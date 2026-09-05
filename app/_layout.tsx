@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import BusLoadingScreen from '../src/components/BusLoadingScreen';
 
 export default function RootLayout() {
+  const [showLoading, setShowLoading] = useState(true);
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" backgroundColor="#F7F7F4" translucent={false} />
@@ -63,6 +65,9 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+      {showLoading && (
+        <BusLoadingScreen onFinish={() => setShowLoading(false)} duration={2100} />
+      )}
     </SafeAreaProvider>
   );
 }
