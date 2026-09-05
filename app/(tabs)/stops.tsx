@@ -6,10 +6,10 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, X, MapPin } from 'lucide-react-native';
 import { stops } from '../../src/services/tracker';
 
@@ -37,7 +37,7 @@ export default function AllStopsScreen() {
   }, [search, filter]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* 1. TOP HEADER & DIRECTORY CONTROLS */}
       <View style={styles.header}>
         <Text style={styles.title}>Stations & Shelters</Text>

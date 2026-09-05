@@ -5,12 +5,12 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Animated,
   Easing,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Bus, ArrowRight, ArrowLeftRight } from 'lucide-react-native';
 import { schedules } from '../../src/services/tracker';
 import { Trip } from '../../src/types';
@@ -69,7 +69,7 @@ export default function TimetableScreen() {
     direction === 'up' ? 'HNLU → Railway Station' : 'Railway Stn → HNLU / Loop';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* HEADER & TOP CONTROLS */}
       <View style={styles.header}>
         <Text style={styles.title}>Timetable</Text>

@@ -9,11 +9,11 @@ import {
   TextInput,
   Modal,
   FlatList,
-  SafeAreaView,
   Platform,
   Animated,
   Easing,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Compass,
   ArrowRight,
@@ -529,7 +529,7 @@ export default function LiveBusScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* --- TOP PLANNING MODE SWITCHER (PILL SEGMENT CONTROL) --- */}
       <View style={styles.topTabBar}>
         {/* TAB 1: Bus Search */}

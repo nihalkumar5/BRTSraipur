@@ -10,8 +10,11 @@ import {
 import { Tabs } from 'expo-router';
 import { Bus, MapPin, Clock, IndianRupee } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const bottomOffset = Math.max(16, insets.bottom + 6);
   const [tabBarWidth, setTabBarWidth] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -43,6 +46,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View
       style={[
         styles.tabBar,
+        { bottom: bottomOffset },
         Platform.OS === 'web'
           ? ({
               backdropFilter: 'blur(28px) saturate(190%)',
