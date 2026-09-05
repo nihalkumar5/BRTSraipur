@@ -1,0 +1,52 @@
+[
+  {
+    "id": "pop-1",
+    "from": "Raipur Railway Station",
+    "to": "HNLU (National Law University)",
+    "fromDisplay": "Raipur Stn",
+    "toDisplay": "HNLU",
+    "tag": "Corridor 1 Express",
+    "typicalDuration": "55m",
+    "fare": 40
+  },
+  {
+    "id": "pop-2",
+    "from": "Telibandha",
+    "to": "Mahanadi Bhawan (Mantralaya)",
+    "fromDisplay": "Telibandha",
+    "toDisplay": "Mantralaya",
+    "tag": "Govt Secretariat Direct",
+    "typicalDuration": "30m",
+    "fare": 25
+  },
+  {
+    "id": "pop-3",
+    "from": "DKS Bhawan",
+    "to": "IIIT Naya Raipur",
+    "fromDisplay": "DKS Bhawan",
+    "toDisplay": "IIIT",
+    "tag": "Campus Special",
+    "typicalDuration": "45m",
+    "fare": 30
+  },
+  {
+    "id": "pop-4",
+    "from": "Raipur Railway Station",
+    "to": "Purkhouti Muktangan",
+    "fromDisplay": "Raipur Stn",
+    "toDisplay": "Muktangan",
+    "tag": "Tourist Feeder",
+    "typicalDuration": "58m",
+    "fare": 40
+  },
+  {
+    "id": "pop-5",
+    "from": "Balco Medical Centre",
+    "to": "CBD (Commercial Complex)",
+    "fromDisplay": "Balco Hospital",
+    "toDisplay": "CBD",
+    "tag": "Fast Shuttle",
+    "typicalDuration": "26m",
+    "fare": 10
+  }
+]

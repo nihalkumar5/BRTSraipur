@@ -1,0 +1,22 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.venv/
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.keystore
+!debug.keystore
+
+# macOS
+.DS_Store
+*.pem
+
+# npm
+npm-debug.*
+yarn-debug.*
+yarn-error.*

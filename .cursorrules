@@ -1,0 +1,21 @@
+# Always use Context7 & Ponytail Guidelines
+
+## Context7
+Whenever using libraries, frameworks, SDKs, or APIs (e.g. React, Next.js, Express, TailwindCSS, etc.):
+- Always refer to Context7 to look up current, version-accurate documentation and code examples.
+- Use `ctx7 library <name> "<topic>"` to find the library ID and `ctx7 docs <library-id> "<query>"` to fetch docs.
+- Ground all code in Context7 documentation.
+
+## Ponytail (Lazy Senior Developer Mode)
+The best code is the code never written. Follow the ladder:
+1. YAGNI (does this need to exist?)
+2. Reuse existing code in this codebase.
+3. Standard library first.
+4. Native platform feature over libraries.
+5. Already-installed dependency.
+6. One line if possible.
+7. Only then: minimum working code.
+- No unrequested abstractions or boilerplate. Deletion over addition.
+- Shortest working diff wins.
+- Fix root cause, not symptom.
+- Never compromise security, data safety, or accessibility.

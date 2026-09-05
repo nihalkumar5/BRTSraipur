@@ -1,0 +1,474 @@
+[
+  {
+    "id": "RRS",
+    "name": "Raipur Railway Station",
+    "shortName": "Railway Station",
+    "code": "RRS",
+    "hindiName": "\u0930\u093e\u092f\u092a\u0941\u0930 \u0930\u0947\u0932\u0935\u0947 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "type": "terminal",
+    "corridor": "Corridor 1",
+    "landmark": "Raipur Junction Railway Station, Platform 1 Exit",
+    "interchange": true,
+    "facilities": [
+      "Railway Interchange",
+      "Auto Stand",
+      "Restrooms",
+      "Ticketing"
+    ],
+    "coordinates": {
+      "latitude": 21.2568,
+      "longitude": 81.6328
+    }
+  },
+  {
+    "id": "DKS",
+    "name": "DKS Bhawan",
+    "shortName": "DKS Bhawan",
+    "code": "DKS",
+    "hindiName": "\u0921\u0940\u0915\u0947\u090f\u0938 \u092d\u0935\u0928",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "DKS Superspeciality Hospital / Old Mantralaya",
+    "interchange": false,
+    "facilities": [
+      "Hospital Access",
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.2465,
+      "longitude": 81.6367
+    }
+  },
+  {
+    "id": "TEL",
+    "name": "Telibandha",
+    "shortName": "Telibandha",
+    "code": "TEL",
+    "hindiName": "\u0924\u0947\u0932\u0940\u092c\u093e\u0902\u0927\u093e",
+    "type": "junction",
+    "corridor": "Corridor 1",
+    "landmark": "Telibandha Chowk / Marine Drive Raipur",
+    "interchange": true,
+    "facilities": [
+      "City Bus Transfer",
+      "Pedestrian Crossing",
+      "Food Outlets"
+    ],
+    "coordinates": {
+      "latitude": 21.2334,
+      "longitude": 81.6702
+    }
+  },
+  {
+    "id": "S15",
+    "name": "Sector 15",
+    "shortName": "Sector 15",
+    "code": "S15",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 15",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Nava Raipur Entrance / Sector 15",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "Digital ETD Display"
+    ],
+    "coordinates": {
+      "latitude": 21.1895,
+      "longitude": 81.7582
+    }
+  },
+  {
+    "id": "CBD",
+    "name": "CBD (Commercial Complex)",
+    "shortName": "CBD",
+    "code": "CBD",
+    "hindiName": "\u0938\u0940\u092c\u0940\u0921\u0940",
+    "type": "hub",
+    "corridor": "Corridor 1",
+    "landmark": "Central Business District, Nava Raipur",
+    "interchange": true,
+    "facilities": [
+      "Commercial Zone",
+      "Banking",
+      "Park & Ride"
+    ],
+    "coordinates": {
+      "latitude": 21.1732,
+      "longitude": 81.7765
+    }
+  },
+  {
+    "id": "EKP",
+    "name": "Ekatm Path",
+    "shortName": "Ekatm Path",
+    "code": "EKP",
+    "hindiName": "\u090f\u0915\u093e\u0924\u094d\u092e \u092a\u0925",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Boulevard towards Capitol Complex",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "CCTV"
+    ],
+    "coordinates": {
+      "latitude": 21.1689,
+      "longitude": 81.782
+    }
+  },
+  {
+    "id": "NBK",
+    "name": "North Block",
+    "shortName": "North Block",
+    "code": "NBK",
+    "hindiName": "\u0928\u0949\u0930\u094d\u0925 \u092c\u094d\u0932\u0949\u0915",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Secretariat North Gate",
+    "interchange": false,
+    "facilities": [
+      "Government Offices Entry"
+    ],
+    "coordinates": {
+      "latitude": 21.1645,
+      "longitude": 81.7865
+    }
+  },
+  {
+    "id": "MHB",
+    "name": "Mahanadi Bhawan (Mantralaya)",
+    "shortName": "Mahanadi Bhawan",
+    "code": "MHB",
+    "hindiName": "\u092e\u0939\u093e\u0928\u0926\u0940 \u092d\u0935\u0928 (\u092e\u0902\u0924\u094d\u0930\u093e\u0932\u092f)",
+    "type": "hub",
+    "corridor": "Corridor 1",
+    "landmark": "Government of Chhattisgarh Mantralaya",
+    "interchange": true,
+    "facilities": [
+      "Secretariat Entry",
+      "VIP Bay",
+      "Security Desk"
+    ],
+    "coordinates": {
+      "latitude": 21.162,
+      "longitude": 81.789
+    }
+  },
+  {
+    "id": "IDB",
+    "name": "Indravati Bhawan (Directorate)",
+    "shortName": "Indravati Bhawan",
+    "code": "IDB",
+    "hindiName": "\u0907\u0902\u0926\u094d\u0930\u093e\u0935\u0924\u0940 \u092d\u0935\u0928 (\u0938\u0902\u091a\u093e\u0932\u0928\u093e\u0932\u092f)",
+    "type": "hub",
+    "corridor": "Corridor 1",
+    "landmark": "HOD Offices Complex",
+    "interchange": false,
+    "facilities": [
+      "Directorates Complex Entry"
+    ],
+    "coordinates": {
+      "latitude": 21.1595,
+      "longitude": 81.7915
+    }
+  },
+  {
+    "id": "SBK",
+    "name": "South Block",
+    "shortName": "South Block",
+    "code": "SBK",
+    "hindiName": "\u0938\u093e\u0909\u0925 \u092c\u094d\u0932\u0949\u0915",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Capitol Complex South Gate",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.156,
+      "longitude": 81.793
+    }
+  },
+  {
+    "id": "S27",
+    "name": "Sector 27",
+    "shortName": "Sector 27",
+    "code": "S27",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 27",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Residential Zone Sector 27",
+    "interchange": false,
+    "facilities": [
+      "Residential Access"
+    ],
+    "coordinates": {
+      "latitude": 21.151,
+      "longitude": 81.795
+    }
+  },
+  {
+    "id": "S29",
+    "name": "Sector 29",
+    "shortName": "Sector 29",
+    "code": "S29",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 29",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Sector 29 Market & Housing",
+    "interchange": false,
+    "facilities": [
+      "Market Access"
+    ],
+    "coordinates": {
+      "latitude": 21.146,
+      "longitude": 81.797
+    }
+  },
+  {
+    "id": "IIM",
+    "name": "IIM Raipur",
+    "shortName": "IIM",
+    "code": "IIM",
+    "hindiName": "\u0906\u0908\u0906\u0908\u090f\u092e \u0930\u093e\u092f\u092a\u0941\u0930",
+    "type": "academic",
+    "corridor": "Corridor 1",
+    "landmark": "Indian Institute of Management Raipur",
+    "interchange": false,
+    "facilities": [
+      "University Campus Access"
+    ],
+    "coordinates": {
+      "latitude": 21.142,
+      "longitude": 81.799
+    }
+  },
+  {
+    "id": "S30",
+    "name": "Sector 30",
+    "shortName": "Sector 30",
+    "code": "S30",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 30",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Institutional Area Sector 30",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.139,
+      "longitude": 81.801
+    }
+  },
+  {
+    "id": "BMC",
+    "name": "Balco Medical Centre",
+    "shortName": "Balco Hospital",
+    "code": "BMC",
+    "hindiName": "\u092c\u093e\u0932\u094d\u0915\u094b \u092e\u0947\u0921\u093f\u0915\u0932 \u0938\u0947\u0902\u091f\u0930",
+    "type": "hospital",
+    "corridor": "Corridor 1",
+    "landmark": "Vedanta Balco Cancer Hospital",
+    "interchange": false,
+    "facilities": [
+      "Wheelchair Accessible",
+      "Emergency Hospital Gate",
+      "Pharmacy"
+    ],
+    "coordinates": {
+      "latitude": 21.135,
+      "longitude": 81.803
+    }
+  },
+  {
+    "id": "HNG",
+    "name": "HNLU Gate",
+    "shortName": "HNLU Gate",
+    "code": "HNG",
+    "hindiName": "\u090f\u091a\u090f\u0928\u090f\u0932\u092f\u0942 \u0917\u0947\u091f",
+    "type": "feeder",
+    "corridor": "Feeder Loop",
+    "landmark": "HNLU Main Entrance Gate",
+    "interchange": false,
+    "facilities": [
+      "Campus Gate"
+    ],
+    "coordinates": {
+      "latitude": 21.128,
+      "longitude": 81.807
+    }
+  },
+  {
+    "id": "HNL",
+    "name": "HNLU (National Law University)",
+    "shortName": "HNLU",
+    "code": "HNLU",
+    "hindiName": "\u0939\u093f\u0926\u093e\u092f\u0924\u0941\u0932\u094d\u0932\u093e\u0939 \u0932\u0949 \u092f\u0942\u0928\u093f\u0935\u0930\u094d\u0938\u093f\u091f\u0940",
+    "type": "terminal",
+    "corridor": "Corridor 1",
+    "landmark": "Hidayatullah National Law University Campus",
+    "interchange": true,
+    "facilities": [
+      "Campus Terminal",
+      "Student Concourse",
+      "Parking"
+    ],
+    "coordinates": {
+      "latitude": 21.13,
+      "longitude": 81.805
+    }
+  },
+  {
+    "id": "JNF",
+    "name": "Jungle Safari",
+    "shortName": "Jungle Safari",
+    "code": "JNF",
+    "hindiName": "\u091c\u0902\u0917\u0932 \u0938\u092b\u093e\u0930\u0940",
+    "type": "tourist",
+    "corridor": "Feeder Loop",
+    "landmark": "Khandwa Jungle Safari Nava Raipur",
+    "interchange": false,
+    "facilities": [
+      "Tourist Hub",
+      "Ticket Counter",
+      "Visitor Parking"
+    ],
+    "coordinates": {
+      "latitude": 21.115,
+      "longitude": 81.815
+    }
+  },
+  {
+    "id": "IIT",
+    "name": "IIIT Naya Raipur",
+    "shortName": "IIIT",
+    "code": "IIIT",
+    "hindiName": "\u091f\u094d\u0930\u093f\u092a\u0932 \u0906\u0908\u091f\u0940 \u0928\u092f\u093e \u0930\u093e\u092f\u092a\u0941\u0930",
+    "type": "academic",
+    "corridor": "Feeder Loop",
+    "landmark": "International Institute of Information Technology",
+    "interchange": false,
+    "facilities": [
+      "College Campus",
+      "Hostel Entrance"
+    ],
+    "coordinates": {
+      "latitude": 21.127,
+      "longitude": 81.765
+    }
+  },
+  {
+    "id": "MUK",
+    "name": "Purkhouti Muktangan",
+    "shortName": "Muktangan",
+    "code": "MUK",
+    "hindiName": "\u092a\u0941\u0930\u0916\u094c\u0924\u0940 \u092e\u0941\u0915\u094d\u0924\u093e\u0902\u0917\u0928",
+    "type": "tourist",
+    "corridor": "Feeder Loop",
+    "landmark": "Chhattisgarh Cultural Open Air Museum",
+    "interchange": false,
+    "facilities": [
+      "Tourism Park Entry",
+      "Craft Stalls"
+    ],
+    "coordinates": {
+      "latitude": 21.134,
+      "longitude": 81.758
+    }
+  },
+  {
+    "id": "NWG",
+    "name": "Nawagaon",
+    "shortName": "Nawagaon",
+    "code": "NWG",
+    "hindiName": "\u0928\u0935\u093e\u0917\u093e\u0902\u0935",
+    "type": "feeder",
+    "corridor": "Feeder Loop",
+    "landmark": "Nawagaon Village / Sports Complex",
+    "interchange": false,
+    "facilities": [
+      "Village Link"
+    ],
+    "coordinates": {
+      "latitude": 21.155,
+      "longitude": 81.765
+    }
+  },
+  {
+    "id": "STD",
+    "name": "Shaheed Veer Narayan Singh Stadium",
+    "shortName": "Cricket Stadium",
+    "code": "STD",
+    "hindiName": "\u0915\u094d\u0930\u093f\u0915\u0947\u091f \u0938\u094d\u091f\u0947\u0921\u093f\u092f\u092e",
+    "type": "sports",
+    "corridor": "Feeder Loop",
+    "landmark": "International Cricket Stadium, Sector 3",
+    "interchange": true,
+    "facilities": [
+      "Mega Event Access",
+      "Direct Concourse"
+    ],
+    "coordinates": {
+      "latitude": 21.165,
+      "longitude": 81.745
+    }
+  },
+  {
+    "id": "SSH",
+    "name": "Satya Sai Sanjeevani Hospital",
+    "shortName": "Satya Sai Hospital",
+    "code": "SSH",
+    "hindiName": "\u0938\u0924\u094d\u092f \u0938\u093e\u0908\u0902 \u0905\u0938\u094d\u092a\u0924\u093e\u0932",
+    "type": "hospital",
+    "corridor": "Feeder Loop",
+    "landmark": "Sri Sathya Sai Sanjeevani Pediatric Heart Hospital",
+    "interchange": false,
+    "facilities": [
+      "Hospital Transit Point",
+      "Patient Drop-off"
+    ],
+    "coordinates": {
+      "latitude": 21.171,
+      "longitude": 81.748
+    }
+  },
+  {
+    "id": "S12",
+    "name": "Sector 12",
+    "shortName": "Sector 12",
+    "code": "S12",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 12",
+    "type": "station",
+    "corridor": "Feeder Loop",
+    "landmark": "Sector 12 Housing",
+    "interchange": false,
+    "facilities": [
+      "Residential Station"
+    ],
+    "coordinates": {
+      "latitude": 21.178,
+      "longitude": 81.751
+    }
+  },
+  {
+    "id": "VDH",
+    "name": "Vedanta Hospital",
+    "shortName": "Vedanta Hospital",
+    "code": "VDH",
+    "hindiName": "\u0935\u0947\u0926\u093e\u0902\u0924\u093e \u0939\u0949\u0938\u094d\u092a\u093f\u091f\u0932",
+    "type": "hospital",
+    "corridor": "Corridor 1",
+    "landmark": "Vedanta Medical Research Complex",
+    "interchange": false,
+    "facilities": [
+      "Healthcare Center"
+    ],
+    "coordinates": {
+      "latitude": 21.136,
+      "longitude": 81.8025
+    }
+  }
+]
