@@ -14,6 +14,7 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   Compass,
   ArrowRight,
@@ -183,6 +184,7 @@ function EditorialStopIcon({ size = 20, color = '#18258F' }: { size?: number; co
 }
 
 export default function LiveBusScreen() {
+  const router = useRouter();
   // Initial state: starts empty by default so the clean Popular Routes screen is the default home screen.
   // Once the user enters stations (or taps a popular route), their chosen route is remembered as the active home screen.
   const [fromStation, setFromStation] = useState<string>(() => {
@@ -598,16 +600,26 @@ export default function LiveBusScreen() {
       >
         {/* PAGE HEADING */}
         <View style={styles.pageHeaderTitleRow}>
-          <Text style={styles.pageMainHeading}>
-            {planningMode === 'next'
-              ? 'Bus Tickets'
-              : "I'm Onboard · Live"}
-          </Text>
-          <Text style={styles.pageSubHeading}>
-            {planningMode === 'next'
-              ? 'Tatpar BRTS · Nava Raipur Express'
-              : 'Real-time in-bus stop tracking & drop-off alerts'}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.pageMainHeading}>
+              {planningMode === 'next'
+                ? 'Bus Tickets'
+                : "I'm Onboard · Live"}
+            </Text>
+            <Text style={styles.pageSubHeading}>
+              {planningMode === 'next'
+                ? 'Tatpar BRTS · Nava Raipur Express'
+                : 'Real-time in-bus stop tracking & drop-off alerts'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/about' as any)}
+            style={styles.infoIconButton}
+            activeOpacity={0.7}
+            accessibilityLabel="About and support"
+          >
+            <Info size={20} color="#18258F" />
+          </TouchableOpacity>
         </View>
 
         {/* NOTIFICATION CONFIRMATION BANNER */}
@@ -1630,6 +1642,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  infoIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EEF0F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
   pageMainHeading: {
     fontSize: 26,
