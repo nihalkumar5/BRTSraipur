@@ -1,0 +1,9 @@
+android/
+ios/
+node_modules/
+.venv/
+.expo/
+.git/
+dist/
+data/*.pdf
+data/*.pptx
