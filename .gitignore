@@ -7,10 +7,13 @@ web-build/
 # Android
 android/.gradle/
 android/app/build/
+android/app/release/
 android/build/
 android/local.properties
 *.keystore
 !debug.keystore
+*.aab
+*.apk
 
 # macOS
 .DS_Store

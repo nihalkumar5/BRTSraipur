@@ -1,11 +1,7 @@
 pluginManagement {
     def resolveNode = {
-        def candidates = [
-            System.getenv("NODE_BINARY"),
-            "/opt/homebrew/bin/node",
-            "/usr/local/bin/node",
-            "node",
-        ]
+        def candidates = []
+        if (System.getenv("NODE_BINARY")) candidates.add(System.getenv("NODE_BINARY"))
         def userHome = System.getProperty("user.home")
         def nvmDir = new File(userHome, ".nvm/versions/node")
         if (nvmDir.exists()) {
@@ -13,8 +9,39 @@ pluginManagement {
                 candidates.add(new File(dir, "bin/node").absolutePath)
             }
         }
+        candidates.add("/opt/homebrew/bin/node")
+        candidates.add("/usr/local/bin/node")
+        candidates.add("/usr/bin/node")
+
+        def updateProcessPath = { String nodePath ->
+            try {
+                def nodeDir = new File(nodePath).parent
+                def pe = Class.forName("java.lang.ProcessEnvironment")
+                def theEnv = pe.getDeclaredField("theEnvironment")
+                theEnv.setAccessible(true)
+                Map env = (Map) theEnv.get(null)
+                
+                def varClass = Class.forName("java.lang.ProcessEnvironment\$Variable")
+                def valClass = Class.forName("java.lang.ProcessEnvironment\$Value")
+                def varMethod = varClass.getDeclaredMethod("valueOf", String.class)
+                varMethod.setAccessible(true)
+                def valMethod = valClass.getDeclaredMethod("valueOf", String.class)
+                valMethod.setAccessible(true)
+
+                def pathVar = varMethod.invoke(null, "PATH")
+                def currentVal = env.get(pathVar)?.toString() ?: ""
+                if (!currentVal.contains(nodeDir)) {
+                    def newVal = valMethod.invoke(null, "${nodeDir}:/opt/homebrew/bin:/usr/local/bin:${currentVal}")
+                    env.put(pathVar, newVal)
+                }
+            } catch (Throwable ignored) {}
+        }
+
         for (candidate in candidates) {
-            if (candidate && new File(candidate).exists()) return candidate
+            if (candidate && new File(candidate).exists()) {
+                updateProcessPath(candidate)
+                return candidate
+            }
         }
         return "node"
     }
@@ -24,12 +51,8 @@ pluginManagement {
 plugins { id("com.facebook.react.settings") }
 
 def resolveNode = {
-    def candidates = [
-        System.getenv("NODE_BINARY"),
-        "/opt/homebrew/bin/node",
-        "/usr/local/bin/node",
-        "node",
-    ]
+    def candidates = []
+    if (System.getenv("NODE_BINARY")) candidates.add(System.getenv("NODE_BINARY"))
     def userHome = System.getProperty("user.home")
     def nvmDir = new File(userHome, ".nvm/versions/node")
     if (nvmDir.exists()) {
@@ -37,8 +60,39 @@ def resolveNode = {
             candidates.add(new File(dir, "bin/node").absolutePath)
         }
     }
+    candidates.add("/opt/homebrew/bin/node")
+    candidates.add("/usr/local/bin/node")
+    candidates.add("/usr/bin/node")
+
+    def updateProcessPath = { String nodePath ->
+        try {
+            def nodeDir = new File(nodePath).parent
+            def pe = Class.forName("java.lang.ProcessEnvironment")
+            def theEnv = pe.getDeclaredField("theEnvironment")
+            theEnv.setAccessible(true)
+            Map env = (Map) theEnv.get(null)
+            
+            def varClass = Class.forName("java.lang.ProcessEnvironment\$Variable")
+            def valClass = Class.forName("java.lang.ProcessEnvironment\$Value")
+            def varMethod = varClass.getDeclaredMethod("valueOf", String.class)
+            varMethod.setAccessible(true)
+            def valMethod = valClass.getDeclaredMethod("valueOf", String.class)
+            valMethod.setAccessible(true)
+
+            def pathVar = varMethod.invoke(null, "PATH")
+            def currentVal = env.get(pathVar)?.toString() ?: ""
+            if (!currentVal.contains(nodeDir)) {
+                def newVal = valMethod.invoke(null, "${nodeDir}:/opt/homebrew/bin:/usr/local/bin:${currentVal}")
+                env.put(pathVar, newVal)
+            }
+        } catch (Throwable ignored) {}
+    }
+
     for (candidate in candidates) {
-        if (candidate && new File(candidate).exists()) return candidate
+        if (candidate && new File(candidate).exists()) {
+            updateProcessPath(candidate)
+            return candidate
+        }
     }
     return "node"
 }

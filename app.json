@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tatpar BRTS Raipur",
     "slug": "tatpar-brts-raipur",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tatparbrts",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#10247B"
+      "backgroundColor": "#18258F"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.raipur.brts.tatpar",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#182A9A"
@@ -34,8 +34,8 @@
       ]
     },
     "androidStatusBar": {
-      "barStyle": "dark-content",
-      "backgroundColor": "#F7F7F4",
+      "barStyle": "light-content",
+      "backgroundColor": "#18258F",
       "translucent": false
     },
     "androidNavigationBar": {

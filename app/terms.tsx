@@ -6,10 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, FileText, AlertCircle, ShieldAlert, Scale, CheckCircle2, Mail, Globe } from 'lucide-react-native';
+import { ArrowLeft, FileText, AlertCircle, ShieldAlert, Scale, CheckCircle2, Mail, Globe, ExternalLink } from 'lucide-react-native';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();
@@ -133,14 +134,26 @@ export default function TermsOfServiceScreen() {
           <View style={styles.contactCard}>
             <Text style={styles.contactLabel}>Lead Developer & Maintainer:</Text>
             <Text style={styles.contactValue}>Nihal Kumar</Text>
-            <View style={styles.contactRow}>
+            
+            <TouchableOpacity
+              style={styles.contactRow}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('mailto:nihalkumar5@gmail.com?subject=Tatpar%20BRTS%20Terms%20Inquiry')}
+            >
               <Mail size={14} color="#18258F" />
-              <Text style={styles.contactValue}>nihalkumar5@gmail.com</Text>
-            </View>
-            <View style={styles.contactRow}>
+              <Text style={styles.contactValueLink}>nihalkumar5@gmail.com</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.contactRow}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://tatpar-brts-raipur.vercel.app')}
+            >
               <Globe size={14} color="#18258F" />
-              <Text style={styles.contactValue}>https://tatpar-brts-raipur.vercel.app</Text>
-            </View>
+              <Text style={styles.contactValueLink}>https://tatpar-brts-raipur.vercel.app</Text>
+              <ExternalLink size={12} color="#18258F" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+            
             <Text style={styles.contactCity}>Raipur, Chhattisgarh, India</Text>
           </View>
         </View>
@@ -266,6 +279,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#18258F',
+  },
+  contactValueLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#18258F',
+    textDecorationLine: 'underline',
   },
   contactCity: {
     fontSize: 12,

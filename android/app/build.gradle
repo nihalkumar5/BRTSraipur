@@ -2,15 +2,13 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+project.ext.REACT_NATIVE_NODE_MODULES_DIR = new File(rootDir, "../node_modules/react-native").absolutePath
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 def resolveNode = {
-    def candidates = [
-        System.getenv("NODE_BINARY"),
-        "node",
-        "/opt/homebrew/bin/node",
-        "/usr/local/bin/node",
-    ]
+    def candidates = []
+    if (System.getenv("NODE_BINARY")) candidates.add(System.getenv("NODE_BINARY"))
     def userHome = System.getProperty("user.home")
     def nvmDir = new File(userHome, ".nvm/versions/node")
     if (nvmDir.exists()) {
@@ -18,13 +16,11 @@ def resolveNode = {
             candidates.add(new File(dir, "bin/node").absolutePath)
         }
     }
+    candidates.add("/opt/homebrew/bin/node")
+    candidates.add("/usr/local/bin/node")
+    candidates.add("/usr/bin/node")
     for (candidate in candidates) {
-        if (!candidate) continue
-        try {
-            def process = [candidate, "--version"].execute()
-            process.waitFor()
-            if (process.exitValue() == 0) return candidate
-        } catch (Exception ignored) {}
+        if (candidate && new File(candidate).exists()) return candidate
     }
     return "node"
 }
@@ -55,10 +51,8 @@ react {
     // codegenDir = file("../../node_modules/@react-native/codegen")
 
     /* Variants */
-    //   The list of variants to that are debuggable. For those we're going to
-    //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
-    //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    // Bundle JS into debug builds as well, so running from Android Studio works standalone without Metro error
+    debuggableVariants = []
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -118,8 +112,8 @@ android {
         applicationId 'com.raipur.brts.tatpar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 2
+        versionName "1.0.1"
     }
     signingConfigs {
         debug {
@@ -146,6 +140,7 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+            keepDebugSymbols += ['**/*.so']
         }
     }
     androidResources {

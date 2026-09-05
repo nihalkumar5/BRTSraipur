@@ -6,10 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ShieldCheck, Lock, Bell, Eye, Mail, Globe } from 'lucide-react-native';
+import { ArrowLeft, ShieldCheck, Lock, Bell, Eye, Mail, Globe, ExternalLink } from 'lucide-react-native';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
@@ -117,9 +118,28 @@ export default function PrivacyPolicyScreen() {
           <Text style={styles.paragraph}>
             If you have any questions, suggestions, or grievance complaints regarding this Privacy Policy or app data handling, please contact:
           </Text>
-          <Text style={styles.contactItem}>📧 Email: nihalkumar5@gmail.com</Text>
-          <Text style={styles.contactItem}>📍 Location: Raipur, Chhattisgarh, India</Text>
-          <Text style={styles.contactItem}>🌐 Website: https://tatpar-brts-raipur.vercel.app</Text>
+          <TouchableOpacity
+            style={styles.clickableRow}
+            activeOpacity={0.7}
+            onPress={() => Linking.openURL('mailto:nihalkumar5@gmail.com?subject=Tatpar%20BRTS%20Privacy%20Inquiry')}
+          >
+            <Mail size={15} color="#18258F" />
+            <Text style={styles.contactItemLink}>nihalkumar5@gmail.com</Text>
+          </TouchableOpacity>
+
+          <View style={styles.clickableRow}>
+            <Text style={styles.contactItem}>📍 Location: Raipur, Chhattisgarh, India</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.clickableRow}
+            activeOpacity={0.7}
+            onPress={() => Linking.openURL('https://tatpar-brts-raipur.vercel.app')}
+          >
+            <Globe size={15} color="#18258F" />
+            <Text style={styles.contactItemLink}>https://tatpar-brts-raipur.vercel.app</Text>
+            <ExternalLink size={13} color="#18258F" style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
@@ -233,9 +253,20 @@ const styles = StyleSheet.create({
   },
   contactItem: {
     fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  clickableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+  },
+  contactItemLink: {
+    fontSize: 14,
     color: '#18258F',
     fontWeight: '600',
-    marginBottom: 6,
+    textDecorationLine: 'underline',
   },
   footer: {
     marginTop: 28,

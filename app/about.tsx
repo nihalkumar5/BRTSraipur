@@ -73,6 +73,25 @@ export default function AboutScreen() {
           </Text>
         </View>
 
+        {/* OFFICIAL WEBSITE & WEB PORTAL */}
+        <Text style={styles.sectionHeading}>Official Web Portal</Text>
+        <View style={styles.menuContainer}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={handleWebsite}
+          >
+            <View style={[styles.menuIconContainer, { backgroundColor: '#EEF2FF' }]}>
+              <Globe size={18} color="#18258F" />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Tatpar BRTS Web Portal</Text>
+              <Text style={styles.menuSubtitle}>https://tatpar-brts-raipur.vercel.app</Text>
+            </View>
+            <ExternalLink size={18} color="#18258F" />
+          </TouchableOpacity>
+        </View>
+
         {/* COMPLIANCE & LEGAL LINKS */}
         <Text style={styles.sectionHeading}>Legal & Compliance</Text>
         <View style={styles.menuContainer}>
