@@ -137,6 +137,8 @@ export interface NearbyStation {
   distanceKm: number;
   walkingMins: number;
   distanceFormatted: string;
+  routeTimeMins?: number;
+  stopsAway?: number;
 }
 
 export interface NearbyServiceStation {
@@ -152,6 +154,8 @@ export interface NearbyServiceStation {
   departureTimeText: string;
   isToday: boolean;
   routeSummary: string;
+  routeTimeMins?: number;
+  stopsAway?: number;
 }
 
 export interface NearbyDirectAlternative {

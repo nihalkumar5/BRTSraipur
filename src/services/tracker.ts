@@ -153,69 +153,64 @@ export function formatDistance(distKm: number): string {
   return `${distKm.toFixed(1)} km`;
 }
 
-export function getNearbyStations(stationNameQuery: string, maxKm: number = 2.5): NearbyStation[] {
+export function getNearbyStations(stationNameQuery: string, maxKm: number = 3.5): NearbyStation[] {
   const target = getStopByName(stationNameQuery);
-  if (!target || !target.coordinates) return [];
+  if (!target) return [];
 
-  const results: NearbyStation[] = [];
+  const map = new Map<string, NearbyStation>();
 
-  for (const s of stops) {
-    if (s.id === target.id || !s.coordinates) continue;
-    const dist = getDistanceKm(
-      target.coordinates.latitude,
-      target.coordinates.longitude,
-      s.coordinates.latitude,
-      s.coordinates.longitude
-    );
-    if (dist <= maxKm) {
-      results.push({
-        stop: s,
-        distanceKm: Math.round(dist * 100) / 100,
-        walkingMins: Math.max(1, Math.round((dist / 4.5) * 60)),
-        distanceFormatted: formatDistance(dist),
-      });
+  // 1. Timetable-based adjacent stops from official bus schedules (PDF timetable truth)
+  for (const trip of schedules) {
+    const tIdx = trip.stops.findIndex(s => matchStop(s.stop, target));
+    if (tIdx !== -1) {
+      for (let offset = 1; offset <= 4; offset++) {
+        for (const idx of [tIdx - offset, tIdx + offset]) {
+          if (idx >= 0 && idx < trip.stops.length) {
+            const adjStop = getStopByName(trip.stops[idx].stop);
+            if (!adjStop || adjStop.id === target.id) continue;
+            const deltaMins = Math.abs(trip.stops[idx].mins - trip.stops[tIdx].mins);
+            if (deltaMins <= 20) {
+              const existing = map.get(adjStop.id);
+              if (!existing || (existing.routeTimeMins && deltaMins < existing.routeTimeMins)) {
+                map.set(adjStop.id, {
+                  stop: adjStop,
+                  distanceKm: Math.round(deltaMins * 0.4 * 10) / 10,
+                  walkingMins: deltaMins,
+                  distanceFormatted: `${deltaMins}m on route`,
+                  routeTimeMins: deltaMins,
+                  stopsAway: offset,
+                });
+              }
+            }
+          }
+        }
+      }
     }
   }
 
-  results.sort((a, b) => a.distanceKm - b.distanceKm);
+  const results = Array.from(map.values());
+  results.sort((a, b) => {
+    const aTime = a.routeTimeMins ?? 999;
+    const bTime = b.routeTimeMins ?? 999;
+    return aTime - bTime;
+  });
+
   return results;
 }
 
 export function getNearbyStationsFromCoordinates(
-  userLat: number,
-  userLon: number,
-  maxKm: number = 2.5
+  _userLat: number,
+  _userLon: number,
+  _maxKm: number = 2.5
 ): NearbyStation[] {
-  const results: NearbyStation[] = [];
-
-  for (const s of stops) {
-    if (!s.coordinates) continue;
-    const dist = getDistanceKm(
-      userLat,
-      userLon,
-      s.coordinates.latitude,
-      s.coordinates.longitude
-    );
-    if (dist <= maxKm) {
-      results.push({
-        stop: s,
-        distanceKm: Math.round(dist * 100) / 100,
-        walkingMins: Math.max(1, Math.round((dist / 4.5) * 60)),
-        distanceFormatted: formatDistance(dist),
-      });
-    }
-  }
-
-  results.sort((a, b) => a.distanceKm - b.distanceKm);
-  return results;
+  return [];
 }
 
 export function getNearestStopFromCoordinates(
-  userLat: number,
-  userLon: number
+  _userLat: number,
+  _userLon: number
 ): NearbyStation | null {
-  const nearby = getNearbyStationsFromCoordinates(userLat, userLon, 25);
-  return nearby.length > 0 ? nearby[0] : null;
+  return null;
 }
 
 export function findNearbyDirectAlternatives(
@@ -597,10 +592,13 @@ export function getNearbyStationsWithService(
     }
   }
 
-  // Prioritize active trips running today
+  // Prioritize active trips running today, then nearest in timetable time
   results.sort((a, b) => {
     if (a.isToday && !b.isToday) return -1;
     if (!a.isToday && b.isToday) return 1;
+    const aTime = a.routeTimeMins ?? a.walkingMins;
+    const bTime = b.routeTimeMins ?? b.walkingMins;
+    if (aTime !== bTime) return aTime - bTime;
     return a.distanceKm - b.distanceKm;
   });
 

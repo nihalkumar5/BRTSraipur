@@ -48,15 +48,12 @@ import {
   findNearbyDirectAlternatives,
   getNearbyStations,
   getNearbyStationsWithService,
-  getNearestStopFromCoordinates,
-  getNearbyStationsFromCoordinates,
 } from '../../src/services/tracker';
 import {
   scheduleBusNotification,
   ScheduledReminder,
   getActiveReminders,
 } from '../../src/services/notifications';
-import { getCurrentUserLocation } from '../../src/services/location';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 
 function EditorialBusIllustration({
@@ -218,8 +215,6 @@ export default function LiveBusScreen() {
     }
     return '';
   });
-
-  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     if (params.from) {
@@ -462,31 +457,6 @@ export default function LiveBusScreen() {
     }).start();
   };
 
-  const handleUseCurrentLocation = useCallback(async () => {
-    setLocating(true);
-    try {
-      const coords = await getCurrentUserLocation();
-      if (coords) {
-        const nearest = getNearestStopFromCoordinates(coords.latitude, coords.longitude);
-        if (nearest) {
-          setFromStation(nearest.stop.name);
-          setSelectedTripId(null);
-          triggerCardBounce();
-          Alert.alert(
-            '📍 Nearest Shelter Located',
-            `Auto-selected ${nearest.stop.shortName} (${nearest.distanceFormatted} away, ~${nearest.walkingMins}m walk) as your boarding station.`
-          );
-        } else {
-          Alert.alert('No Nearby Station', 'No BRTS shelters found within 25 km of your location.');
-        }
-      }
-    } catch (err) {
-      console.warn('Error detecting current location:', err);
-    } finally {
-      setLocating(false);
-    }
-  }, []);
-
   const spinInterpolate = swapSpinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
@@ -718,17 +688,6 @@ export default function LiveBusScreen() {
                     {fromStation ? stops.find(s => s.name === fromStation)?.shortName || fromStation : 'Boarding station'}
                   </Text>
                 </TouchableOpacity>
-
-                {!fromStation ? (
-                  <TouchableOpacity
-                    onPress={handleUseCurrentLocation}
-                    style={styles.nearMeInlineBtn}
-                    activeOpacity={0.7}
-                  >
-                    <Navigation size={11} color="#047857" strokeWidth={2.4} />
-                    <Text style={styles.nearMeInlineText}>{locating ? 'Locating...' : 'Near me'}</Text>
-                  </TouchableOpacity>
-                ) : null}
 
                 {fromStation ? (
                   <TouchableOpacity onPress={clearFrom} style={styles.clearBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -2244,28 +2203,6 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
-
-            {/* USE CURRENT LOCATION BUTTON */}
-            {activePicker === 'from' && !searchQuery ? (
-              <TouchableOpacity
-                style={styles.useCurrentLocRow}
-                onPress={() => {
-                  closePicker();
-                  handleUseCurrentLocation();
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.useCurrentLocIconWrap}>
-                  <Navigation size={16} color="#047857" strokeWidth={2.4} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.useCurrentLocTitle}>
-                    {locating ? 'Locating nearest station...' : 'Use My Current Location'}
-                  </Text>
-                  <Text style={styles.useCurrentLocSub}>Auto-detect nearest bus shelter</Text>
-                </View>
-              </TouchableOpacity>
-            ) : null}
 
             {/* STATIONS LIST */}
             <FlatList

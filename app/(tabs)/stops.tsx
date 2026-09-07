@@ -471,7 +471,9 @@ export default function AllStopsScreen() {
                     >
                       <MapPin size={11} color="#18258F" />
                       <Text style={styles.modalNearbyName}>{ns.stop.shortName}</Text>
-                      <Text style={styles.modalNearbyDist}>({ns.distanceFormatted} · ~{ns.walkingMins}m)</Text>
+                      <Text style={styles.modalNearbyDist}>
+                        ({ns.routeTimeMins ? `${ns.routeTimeMins}m on route` : `${ns.distanceFormatted} · ~${ns.walkingMins}m`})
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
