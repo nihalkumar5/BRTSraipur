@@ -15,6 +15,7 @@ import {
   Linking,
   Alert,
   BackHandler,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -287,6 +288,10 @@ export default function LiveBusScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string; to?: string }>();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const [measuredBannerWidth, setMeasuredBannerWidth] = useState(0);
+  const currentBannerWidth = measuredBannerWidth || Math.max(280, Math.min(windowWidth, 540) - 32);
+  const bannerHeight = Math.round(currentBannerWidth * (507 / 2055));
 
   // Session-persisted station state: stays preserved when clicking Home or switching tabs,
   // but resets when the app is closed.
@@ -1882,15 +1887,21 @@ export default function LiveBusScreen() {
 
                 {/* PROMOTIONAL BANNER IMAGE */}
                 <TouchableOpacity
-                  style={styles.homeDownBannerWrap}
+                  style={[styles.homeDownBannerWrap, { height: bannerHeight }]}
                   activeOpacity={0.9}
                   onPress={() => setPlanningMode('onboard')}
+                  onLayout={(e) => {
+                    const w = e.nativeEvent.layout.width;
+                    if (w > 0 && Math.abs(w - measuredBannerWidth) > 2) {
+                      setMeasuredBannerWidth(w);
+                    }
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel="Live Tracking, Smoother Journeys"
                 >
                   <Image
                     source={require('../../assets/images/homedown.webp')}
-                    style={styles.homeDownBannerImage}
+                    style={[styles.homeDownBannerImage, { width: '100%', height: bannerHeight }]}
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
@@ -3545,15 +3556,15 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   busCardRightIllustration: {
-    width: 130,
-    height: 82,
+    width: 154,
+    height: 95,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   busCard3DImage: {
-    width: 130,
-    height: 82,
+    width: 154,
+    height: 95,
   },
   busCardDivider: {
     height: 1,
