@@ -1382,13 +1382,11 @@ export default function LiveBusScreen() {
                       {/* TOP ROW: INFO ON LEFT, 3D RED BUS ON RIGHT */}
                       <View style={styles.busCardTopRow}>
                         <View style={styles.busCardLeftCol}>
-                          {/* NEXT BUS BADGE */}
-                          <View style={styles.nextBusBadge}>
-                            <Bus size={14} color="#2563EB" strokeWidth={2.2} />
-                            <Text style={styles.nextBusBadgeText}>
-                              {journey.isProximityOptimized
-                                ? `⚡ SMART DIRECT (${journey.minutesSaved || 15}M)`
-                                : 'NEXT BUS'}
+                          {/* ● NEXT BUS BADGE */}
+                          <View style={styles.heroLiveBadgeRow}>
+                            <View style={styles.heroLiveDot} />
+                            <Text style={styles.heroLiveBadgeText}>
+                              {journey.isProximityOptimized ? 'SMART DIRECT' : 'NEXT BUS'}
                             </Text>
                           </View>
 
@@ -1412,6 +1410,11 @@ export default function LiveBusScreen() {
                             {journey.fromStop.shortName} → {journey.toStop.shortName}
                             {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                           </Text>
+
+                          {/* ROUTE META LINE (ROUTE · SERVICE · FARE) */}
+                          <Text style={styles.heroRouteMetaText} numberOfLines={1}>
+                            {journey.routeBadge} · {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'} · ₹{journey.fare}
+                          </Text>
                         </View>
 
                         {/* RIGHT 3D BUS ILLUSTRATION */}
@@ -1424,66 +1427,23 @@ export default function LiveBusScreen() {
                         </View>
                       </View>
 
-                      {/* SUBTLE DIVIDER */}
-                      <View style={styles.busCardDivider} />
+                      {/* CLEAN DIVIDER */}
+                      <View style={styles.heroDividerLine} />
 
-                      {/* BOTTOM ROW: ROUTE + DURATION + DEPARTING IN PILL */}
-                      <View style={styles.busCardBottomRow}>
-                        {/* ROUTE */}
-                        <View style={styles.busCardBottomMetaItem}>
-                          <View style={styles.busCardIconBox}>
-                            <Bus size={15} color="#2563EB" strokeWidth={2.2} />
-                          </View>
-                          <View style={styles.busCardMetaTextCol}>
-                            <Text style={styles.busCardMetaTitle} numberOfLines={1}>
-                              {journey.routeBadge}
-                            </Text>
-                            <Text style={styles.busCardMetaSubtitle} numberOfLines={1}>
-                              {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'}
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* SUBTLE VERTICAL DIVIDER */}
-                        <View style={styles.busCardVerticalDivider} />
-
-                        {/* TRAVEL TIME */}
-                        <View style={styles.busCardBottomMetaItem}>
-                          <View style={styles.busCardIconBox}>
-                            <Clock size={15} color="#2563EB" strokeWidth={2.2} />
-                          </View>
-                          <View style={styles.busCardMetaTextCol}>
-                            <Text style={styles.busCardMetaTitle} numberOfLines={1}>
-                              {journey.durationMins} min
-                            </Text>
-                            <Text style={styles.busCardMetaSubtitle} numberOfLines={1}>
-                              Travel Time
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* DEPARTING IN ACTION PILL */}
-                        <View style={styles.busCardCountdownPill}>
-                          <View style={styles.busCardCountdownTextCol}>
-                            <Text style={styles.busCardCountdownPreLabel} numberOfLines={1}>
-                              DEPARTING IN
-                            </Text>
-                            <Text style={styles.busCardCountdownValue} numberOfLines={1}>
-                              {(() => {
-                                let diff = journey.departureMins - currentTimeMins;
-                                if (diff < 0) diff += 1440;
-                                if (diff === 0) return 'NOW';
-                                const hrs = Math.floor(diff / 60);
-                                const mins = diff % 60;
-                                if (hrs > 0) return `${hrs}H ${mins}M`;
-                                return `${mins} MIN`;
-                              })()}
-                            </Text>
-                          </View>
-                          <View style={styles.busCardChevronBtn}>
-                            <ChevronRight size={13} color="#18258F" strokeWidth={2.8} />
-                          </View>
-                        </View>
+                      {/* BOTTOM ROW: DEPARTS IN */}
+                      <View style={styles.heroDepartsInRow}>
+                        <Text style={styles.heroDepartsInLabel}>Departs in</Text>
+                        <Text style={styles.heroDepartsInValue}>
+                          {(() => {
+                            let diff = journey.departureMins - currentTimeMins;
+                            if (diff < 0) diff += 1440;
+                            if (diff === 0) return 'NOW';
+                            const hrs = Math.floor(diff / 60);
+                            const mins = diff % 60;
+                            if (hrs > 0) return `${hrs}h ${mins}m`;
+                            return `${mins} min`;
+                          })()}
+                        </Text>
                       </View>
                     </TouchableOpacity>
                   </Animated.View>
@@ -1521,158 +1481,111 @@ export default function LiveBusScreen() {
                   </TouchableOpacity>
                 )}
 
-                {/* UPCOMING DEPARTURES STRIP */}
-                {journey.upcomingDepartures && journey.upcomingDepartures.length > 1 ? (
-                  <View style={[styles.upcomingContainer, styles.upcomingContainerTickets]}>
-                    <Text style={styles.upcomingHeaderTitle}>Upcoming departures</Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.depScrollContent}
-                    >
-                      {journey.upcomingDepartures.map(dep => {
-                        const isSelected = journey.trip.id === dep.tripId;
-                        const isDeparted = !!dep.isDeparted;
-                        const isCurrent = !dep.isNextDay && !isDeparted && dep.diffMins === 0;
-                        const diffLabel = isDeparted
-                          ? (dep.isLastToday ? 'LAST TODAY' : 'DEPARTED')
-                          : dep.isNextDay
-                          ? 'TOMORROW'
-                          : dep.diffMins === 0
-                          ? 'NOW'
-                          : dep.diffMins < 60
-                          ? `${dep.diffMins} MIN`
-                          : `${Math.floor(dep.diffMins / 60)}H ${dep.diffMins % 60}M`;
+                {/* NEXT DEPARTURES STRIP (CLEAN MINIMAL TEXT ROW) */}
+                {(() => {
+                  const otherDeps = (journey.upcomingDepartures || [])
+                    .filter(dep => dep.tripId !== journey.trip.id)
+                    .slice(0, 3);
+                  if (otherDeps.length === 0) return null;
 
-                        return (
-                          <TouchableOpacity
-                            key={`${dep.tripId}_${dep.departureTime}_${dep.isNextDay ? 'next' : 'today'}_${dep.isDeparted ? 'dep' : 'up'}`}
-                            style={[
-                              styles.depCard,
-                              isDeparted && styles.depCardDeparted,
-                              isSelected && styles.depCardSelected,
-                            ]}
-                            onPress={() => {
-                              setSelectedTripId(dep.tripId);
-                              triggerCardBounce();
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.depCardHeader}>
-                              {isCurrent ? (
-                                <View
-                                  style={[
-                                    styles.depLiveDot,
-                                    isSelected && { backgroundColor: '#18258F' },
-                                  ]}
-                                />
-                              ) : null}
+                  return (
+                    <View style={styles.cleanNextDeparturesCard}>
+                      <View style={styles.cleanNextDeparturesHeaderRow}>
+                        <Text style={styles.cleanNextDeparturesTitle}>Next departures</Text>
+                        <TouchableOpacity
+                          onPress={() => router.push('/timetable' as any)}
+                          activeOpacity={0.7}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Text style={styles.cleanViewFullTimetableLink}>View full timetable →</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.cleanNextDeparturesTimesRow}>
+                        {otherDeps.map((dep, idx) => (
+                          <React.Fragment key={`${dep.tripId}_${dep.departureTime}`}>
+                            {idx > 0 && <Text style={styles.cleanNextDepDot}>·</Text>}
+                            <TouchableOpacity
+                              onPress={() => {
+                                setSelectedTripId(dep.tripId);
+                                triggerCardBounce();
+                              }}
+                              activeOpacity={0.7}
+                              style={styles.cleanNextDepBtn}
+                            >
                               <Text
                                 style={[
-                                  styles.depTimeText,
-                                  isDeparted && styles.depTimeTextDeparted,
-                                  isSelected ? styles.depTimeTextSelected : styles.depTimeTextFuture,
+                                  styles.cleanNextDepTimeText,
+                                  journey.trip.id === dep.tripId && styles.cleanNextDepTimeTextSelected,
                                 ]}
                               >
                                 {dep.departureTime}
                               </Text>
-                            </View>
-                            <Text
-                              style={[
-                                styles.depStatusText,
-                                isDeparted && styles.depStatusTextDeparted,
-                                isSelected ? styles.depStatusTextSelected : styles.depStatusTextFuture,
-                              ]}
-                            >
-                              {diffLabel}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ) : null}
-
-                {/* REMAINING TIME & FARE DUAL PREMIUM CARDS */}
-                <View style={styles.metricsGridRow}>
-                  {/* CARD 1: TRAVEL TIME */}
-                  <View style={[styles.metricCard, styles.metricCardRemaining]}>
-                    <View style={styles.metricCardHeader}>
-                      <View style={styles.metricLabelGroup}>
-                        <Clock size={13} color="#17268F" strokeWidth={2.4} />
-                        <Text style={styles.metricCardLabel}>TRAVEL TIME</Text>
-                      </View>
-                      <View style={[styles.metricBadgeRemaining, journey.isTransfer && { backgroundColor: '#FEF3C7' }]}>
-                        <Text style={[styles.metricBadgeTextRemaining, journey.isTransfer && { color: '#B45309' }]}>
-                          {journey.isTransfer ? '1 TRANSFER' : 'DIRECT'}
-                        </Text>
+                            </TouchableOpacity>
+                          </React.Fragment>
+                        ))}
                       </View>
                     </View>
-                    <Text style={styles.metricCardValue}>
-                      {journey.durationMins} <Text style={styles.metricUnitText}>min</Text>
-                    </Text>
-                    <Text style={styles.metricCardSub} numberOfLines={1}>
-                      {journey.optimalProximity?.shortHopBus
-                        ? `Save ${journey.optimalProximity.minutesSaved}m via ${journey.optimalProximity.shortHopBus.dropStationShortName}`
-                        : journey.isTransfer
-                        ? `incl. ${journey.transferWaitMins}m wait at ${journey.transferHub}`
-                        : `to ${journey.toStop.shortName}`}
-                    </Text>
+                  );
+                })()}
+
+                {/* ROUTE STATUS COMPONENT (COMBINES STATUS, TIME, AND LINK) */}
+                <View style={styles.cleanRouteStatusCard}>
+                  <View style={styles.cleanRouteStatusTopRow}>
+                    <Text style={styles.cleanRouteStatusLabel}>Route status</Text>
+                    <View style={styles.cleanRouteStatusLiveRow}>
+                      <View style={styles.cleanStatusGreenDot} />
+                      <Text style={styles.cleanRouteStatusLiveText}>On schedule</Text>
+                    </View>
                   </View>
 
-                  {/* CARD 2: OFFICIAL FARE */}
-                  <View style={[styles.metricCard, styles.metricCardFare]}>
-                    <View style={styles.metricCardHeader}>
-                      <View style={styles.metricLabelGroup}>
-                        <ShieldCheck size={13.5} color="#17268F" strokeWidth={2.4} />
-                        <Text style={styles.metricCardLabel}>FARE</Text>
-                      </View>
-                      <View style={styles.metricBadgeFare}>
-                        <Text style={styles.metricBadgeTextFare}>AC RIDE</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.metricCardValue}>₹{journey.fare}</Text>
-                    <Text style={styles.metricCardSub} numberOfLines={1}>
-                      {journey.optimalProximity?.shortHopBus
-                        ? `Direct bus: ₹${journey.optimalProximity.shortHopBus.fare} (Save ₹${journey.fare - journey.optimalProximity.shortHopBus.fare})`
-                        : journey.isTransfer
-                        ? `Total for 2 Buses (via ${journey.transferHub})`
-                        : journey.trip.serviceDay === 'weekend'
-                        ? 'Weekend Express'
-                        : 'AC Express'}
+                  <Text style={styles.cleanRouteStatusStations} numberOfLines={1}>
+                    {journey.fromStop.shortName} → {journey.toStop.shortName}
+                  </Text>
+
+                  <View style={styles.cleanRouteStatusBottomRow}>
+                    <Text style={styles.cleanRouteStatusDetails}>
+                      {journey.durationMins} min · {journey.fromTime} → {journey.toTime}
                     </Text>
+                    <TouchableOpacity
+                      onPress={() => router.push('/timetable' as any)}
+                      activeOpacity={0.7}
+                      style={styles.cleanRouteStatusViewBtn}
+                    >
+                      <Text style={styles.cleanRouteStatusViewText}>View route →</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* DEPARTURE REMINDER ACTION CARD */}
+                {/* COMPACT DEPARTURE REMINDER */}
                 <TouchableOpacity
-                  style={styles.notificationActionCard}
+                  style={styles.compactReminderCard}
                   onPress={handleScheduleNotifications}
                   activeOpacity={0.8}
                 >
-                  <View style={styles.notificationIconBox}>
+                  <View style={styles.compactReminderIconBox}>
                     {activeReminders.length > 0 ? (
-                      <BellRing size={16} color="#F26B52" strokeWidth={2.2} />
+                      <BellRing size={15} color="#EA580C" strokeWidth={2.2} />
                     ) : (
-                      <Bell size={16} color="#F26B52" strokeWidth={2.2} />
+                      <Bell size={15} color="#EA580C" strokeWidth={2.2} />
                     )}
                   </View>
-                  <View style={styles.notificationTextBox}>
-                    <Text style={styles.notificationTitle}>Departure reminder</Text>
-                    <Text style={styles.notificationSubtitle}>
-                      {activeReminders.length > 0 ? 'Alerts active for this ride' : 'Alert me 30 min before departure'}
+                  <View style={styles.compactReminderTextBox}>
+                    <Text style={styles.compactReminderTitle}>Departure reminder</Text>
+                    <Text style={styles.compactReminderSubtitle}>
+                      {activeReminders.length > 0 ? 'Alert active for this ride' : 'Get notified 30 min before departure'}
                     </Text>
                   </View>
                   <View
                     style={[
-                      styles.notificationSetBtn,
-                      activeReminders.length > 0 && styles.notificationSetBtnActive,
+                      styles.compactReminderBtn,
+                      activeReminders.length > 0 && styles.compactReminderBtnActive,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.notificationSetBtnText,
-                        activeReminders.length > 0 && styles.notificationSetBtnTextActive,
+                        styles.compactReminderBtnText,
+                        activeReminders.length > 0 && styles.compactReminderBtnTextActive,
                       ]}
                     >
                       {activeReminders.length > 0 ? 'Active' : 'Set reminder'}
@@ -1847,239 +1760,18 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
-                {/* OFFICIAL TIMETABLE & STOPPAGES */}
-                <View style={styles.stopsTimelineContainer}>
-                  <View style={styles.timelineHeaderRow}>
-                    <View style={styles.scheduledRoutePill}>
-                      <Text style={styles.scheduledRoutePillText}>OFFICIAL TIMETABLE</Text>
-                    </View>
-                    <Text style={styles.timelineTitle}>Route Stoppages & Schedule</Text>
+                {/* VIEW COMPLETE TIMETABLE FOOTER CTA */}
+                <TouchableOpacity
+                  style={styles.cleanTimetableFooterCta}
+                  onPress={() => router.push('/timetable' as any)}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.cleanTimetableFooterLeft}>
+                    <Calendar size={15} color="#18258F" strokeWidth={2.2} />
+                    <Text style={styles.cleanTimetableFooterText}>View full timetable & all stops</Text>
                   </View>
-
-                  <View style={styles.timelineSummaryBar}>
-                    <View style={styles.timelineSummaryItem}>
-                      <Text style={styles.timelineSummaryValue}>{journey.fromTime}</Text>
-                      <Text style={styles.timelineSummarySub} numberOfLines={1}>{journey.fromStop.shortName}</Text>
-                    </View>
-                    <View style={styles.timelineSummaryMid}>
-                      <Text style={styles.timelineSummaryDuration}>{journey.durationMins} min</Text>
-                      <ArrowRight size={13} color="#18258F" style={{ marginTop: 2 }} />
-                    </View>
-                    <View style={[styles.timelineSummaryItem, { alignItems: 'flex-end' }]}>
-                      <Text style={styles.timelineSummaryValue}>{journey.toTime}</Text>
-                      <Text style={styles.timelineSummarySub} numberOfLines={1}>{journey.toStop.shortName}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.timelineListContainer}>
-                    {/* LEG 1 HEADER IF TRANSFER */}
-                    {journey.isTransfer && (
-                      <View style={styles.legHeaderRow}>
-                        <View style={styles.legHeaderBadge}>
-                          <Text style={styles.legHeaderBadgeText}>LEG 1 OF 2</Text>
-                        </View>
-                        <Text style={styles.legHeaderText}>
-                          Bus {journey.trip.routeNumber} ({journey.fromStop.shortName} → {journey.transferHub}) · Board {journey.fromTime}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* LEG 1 STOPS */}
-                    {journey.intermediateStops.map((stopItem, index) => {
-                      const isFirst = index === 0;
-                      const isLast = index === journey.intermediateStops.length - 1;
-                      const isTransferStop = isLast && journey.isTransfer;
-
-                      return (
-                        <View key={index} style={styles.timelineRow}>
-                          <View style={styles.timelineDotCol}>
-                            {!isLast && <View style={styles.timelineVerticalLine} />}
-                            {isFirst ? (
-                              <View style={[styles.timelineDot, styles.timelineDotOrigin]}>
-                                <View style={styles.timelineDotInnerWhite} />
-                              </View>
-                            ) : isTransferStop ? (
-                              <View style={[styles.timelineDot, styles.timelineDotTransfer]}>
-                                <View style={styles.timelineDotInnerWhite} />
-                              </View>
-                            ) : isLast ? (
-                              <View style={[styles.timelineDot, styles.timelineDotDest]}>
-                                <View style={styles.timelineDotInnerWhite} />
-                              </View>
-                            ) : (
-                              <View style={[styles.timelineDot, styles.timelineDotIntermediate]} />
-                            )}
-                          </View>
-
-                          <View style={[styles.timelineInfoRow, isLast && { paddingBottom: 4 }]}>
-                            <View style={{ flex: 1, marginRight: 12 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                <Text
-                                  style={[
-                                    styles.timelineStationName,
-                                    (isFirst || isLast) ? styles.timelineStationBold : styles.timelineStationMuted,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {stopItem.name}
-                                </Text>
-                                {isFirst ? (
-                                  <View style={styles.originTagBadge}>
-                                    <Text style={styles.originTagBadgeText}>Boarding</Text>
-                                  </View>
-                                ) : isTransferStop ? (
-                                  <View style={[styles.transferTagBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-                                    <Text style={[styles.transferTagBadgeText, { color: '#B45309' }]}>Alight (Change Bus)</Text>
-                                  </View>
-                                ) : isLast ? (
-                                  <View style={styles.destTagBadge}>
-                                    <Text style={styles.destTagBadgeText}>Drop-off</Text>
-                                  </View>
-                                ) : null}
-                              </View>
-                              {isFirst ? (
-                                <Text style={styles.timelineShelterSub}>Platform 1 · Gate opens 2m prior</Text>
-                              ) : isTransferStop ? (
-                                <Text style={[styles.timelineShelterSub, { color: '#B45309', fontWeight: '600' }]}>
-                                  Arrive {journey.transferArrivalTime || stopItem.time} · De-board Bus {journey.trip.routeNumber} here
-                                </Text>
-                              ) : isLast ? (
-                                <Text style={styles.timelineShelterSub}>Final interchange terminal</Text>
-                              ) : index === 1 ? (
-                                <Text style={styles.timelineShelterSub}>Nava Raipur BRTS Shelter</Text>
-                              ) : (
-                                <Text style={styles.timelineShelterSub}>Designated bus shelter</Text>
-                              )}
-                            </View>
-
-                            <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                              <Text
-                                style={[
-                                  styles.timelineTimeText,
-                                  (isFirst || isLast) ? styles.timelineTimeBold : styles.timelineTimeMuted,
-                                ]}
-                              >
-                                {stopItem.time}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-
-                    {/* INTERCHANGE BLOCK IF TRANSFER */}
-                    {journey.isTransfer && (
-                      <View style={styles.timelineInterchangeBox}>
-                        <View style={styles.timelineInterchangeIconWrap}>
-                          <ArrowUpDown size={16} color="#18258F" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={styles.timelineInterchangeTitle}>
-                              Change to Bus {journey.connectingTrip?.routeNumber || 'Connecting Bus'}
-                            </Text>
-                            <View style={[styles.transferTagBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-                              <Text style={[styles.transferTagBadgeText, { color: '#B45309' }]}>{journey.transferWaitMins}m wait</Text>
-                            </View>
-                          </View>
-                          <Text style={styles.timelineInterchangeSub}>
-                            Alight at {journey.transferArrivalTime || ''} · Wait {journey.transferWaitMins}m at {journey.transferHub} · Bus leaves at {journey.connectingFromTime}
-                          </Text>
-                        </View>
-                        <View style={styles.timelineInterchangeDepBadge}>
-                          <Text style={styles.timelineInterchangeDepText}>{journey.connectingFromTime}</Text>
-                        </View>
-                      </View>
-                    )}
-
-                    {/* LEG 2 HEADER IF TRANSFER */}
-                    {journey.isTransfer && journey.secondLegStops && (
-                      <View style={[styles.legHeaderRow, { marginTop: 12, backgroundColor: '#F0FDF4', borderColor: '#A7F3D0' }]}>
-                        <View style={[styles.legHeaderBadge, { backgroundColor: '#059669' }]}>
-                          <Text style={styles.legHeaderBadgeText}>LEG 2 OF 2</Text>
-                        </View>
-                        <Text style={[styles.legHeaderText, { color: '#065F46' }]}>
-                          Bus {journey.connectingTrip?.routeNumber || 'Connecting Bus'} ({journey.transferHub} → {journey.toStop.shortName}) · Departs {journey.connectingFromTime}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* LEG 2 STOPS */}
-                    {journey.isTransfer && journey.secondLegStops && journey.secondLegStops.map((stopItem, index) => {
-                      const isFirst = index === 0;
-                      const isLast = index === journey.secondLegStops!.length - 1;
-
-                      return (
-                        <View key={`leg2-${index}`} style={styles.timelineRow}>
-                          <View style={styles.timelineDotCol}>
-                            {!isLast && <View style={[styles.timelineVerticalLine, { backgroundColor: '#A7F3D0' }]} />}
-                            {isFirst ? (
-                              <View style={[styles.timelineDot, styles.timelineDotBoarding2]}>
-                                <View style={styles.timelineDotInnerWhite} />
-                              </View>
-                            ) : isLast ? (
-                              <View style={[styles.timelineDot, styles.timelineDotDest]}>
-                                <View style={styles.timelineDotInnerWhite} />
-                              </View>
-                            ) : (
-                              <View style={[styles.timelineDot, styles.timelineDotIntermediate, { borderColor: '#10B981' }]} />
-                            )}
-                          </View>
-
-                          <View style={[styles.timelineInfoRow, isLast && { paddingBottom: 4 }]}>
-                            <View style={{ flex: 1, marginRight: 12 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                <Text
-                                  style={[
-                                    styles.timelineStationName,
-                                    (isFirst || isLast) ? styles.timelineStationBold : styles.timelineStationMuted,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {stopItem.name}
-                                </Text>
-                                {isFirst ? (
-                                  <View style={[styles.originTagBadge, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1 }]}>
-                                    <Text style={[styles.originTagBadgeText, { color: '#047857' }]}>Board Bus {journey.connectingTrip?.routeNumber || 'Leg 2'}</Text>
-                                  </View>
-                                ) : isLast ? (
-                                  <View style={styles.destTagBadge}>
-                                    <Text style={styles.destTagBadgeText}>Final Destination</Text>
-                                  </View>
-                                ) : null}
-                              </View>
-                              <Text style={styles.timelineShelterSub}>
-                                {isFirst
-                                  ? `Board Bus ${journey.connectingTrip?.routeNumber || '2'} at ${journey.connectingFromTime} towards ${journey.toStop.shortName}`
-                                  : isLast
-                                  ? `Final arrival at destination (${journey.toTime})`
-                                  : 'Designated bus shelter'}
-                              </Text>
-                            </View>
-
-                            <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                              <Text
-                                style={[
-                                  styles.timelineTimeText,
-                                  (isFirst || isLast) ? styles.timelineTimeBold : styles.timelineTimeMuted,
-                                ]}
-                              >
-                                {stopItem.time}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-
-                  <View style={styles.timelineFooterNotice}>
-                    <Info size={13} color="#18258F" style={{ marginTop: 2, marginRight: 6, opacity: 0.7 }} />
-                    <Text style={styles.timelineFooterNoticeText}>
-                      Timings follow official Nava Raipur BRTS express schedule. Buses halt for 30–45s at designated shelters.
-                    </Text>
-                  </View>
-                </View>
+                  <ChevronRight size={15} color="#18258F" strokeWidth={2.2} />
+                </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.noRouteContainer}>
@@ -3496,6 +3188,268 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+
+  /* USER PREFERRED HERO CARD STYLES */
+  heroLiveBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    marginBottom: 2,
+  },
+  heroLiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  heroLiveBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#10B981',
+    letterSpacing: 0.8,
+  },
+  heroRouteMetaText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#334155',
+    marginTop: 6,
+  },
+  heroDividerLine: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 12,
+  },
+  heroDepartsInRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heroDepartsInLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  heroDepartsInValue: {
+    fontFamily: FONT.bold,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+
+  /* NEXT DEPARTURES MINIMAL TEXT ROW */
+  cleanNextDeparturesCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
+    borderWidth: 1.2,
+    borderColor: '#F1F5F9',
+  },
+  cleanNextDeparturesHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cleanNextDeparturesTitle: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cleanViewFullTimetableLink: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+  cleanNextDeparturesTimesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  cleanNextDepBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  cleanNextDepTimeText: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  cleanNextDepTimeTextSelected: {
+    color: '#18258F',
+  },
+  cleanNextDepDot: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+
+  /* ROUTE STATUS COMPONENT (REPLACES TRAVEL TIME & FARE CARDS) */
+  cleanRouteStatusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1.2,
+    borderColor: '#F1F5F9',
+  },
+  cleanRouteStatusTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  cleanRouteStatusLabel: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cleanRouteStatusLiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  cleanStatusGreenDot: {
+    width: 6.5,
+    height: 6.5,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  cleanRouteStatusLiveText: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  cleanRouteStatusStations: {
+    fontFamily: FONT.bold,
+    fontSize: 15.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  cleanRouteStatusBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cleanRouteStatusDetails: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#475569',
+  },
+  cleanRouteStatusViewBtn: {
+    paddingVertical: 2,
+    paddingLeft: 6,
+  },
+  cleanRouteStatusViewText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+
+  /* COMPACT DEPARTURE REMINDER */
+  compactReminderCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    borderWidth: 1.2,
+    borderColor: 'rgba(23, 38, 143, 0.08)',
+  },
+  compactReminderIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#FFF1EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  compactReminderTextBox: {
+    flex: 1,
+    marginRight: 8,
+  },
+  compactReminderTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  compactReminderSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  compactReminderBtn: {
+    backgroundColor: '#FFF1EE',
+    paddingHorizontal: 12,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  compactReminderBtnActive: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+  },
+  compactReminderBtnText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#EA580C',
+  },
+  compactReminderBtnTextActive: {
+    color: '#FFFFFF',
+  },
+
+  /* VIEW TIMETABLE FOOTER CTA */
+  cleanTimetableFooterCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+  },
+  cleanTimetableFooterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cleanTimetableFooterText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+
   royalBlueHeroCard: {
     backgroundColor: '#18258F', // Signature Deep Navy Background
     borderRadius: 18,
