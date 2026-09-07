@@ -833,10 +833,14 @@ export default function LiveBusScreen() {
                     </View>
 
                     <Text style={styles.optimalProximityHeadline}>
-                      {journey.fromStop.shortName} aur {journey.toStop.shortName} sirf {journey.optimalProximity.directDistanceFormatted} door hain!
+                      {journey.optimalProximity.shortHopBus
+                        ? `Direct Bus to ${journey.optimalProximity.shortHopBus.dropStationShortName} (${journey.toStop.shortName} ke paas)!`
+                        : `${journey.fromStop.shortName} aur ${journey.toStop.shortName} sirf ${journey.optimalProximity.directDistanceFormatted} door hain!`}
                     </Text>
                     <Text style={styles.optimalProximitySub}>
-                      Nava Raipur BRTS Bus 202 ek circular one-way loop hai, isliye bus transfer me North Block hokar {journey.optimalProximity.circuitTransferDurationMins} min lagte hain. Iske bajaye yeh optimal solution apnayein:
+                      {journey.optimalProximity.shortHopBus
+                        ? `Bus change karke pura circuit loop ghoomne me ${journey.optimalProximity.circuitTransferDurationMins} min lagte hain. Iske bajaye Bus ${journey.optimalProximity.shortHopBus.busNumber} se ${journey.optimalProximity.shortHopBus.dropStationShortName} utrein:`
+                        : `Nava Raipur BRTS circular loop bus transfer me ${journey.optimalProximity.circuitTransferDurationMins} min lagte hain. Iske bajaye direct walk ya e-rickshaw lein:`}
                     </Text>
 
                     {/* Primary Choice: Short Hop Bus + Short Walk */}
@@ -871,7 +875,7 @@ export default function LiveBusScreen() {
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text style={styles.optimalStepMain}>
-                              Walk <Text style={{ fontWeight: '700', color: '#059669' }}>{journey.optimalProximity.shortHopBus.walkFromDropFormatted}</Text> (~{journey.optimalProximity.shortHopBus.walkFromDropMins}m) to {journey.toStop.shortName}
+                              Connection: <Text style={{ fontWeight: '700', color: '#059669' }}>{journey.optimalProximity.shortHopBus.walkFromDropFormatted}</Text> (~{journey.optimalProximity.shortHopBus.walkFromDropMins}m) to {journey.toStop.shortName}
                             </Text>
                             <Text style={styles.optimalStepDetail}>
                               Total commute: {journey.optimalProximity.shortHopBus.totalCommuteMins} mins instead of {journey.optimalProximity.circuitTransferDurationMins} mins
@@ -903,9 +907,13 @@ export default function LiveBusScreen() {
                         <Navigation size={15} color="#D97706" strokeWidth={2.4} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.optimalWalkTitle}>🚶 Direct Campus Walk / E-Rickshaw</Text>
+                        <Text style={styles.optimalWalkTitle}>
+                          {journey.optimalProximity.directDistanceKm <= 3.5 ? '🚶 Direct Campus Walk / E-Rickshaw' : '🛺 Direct Auto / E-Rickshaw'}
+                        </Text>
                         <Text style={styles.optimalWalkDesc}>
-                          {journey.optimalProximity.directDistanceFormatted} direct distance · ~{journey.optimalProximity.directWalkingMins}m walk ya 3m e-rickshaw
+                          {journey.optimalProximity.directDistanceKm <= 3.5
+                            ? `${journey.optimalProximity.directDistanceFormatted} direct distance · ~${journey.optimalProximity.directWalkingMins}m walk ya 3m e-rickshaw`
+                            : `${journey.optimalProximity.directDistanceFormatted} direct distance · ~15m direct e-rickshaw / auto ride`}
                         </Text>
                       </View>
                     </View>
@@ -1103,6 +1111,26 @@ export default function LiveBusScreen() {
                       Take <Text style={{ fontWeight: '700', color: '#18258F' }}>Bus {journey.trip.routeNumber}</Text> → Change at <Text style={{ fontWeight: '700', color: '#18258F' }}>{journey.transferHub}</Text> ({journey.transferWaitMins}m wait) → Take <Text style={{ fontWeight: '700', color: '#059669' }}>Bus {journey.connectingTrip?.routeNumber}</Text>
                     </Text>
                   </View>
+                )}
+
+                {/* TRANSFER FAST DIRECT PROXIMITY SHORTCUT */}
+                {journey.isTransfer && journey.optimalProximity?.shortHopBus && (
+                  <TouchableOpacity
+                    style={styles.transferProximityPill}
+                    onPress={() => {
+                      if (journey.optimalProximity?.shortHopBus?.dropStationShortName) {
+                        setToStation(journey.optimalProximity.shortHopBus.dropStationShortName);
+                        setSelectedTripId(null);
+                        triggerCardBounce();
+                      }
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Zap size={13} color="#047857" strokeWidth={2.4} />
+                    <Text style={styles.transferProximityPillText}>
+                      ⚡ Fast Option: Take Bus {journey.optimalProximity.shortHopBus.busNumber} to {journey.optimalProximity.shortHopBus.dropStationShortName} in {journey.optimalProximity.shortHopBus.busRideMins}m (Save {journey.optimalProximity.minutesSaved}m) ➔
+                    </Text>
+                  </TouchableOpacity>
                 )}
 
                 {/* UPCOMING DEPARTURES STRIP */}
@@ -4018,6 +4046,25 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: '#1E3A8A',
     fontWeight: '500',
+  },
+  transferProximityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  transferProximityPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065F46',
+    flex: 1,
   },
   busChangeGuideCard: {
     backgroundColor: '#FFFFFF',
