@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Animated,
   Easing,
   Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -47,6 +48,8 @@ import {
   findNearbyDirectAlternatives,
   getNearbyStations,
   getNearbyStationsWithService,
+  getNearestStopFromCoordinates,
+  getNearbyStationsFromCoordinates,
 } from '../../src/services/tracker';
 import {
   scheduleBusNotification,
@@ -214,6 +217,8 @@ export default function LiveBusScreen() {
     }
     return '';
   });
+
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     if (params.from) {
@@ -456,6 +461,37 @@ export default function LiveBusScreen() {
     }).start();
   };
 
+  const handleUseCurrentLocation = useCallback(() => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          setLocating(false);
+          const { latitude, longitude } = pos.coords;
+          const nearest = getNearestStopFromCoordinates(latitude, longitude);
+          if (nearest) {
+            setFromStation(nearest.stop.name);
+            setSelectedTripId(null);
+            triggerCardBounce();
+            Alert.alert(
+              '📍 Nearest Shelter Located',
+              `Auto-selected ${nearest.stop.shortName} (${nearest.distanceFormatted} away, ~${nearest.walkingMins}m walk) as your boarding station.`
+            );
+          } else {
+            Alert.alert('No Nearby Station', 'No BRTS shelters found within 25 km of your location.');
+          }
+        },
+        err => {
+          setLocating(false);
+          Alert.alert('Location Access', 'Please allow location permission to auto-detect your nearest bus shelter.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      Alert.alert('Location Unavailable', 'Geolocation is not supported on this device.');
+    }
+  }, []);
+
   const spinInterpolate = swapSpinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
@@ -687,6 +723,17 @@ export default function LiveBusScreen() {
                     {fromStation ? stops.find(s => s.name === fromStation)?.shortName || fromStation : 'Boarding station'}
                   </Text>
                 </TouchableOpacity>
+
+                {!fromStation ? (
+                  <TouchableOpacity
+                    onPress={handleUseCurrentLocation}
+                    style={styles.nearMeInlineBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Navigation size={11} color="#047857" strokeWidth={2.4} />
+                    <Text style={styles.nearMeInlineText}>{locating ? 'Locating...' : 'Near me'}</Text>
+                  </TouchableOpacity>
+                ) : null}
 
                 {fromStation ? (
                   <TouchableOpacity onPress={clearFrom} style={styles.clearBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -2041,6 +2088,28 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
+
+            {/* USE CURRENT LOCATION BUTTON */}
+            {activePicker === 'from' && !searchQuery ? (
+              <TouchableOpacity
+                style={styles.useCurrentLocRow}
+                onPress={() => {
+                  closePicker();
+                  handleUseCurrentLocation();
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.useCurrentLocIconWrap}>
+                  <Navigation size={16} color="#047857" strokeWidth={2.4} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.useCurrentLocTitle}>
+                    {locating ? 'Locating nearest station...' : 'Use My Current Location'}
+                  </Text>
+                  <Text style={styles.useCurrentLocSub}>Auto-detect nearest bus shelter</Text>
+                </View>
+              </TouchableOpacity>
+            ) : null}
 
             {/* STATIONS LIST */}
             <FlatList
@@ -3567,6 +3636,53 @@ const styles = StyleSheet.create({
   },
   drawerListContent: {
     paddingBottom: 40,
+  },
+  nearMeInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    marginRight: 6,
+  },
+  nearMeInlineText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#047857',
+  },
+  useCurrentLocRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    marginBottom: 12,
+  },
+  useCurrentLocIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#D1FAE5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  useCurrentLocTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  useCurrentLocSub: {
+    fontSize: 11,
+    color: '#047857',
+    marginTop: 1,
   },
   drawerItemRow: {
     flexDirection: 'row',

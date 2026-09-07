@@ -4,7 +4,7 @@
     "name": "Raipur Railway Station",
     "shortName": "Railway Station",
     "code": "RRS",
-    "hindiName": "\u0930\u093e\u092f\u092a\u0941\u0930 \u0930\u0947\u0932\u0935\u0947 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "hindiName": "रायपुर रेलवे स्टेशन",
     "type": "terminal",
     "corridor": "Corridor 1",
     "landmark": "Raipur Junction Railway Station, Platform 1 Exit",
@@ -17,7 +17,7 @@
     ],
     "coordinates": {
       "latitude": 21.2568,
-      "longitude": 81.6328
+      "longitude": 81.631
     }
   },
   {
@@ -25,7 +25,7 @@
     "name": "DKS Bhawan",
     "shortName": "DKS Bhawan",
     "code": "DKS",
-    "hindiName": "\u0921\u0940\u0915\u0947\u090f\u0938 \u092d\u0935\u0928",
+    "hindiName": "डीकेएस भवन",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "DKS Superspeciality Hospital / Old Mantralaya",
@@ -35,8 +35,8 @@
       "Sheltered Platform"
     ],
     "coordinates": {
-      "latitude": 21.2465,
-      "longitude": 81.6367
+      "latitude": 21.245,
+      "longitude": 81.6412
     }
   },
   {
@@ -44,7 +44,7 @@
     "name": "Telibandha",
     "shortName": "Telibandha",
     "code": "TEL",
-    "hindiName": "\u0924\u0947\u0932\u0940\u092c\u093e\u0902\u0927\u093e",
+    "hindiName": "तेलीबांधा",
     "type": "junction",
     "corridor": "Corridor 1",
     "landmark": "Telibandha Chowk / Marine Drive Raipur",
@@ -55,8 +55,8 @@
       "Food Outlets"
     ],
     "coordinates": {
-      "latitude": 21.2334,
-      "longitude": 81.6702
+      "latitude": 21.2365,
+      "longitude": 81.6711
     }
   },
   {
@@ -64,7 +64,7 @@
     "name": "Sector 15",
     "shortName": "Sector 15",
     "code": "S15",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 15",
+    "hindiName": "सेक्टर 15",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Nava Raipur Entrance / Sector 15",
@@ -83,7 +83,7 @@
     "name": "CBD (Commercial Complex)",
     "shortName": "CBD",
     "code": "CBD",
-    "hindiName": "\u0938\u0940\u092c\u0940\u0921\u0940",
+    "hindiName": "सीबीडी",
     "type": "hub",
     "corridor": "Corridor 1",
     "landmark": "Central Business District, Nava Raipur",
@@ -103,7 +103,7 @@
     "name": "Ekatm Path",
     "shortName": "Ekatm Path",
     "code": "EKP",
-    "hindiName": "\u090f\u0915\u093e\u0924\u094d\u092e \u092a\u0925",
+    "hindiName": "एकात्म पथ",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Boulevard towards Capitol Complex",
@@ -122,7 +122,7 @@
     "name": "North Block",
     "shortName": "North Block",
     "code": "NBK",
-    "hindiName": "\u0928\u0949\u0930\u094d\u0925 \u092c\u094d\u0932\u0949\u0915",
+    "hindiName": "नॉर्थ ब्लॉक",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Secretariat North Gate",
@@ -140,7 +140,7 @@
     "name": "Mahanadi Bhawan (Mantralaya)",
     "shortName": "Mahanadi Bhawan",
     "code": "MHB",
-    "hindiName": "\u092e\u0939\u093e\u0928\u0926\u0940 \u092d\u0935\u0928 (\u092e\u0902\u0924\u094d\u0930\u093e\u0932\u092f)",
+    "hindiName": "महानदी भवन (मंत्रालय)",
     "type": "hub",
     "corridor": "Corridor 1",
     "landmark": "Government of Chhattisgarh Mantralaya",
@@ -151,8 +151,8 @@
       "Security Desk"
     ],
     "coordinates": {
-      "latitude": 21.162,
-      "longitude": 81.789
+      "latitude": 21.1597,
+      "longitude": 81.7975
     }
   },
   {
@@ -160,7 +160,7 @@
     "name": "Indravati Bhawan (Directorate)",
     "shortName": "Indravati Bhawan",
     "code": "IDB",
-    "hindiName": "\u0907\u0902\u0926\u094d\u0930\u093e\u0935\u0924\u0940 \u092d\u0935\u0928 (\u0938\u0902\u091a\u093e\u0932\u0928\u093e\u0932\u092f)",
+    "hindiName": "इंद्रावती भवन (संचालनालय)",
     "type": "hub",
     "corridor": "Corridor 1",
     "landmark": "HOD Offices Complex",
@@ -169,8 +169,8 @@
       "Directorates Complex Entry"
     ],
     "coordinates": {
-      "latitude": 21.1595,
-      "longitude": 81.7915
+      "latitude": 21.1564,
+      "longitude": 81.7962
     }
   },
   {
@@ -178,7 +178,7 @@
     "name": "South Block",
     "shortName": "South Block",
     "code": "SBK",
-    "hindiName": "\u0938\u093e\u0909\u0925 \u092c\u094d\u0932\u0949\u0915",
+    "hindiName": "साउथ ब्लॉक",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Capitol Complex South Gate",
@@ -187,8 +187,8 @@
       "Sheltered Platform"
     ],
     "coordinates": {
-      "latitude": 21.156,
-      "longitude": 81.793
+      "latitude": 21.153,
+      "longitude": 81.794
     }
   },
   {
@@ -196,7 +196,7 @@
     "name": "Sector 27",
     "shortName": "Sector 27",
     "code": "S27",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 27",
+    "hindiName": "सेक्टर 27",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Residential Zone Sector 27",
@@ -214,7 +214,7 @@
     "name": "Sector 29",
     "shortName": "Sector 29",
     "code": "S29",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 29",
+    "hindiName": "सेक्टर 29",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Sector 29 Market & Housing",
@@ -232,7 +232,7 @@
     "name": "IIM Raipur",
     "shortName": "IIM",
     "code": "IIM",
-    "hindiName": "\u0906\u0908\u0906\u0908\u090f\u092e \u0930\u093e\u092f\u092a\u0941\u0930",
+    "hindiName": "आईआईएम रायपुर",
     "type": "academic",
     "corridor": "Corridor 1",
     "landmark": "Indian Institute of Management Raipur",
@@ -241,8 +241,8 @@
       "University Campus Access"
     ],
     "coordinates": {
-      "latitude": 21.142,
-      "longitude": 81.799
+      "latitude": 21.1226,
+      "longitude": 81.8261
     }
   },
   {
@@ -250,7 +250,7 @@
     "name": "Sector 30",
     "shortName": "Sector 30",
     "code": "S30",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 30",
+    "hindiName": "सेक्टर 30",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Institutional Area Sector 30",
@@ -268,7 +268,7 @@
     "name": "Balco Medical Centre",
     "shortName": "Balco Hospital",
     "code": "BMC",
-    "hindiName": "\u092c\u093e\u0932\u094d\u0915\u094b \u092e\u0947\u0921\u093f\u0915\u0932 \u0938\u0947\u0902\u091f\u0930",
+    "hindiName": "बाल्को मेडिकल सेंटर",
     "type": "hospital",
     "corridor": "Corridor 1",
     "landmark": "Vedanta Balco Cancer Hospital",
@@ -279,8 +279,8 @@
       "Pharmacy"
     ],
     "coordinates": {
-      "latitude": 21.135,
-      "longitude": 81.803
+      "latitude": 21.1274,
+      "longitude": 81.7645
     }
   },
   {
@@ -288,7 +288,7 @@
     "name": "HNLU Gate",
     "shortName": "HNLU Gate",
     "code": "HNG",
-    "hindiName": "\u090f\u091a\u090f\u0928\u090f\u0932\u092f\u0942 \u0917\u0947\u091f",
+    "hindiName": "एचएनएलयू गेट",
     "type": "feeder",
     "corridor": "Feeder Loop",
     "landmark": "HNLU Main Entrance Gate",
@@ -297,8 +297,8 @@
       "Campus Gate"
     ],
     "coordinates": {
-      "latitude": 21.128,
-      "longitude": 81.807
+      "latitude": 21.1095,
+      "longitude": 81.7592
     }
   },
   {
@@ -306,7 +306,7 @@
     "name": "HNLU (National Law University)",
     "shortName": "HNLU",
     "code": "HNLU",
-    "hindiName": "\u0939\u093f\u0926\u093e\u092f\u0924\u0941\u0932\u094d\u0932\u093e\u0939 \u0932\u0949 \u092f\u0942\u0928\u093f\u0935\u0930\u094d\u0938\u093f\u091f\u0940",
+    "hindiName": "हिदायतुल्लाह लॉ यूनिवर्सिटी",
     "type": "terminal",
     "corridor": "Corridor 1",
     "landmark": "Hidayatullah National Law University Campus",
@@ -317,8 +317,8 @@
       "Parking"
     ],
     "coordinates": {
-      "latitude": 21.13,
-      "longitude": 81.805
+      "latitude": 21.107,
+      "longitude": 81.7581
     }
   },
   {
@@ -326,7 +326,7 @@
     "name": "Jungle Safari",
     "shortName": "Jungle Safari",
     "code": "JNF",
-    "hindiName": "\u091c\u0902\u0917\u0932 \u0938\u092b\u093e\u0930\u0940",
+    "hindiName": "जंगल सफारी",
     "type": "tourist",
     "corridor": "Feeder Loop",
     "landmark": "Khandwa Jungle Safari Nava Raipur",
@@ -337,8 +337,8 @@
       "Visitor Parking"
     ],
     "coordinates": {
-      "latitude": 21.115,
-      "longitude": 81.815
+      "latitude": 21.0979,
+      "longitude": 81.7772
     }
   },
   {
@@ -346,7 +346,7 @@
     "name": "IIIT Naya Raipur",
     "shortName": "IIIT",
     "code": "IIIT",
-    "hindiName": "\u091f\u094d\u0930\u093f\u092a\u0932 \u0906\u0908\u091f\u0940 \u0928\u092f\u093e \u0930\u093e\u092f\u092a\u0941\u0930",
+    "hindiName": "ट्रिपल आईटी नया रायपुर",
     "type": "academic",
     "corridor": "Feeder Loop",
     "landmark": "International Institute of Information Technology",
@@ -356,8 +356,8 @@
       "Hostel Entrance"
     ],
     "coordinates": {
-      "latitude": 21.127,
-      "longitude": 81.765
+      "latitude": 21.1291,
+      "longitude": 81.7656
     }
   },
   {
@@ -365,7 +365,7 @@
     "name": "Purkhouti Muktangan",
     "shortName": "Muktangan",
     "code": "MUK",
-    "hindiName": "\u092a\u0941\u0930\u0916\u094c\u0924\u0940 \u092e\u0941\u0915\u094d\u0924\u093e\u0902\u0917\u0928",
+    "hindiName": "पुरखौती मुक्तांगन",
     "type": "tourist",
     "corridor": "Feeder Loop",
     "landmark": "Chhattisgarh Cultural Open Air Museum",
@@ -376,7 +376,7 @@
     ],
     "coordinates": {
       "latitude": 21.134,
-      "longitude": 81.758
+      "longitude": 81.759
     }
   },
   {
@@ -384,7 +384,7 @@
     "name": "Nawagaon",
     "shortName": "Nawagaon",
     "code": "NWG",
-    "hindiName": "\u0928\u0935\u093e\u0917\u093e\u0902\u0935",
+    "hindiName": "नवागांव",
     "type": "feeder",
     "corridor": "Feeder Loop",
     "landmark": "Nawagaon Village / Sports Complex",
@@ -402,7 +402,7 @@
     "name": "Shaheed Veer Narayan Singh Stadium",
     "shortName": "Cricket Stadium",
     "code": "STD",
-    "hindiName": "\u0915\u094d\u0930\u093f\u0915\u0947\u091f \u0938\u094d\u091f\u0947\u0921\u093f\u092f\u092e",
+    "hindiName": "क्रिकेट स्टेडियम",
     "type": "sports",
     "corridor": "Feeder Loop",
     "landmark": "International Cricket Stadium, Sector 3",
@@ -412,8 +412,8 @@
       "Direct Concourse"
     ],
     "coordinates": {
-      "latitude": 21.165,
-      "longitude": 81.745
+      "latitude": 21.2034,
+      "longitude": 81.824
     }
   },
   {
@@ -421,7 +421,7 @@
     "name": "Satya Sai Sanjeevani Hospital",
     "shortName": "Satya Sai Hospital",
     "code": "SSH",
-    "hindiName": "\u0938\u0924\u094d\u092f \u0938\u093e\u0908\u0902 \u0905\u0938\u094d\u092a\u0924\u093e\u0932",
+    "hindiName": "सत्य साईं अस्पताल",
     "type": "hospital",
     "corridor": "Feeder Loop",
     "landmark": "Sri Sathya Sai Sanjeevani Pediatric Heart Hospital",
@@ -431,8 +431,8 @@
       "Patient Drop-off"
     ],
     "coordinates": {
-      "latitude": 21.171,
-      "longitude": 81.748
+      "latitude": 21.2109,
+      "longitude": 81.8115
     }
   },
   {
@@ -440,7 +440,7 @@
     "name": "Sector 12",
     "shortName": "Sector 12",
     "code": "S12",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 12",
+    "hindiName": "सेक्टर 12",
     "type": "station",
     "corridor": "Feeder Loop",
     "landmark": "Sector 12 Housing",
@@ -458,7 +458,7 @@
     "name": "Vedanta Hospital",
     "shortName": "Vedanta Hospital",
     "code": "VDH",
-    "hindiName": "\u0935\u0947\u0926\u093e\u0902\u0924\u093e \u0939\u0949\u0938\u094d\u092a\u093f\u091f\u0932",
+    "hindiName": "वेदांता हॉस्पिटल",
     "type": "hospital",
     "corridor": "Corridor 1",
     "landmark": "Vedanta Medical Research Complex",
@@ -467,8 +467,8 @@
       "Healthcare Center"
     ],
     "coordinates": {
-      "latitude": 21.136,
-      "longitude": 81.8025
+      "latitude": 21.127,
+      "longitude": 81.764
     }
   },
   {
@@ -476,7 +476,7 @@
     "name": "Agriculture College",
     "shortName": "Agri College",
     "code": "AGC",
-    "hindiName": "\u0915\u0943\u0937\u093f \u092e\u0939\u093e\u0935\u093f\u0926\u094d\u092f\u093e\u0932\u092f",
+    "hindiName": "कृषि महाविद्यालय",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Indira Gandhi Krishi Vishwavidyalaya, Krishak Nagar",
@@ -486,8 +486,8 @@
       "Pedestrian Crossing"
     ],
     "coordinates": {
-      "latitude": 21.2372,
-      "longitude": 81.7058
+      "latitude": 21.2366,
+      "longitude": 81.7041
     }
   },
   {
@@ -495,7 +495,7 @@
     "name": "Rawatpura Sarkar University",
     "shortName": "Rawatpura Univ",
     "code": "RSU",
-    "hindiName": "\u0930\u093e\u0935\u0924\u092a\u0941\u0930\u093e \u0938\u0930\u0915\u093e\u0930 \u0935\u093f\u0936\u094d\u0935\u0935\u093f\u0926\u094d\u092f\u093e\u0932\u092f",
+    "hindiName": "रावतपुरा सरकार विश्वविद्यालय",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Shri Rawatpura Sarkar University Campus, Dhaneli",
@@ -514,7 +514,7 @@
     "name": "Thanaud",
     "shortName": "Thanaud",
     "code": "THN",
-    "hindiName": "\u0920\u0928\u094c\u0926",
+    "hindiName": "ठनौद",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Thanaud Chowk, Nava Raipur",
@@ -523,8 +523,8 @@
       "Sheltered Platform"
     ],
     "coordinates": {
-      "latitude": 21.155,
-      "longitude": 81.785
+      "latitude": 21.0731,
+      "longitude": 81.8361
     }
   },
   {
@@ -532,7 +532,7 @@
     "name": "NH 30 Chowk",
     "shortName": "NH 30 Chowk",
     "code": "NH30",
-    "hindiName": "\u090f\u0928\u090f\u091a \u0969\u0966 \u091a\u094c\u0915",
+    "hindiName": "एनएच ३० चौक",
     "type": "junction",
     "corridor": "Corridor 1",
     "landmark": "NH-30 Raipur-Jagdalpur Highway Junction",
@@ -542,8 +542,8 @@
       "Pedestrian Crossing"
     ],
     "coordinates": {
-      "latitude": 21.138,
-      "longitude": 81.765
+      "latitude": 21.1021,
+      "longitude": 81.7411
     }
   },
   {
@@ -551,7 +551,7 @@
     "name": "Military Station",
     "shortName": "Military Stn",
     "code": "MLS",
-    "hindiName": "\u092e\u093f\u0932\u093f\u091f\u094d\u0930\u0940 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "hindiName": "मिलिट्री स्टेशन",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Military Cantonment, Nava Raipur",
@@ -569,7 +569,7 @@
     "name": "Sector 17",
     "shortName": "Sec 17",
     "code": "S17",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096d",
+    "hindiName": "सेक्टर १७",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Residential Sector 17, Nava Raipur",
@@ -587,7 +587,7 @@
     "name": "Sector 22",
     "shortName": "Sec 22",
     "code": "S22",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0968\u0968",
+    "hindiName": "सेक्टर २२",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Residential & Commercial Sector 22",
@@ -605,7 +605,7 @@
     "name": "CBD Railway Station",
     "shortName": "CBD Rail Stn",
     "code": "CRS",
-    "hindiName": "\u0938\u0940\u092c\u0940\u0921\u0940 \u0930\u0947\u0932\u0935\u0947 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "hindiName": "सीबीडी रेलवे स्टेशन",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Central Business District Railway Station",
@@ -624,7 +624,7 @@
     "name": "Office Complex Block A B",
     "shortName": "Office Complex",
     "code": "OCB",
-    "hindiName": "\u0911\u092b\u093f\u0938 \u0915\u0949\u092e\u094d\u092a\u094d\u0932\u0947\u0915\u094d\u0938 \u092c\u094d\u0932\u0949\u0915 \u090f \u092c\u0940",
+    "hindiName": "ऑफिस कॉम्प्लेक्स ब्लॉक ए बी",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Commercial Office Complexes Block A & B, CBD",
@@ -642,7 +642,7 @@
     "name": "Mantri Aawas",
     "shortName": "Mantri Aawas",
     "code": "MAW",
-    "hindiName": "\u092e\u0902\u0924\u094d\u0930\u0940 \u0906\u0935\u093e\u0938",
+    "hindiName": "मंत्री आवास",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Ministerial Enclave, Capitol Complex",
@@ -660,7 +660,7 @@
     "name": "Rakhi village",
     "shortName": "Rakhi Village",
     "code": "RKV",
-    "hindiName": "\u0930\u093e\u0916\u0940 \u0917\u093e\u0902\u0935",
+    "hindiName": "राखी गांव",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Rakhi Village, Nava Raipur",
@@ -678,7 +678,7 @@
     "name": "Sector 27-29 Mid",
     "shortName": "Sec 27-29 Mid",
     "code": "S27M",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0968\u096d-\u0968\u096f \u092e\u093f\u0921",
+    "hindiName": "सेक्टर २७-२९ मिड",
     "type": "station",
     "corridor": "Corridor 1",
     "landmark": "Connecting Corridor Between Sector 27 and Sector 29",
@@ -687,8 +687,8 @@
       "Sheltered Platform"
     ],
     "coordinates": {
-      "latitude": 21.1585,
-      "longitude": 81.793
+      "latitude": 21.1485,
+      "longitude": 81.796
     }
   },
   {
@@ -696,7 +696,7 @@
     "name": "Sector 17 Main Gate",
     "shortName": "Sec 17 Gate",
     "code": "S17M",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096d \u092e\u0947\u0928 \u0917\u0947\u091f",
+    "hindiName": "सेक्टर १७ मेन गेट",
     "type": "station",
     "corridor": "Feeder Corridor",
     "landmark": "Sector 17 Residential Main Gate",
@@ -715,7 +715,7 @@
     "name": "Sector 18 Main Gate",
     "shortName": "Sec 18 Gate",
     "code": "S18M",
-    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096e \u092e\u0947\u0928 \u0917\u0947\u091f",
+    "hindiName": "सेक्टर १८ मेन गेट",
     "type": "station",
     "corridor": "Feeder Corridor",
     "landmark": "Sector 18 Residential Main Gate",

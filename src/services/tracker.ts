@@ -173,6 +173,43 @@ export function getNearbyStations(stationNameQuery: string, maxKm: number = 2.5)
   return results;
 }
 
+export function getNearbyStationsFromCoordinates(
+  userLat: number,
+  userLon: number,
+  maxKm: number = 2.5
+): NearbyStation[] {
+  const results: NearbyStation[] = [];
+
+  for (const s of stops) {
+    if (!s.coordinates) continue;
+    const dist = getDistanceKm(
+      userLat,
+      userLon,
+      s.coordinates.latitude,
+      s.coordinates.longitude
+    );
+    if (dist <= maxKm) {
+      results.push({
+        stop: s,
+        distanceKm: Math.round(dist * 100) / 100,
+        walkingMins: Math.max(1, Math.round((dist / 4.5) * 60)),
+        distanceFormatted: formatDistance(dist),
+      });
+    }
+  }
+
+  results.sort((a, b) => a.distanceKm - b.distanceKm);
+  return results;
+}
+
+export function getNearestStopFromCoordinates(
+  userLat: number,
+  userLon: number
+): NearbyStation | null {
+  const nearby = getNearbyStationsFromCoordinates(userLat, userLon, 25);
+  return nearby.length > 0 ? nearby[0] : null;
+}
+
 export function findNearbyDirectAlternatives(
   fromName: string,
   toName: string,
