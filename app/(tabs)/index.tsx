@@ -1371,51 +1371,110 @@ export default function LiveBusScreen() {
                 ) : (
                   <Animated.View
                     style={[
-                      styles.royalBlueHeroCard,
+                      styles.modernBusCard,
                       { transform: [{ scale: cardScaleAnim }] },
                     ]}
                   >
-                    <View style={styles.heroInfoContent}>
-                      <Text style={styles.heroPreLabel}>
-                        {journey.isProximityOptimized
-                          ? `⚡ SMART DIRECT ROUTE (SAVE ${journey.minutesSaved || 15}M)`
-                          : 'NEXT BUS'}
-                      </Text>
-                      <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
-                      <View style={styles.heroRouteRow}>
-                        <Text style={styles.heroRouteCodes}>
-                          {journey.fromStop.code} <Text style={styles.heroArrowText}>→</Text> {journey.toStop.code}
-                        </Text>
-                      </View>
-                      <Text style={styles.heroStationNames} numberOfLines={1}>
-                        {journey.originalOriginStop ? `${journey.originalOriginStop.shortName} ➔ ` : ''}
-                        {journey.fromStop.shortName} → {journey.toStop.shortName}
-                        {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
-                      </Text>
-                    </View>
+                    <TouchableOpacity
+                      activeOpacity={0.92}
+                      onPress={() => setSelectedTripId(journey.trip.id)}
+                    >
+                      {/* TOP ROW: INFO ON LEFT, 3D RED BUS ON RIGHT */}
+                      <View style={styles.busCardTopRow}>
+                        <View style={styles.busCardLeftCol}>
+                          {/* NEXT BUS BADGE */}
+                          <View style={styles.nextBusBadge}>
+                            <Bus size={14} color="#2563EB" strokeWidth={2.2} />
+                            <Text style={styles.nextBusBadgeText}>
+                              {journey.isProximityOptimized
+                                ? `⚡ SMART DIRECT (${journey.minutesSaved || 15}M)`
+                                : 'NEXT BUS'}
+                            </Text>
+                          </View>
 
-                    <View style={styles.heroIllustrationWrapper} pointerEvents="none">
-                      <EditorialBusIllustration />
-                    </View>
+                          {/* DEPARTURE TIME */}
+                          <Text style={styles.busCardTimeText}>{journey.fromTime}</Text>
 
-                    <View style={styles.heroBottomRow}>
-                      <View style={{ flex: 1, marginRight: 8 }}>
-                        <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
-                        <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
-                          {journey.isProximityOptimized
-                            ? `Direct Bus · ₹${journey.fare}${journey.minutesSaved ? ` · Save ${journey.minutesSaved}m` : ''}`
-                            : journey.isTransfer
-                            ? `Via ${journey.transferHub}`
-                            : 'AC Express'}
-                        </Text>
+                          {/* CORRIDOR ROUTE CODES */}
+                          <View style={styles.busCardRouteCodesRow}>
+                            <Text style={styles.busCardRouteCodes}>
+                              {journey.fromStop.code || journey.fromStop.shortName.slice(0, 3).toUpperCase()}
+                            </Text>
+                            <Text style={styles.busCardArrow}>→</Text>
+                            <Text style={styles.busCardRouteCodes}>
+                              {journey.toStop.code || journey.toStop.shortName.slice(0, 4).toUpperCase()}
+                            </Text>
+                          </View>
+
+                          {/* FULL STATION NAMES */}
+                          <Text style={styles.busCardStationNames} numberOfLines={1}>
+                            {journey.originalOriginStop ? `${journey.originalOriginStop.shortName} ➔ ` : ''}
+                            {journey.fromStop.shortName} → {journey.toStop.shortName}
+                            {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
+                          </Text>
+                        </View>
+
+                        {/* RIGHT 3D BUS ILLUSTRATION */}
+                        <View style={styles.busCardRightIllustration} pointerEvents="none">
+                          <Image
+                            source={require('../../assets/images/redbus_3d.png')}
+                            style={styles.busCard3DImage}
+                            resizeMode="contain"
+                          />
+                        </View>
                       </View>
-                      <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
-                        <Text style={styles.heroMetaTitle}>{journey.durationMins} min</Text>
-                        <Text style={styles.heroMetaDeparts} numberOfLines={1}>
-                          {journey.countdownText.toUpperCase()}
-                        </Text>
+
+                      {/* SUBTLE DIVIDER */}
+                      <View style={styles.busCardDivider} />
+
+                      {/* BOTTOM ROW: ROUTE + DURATION + DEPARTING IN PILL */}
+                      <View style={styles.busCardBottomRow}>
+                        {/* ROUTE */}
+                        <View style={styles.busCardBottomMetaItem}>
+                          <View style={styles.busCardIconBox}>
+                            <Bus size={19} color="#2563EB" strokeWidth={2} />
+                          </View>
+                          <View>
+                            <Text style={styles.busCardMetaTitle}>{journey.routeBadge}</Text>
+                            <Text style={styles.busCardMetaSubtitle} numberOfLines={1}>
+                              {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* TRAVEL TIME */}
+                        <View style={styles.busCardBottomMetaItem}>
+                          <View style={styles.busCardIconBox}>
+                            <Clock size={19} color="#2563EB" strokeWidth={2} />
+                          </View>
+                          <View>
+                            <Text style={styles.busCardMetaTitle}>{journey.durationMins} min</Text>
+                            <Text style={styles.busCardMetaSubtitle}>Travel Time</Text>
+                          </View>
+                        </View>
+
+                        {/* DEPARTING IN ACTION PILL */}
+                        <View style={styles.busCardCountdownPill}>
+                          <View>
+                            <Text style={styles.busCardCountdownPreLabel}>DEPARTING IN</Text>
+                            <Text style={styles.busCardCountdownValue}>
+                              {(() => {
+                                let diff = journey.departureMins - currentTimeMins;
+                                if (diff < 0) diff += 1440;
+                                if (diff === 0) return 'NOW';
+                                const hrs = Math.floor(diff / 60);
+                                const mins = diff % 60;
+                                if (hrs > 0) return `${hrs}H ${mins}M`;
+                                return `${mins} MIN`;
+                              })()}
+                            </Text>
+                          </View>
+                          <View style={styles.busCardChevronBtn}>
+                            <ChevronRight size={17} color="#18258F" strokeWidth={2.6} />
+                          </View>
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </Animated.View>
                 )}
 
@@ -3242,6 +3301,169 @@ const styles = StyleSheet.create({
   activeSection: {
     marginTop: 14,
     paddingHorizontal: 16,
+  },
+  /* --- REDESIGNED BUS HERO CARD (MATCHING USER UPLOADED DESIGN) --- */
+  modernBusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#EDF2F7',
+    marginBottom: 20,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 12px 32px rgba(24, 37, 143, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        } as any)
+      : {}),
+  },
+  busCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  busCardLeftCol: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  nextBusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EBF3FE',
+    paddingHorizontal: 12,
+    paddingVertical: 5.5,
+    borderRadius: 20,
+    gap: 7,
+    alignSelf: 'flex-start',
+  },
+  nextBusBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#2563EB',
+    letterSpacing: 1.1,
+  },
+  busCardTimeText: {
+    fontFamily: FONT.extraBold,
+    fontSize: 35,
+    fontWeight: '800',
+    color: '#0B132B',
+    letterSpacing: -0.6,
+    marginTop: 8,
+    marginBottom: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  busCardRouteCodesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 2,
+  },
+  busCardRouteCodes: {
+    fontFamily: FONT.extraBold,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0B132B',
+    letterSpacing: -0.3,
+  },
+  busCardArrow: {
+    color: '#64748B',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  busCardStationNames: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 4,
+  },
+  busCardRightIllustration: {
+    width: 165,
+    height: 105,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  busCard3DImage: {
+    width: 165,
+    height: 105,
+  },
+  busCardDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 18,
+  },
+  busCardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  busCardBottomMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    flexShrink: 1,
+  },
+  busCardIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  busCardMetaTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#0B132B',
+    letterSpacing: -0.2,
+  },
+  busCardMetaSubtitle: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 1,
+  },
+  busCardCountdownPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 18,
+    gap: 9,
+    flexShrink: 0,
+  },
+  busCardCountdownPreLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#475569',
+    letterSpacing: 0.6,
+  },
+  busCardCountdownValue: {
+    fontFamily: FONT.extraBold,
+    fontSize: 14.5,
+    fontWeight: '800',
+    color: '#0B132B',
+    marginTop: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  busCardChevronBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   royalBlueHeroCard: {
     backgroundColor: '#18258F', // Signature Deep Navy Background
