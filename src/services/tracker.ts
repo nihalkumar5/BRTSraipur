@@ -153,6 +153,47 @@ export function formatDistance(distKm: number): string {
   return `${distKm.toFixed(1)} km`;
 }
 
+/**
+ * Computes proximity between two stations directly from the official bus timetable chart
+ * (Minutes difference and number of stops along any connecting route).
+ */
+export function getTimetableChartDelta(stop1: Stop, stop2: Stop): {
+  minutesOnChart: number;
+  stopsAway: number;
+  routeNumber?: string;
+  formatted: string;
+} | null {
+  if (!stop1 || !stop2) return null;
+  let minMinutes = 999;
+  let minStops = 999;
+  let foundRoute: string | undefined;
+
+  for (const trip of schedules) {
+    const fIdx = trip.stops.findIndex(s => matchStop(s.stop, stop1));
+    const tIdx = trip.stops.findIndex(s => matchStop(s.stop, stop2));
+    if (fIdx !== -1 && tIdx !== -1) {
+      const delta = Math.abs(trip.stops[fIdx].mins - trip.stops[tIdx].mins);
+      const stopsAway = Math.abs(fIdx - tIdx);
+      if (delta < minMinutes || (delta === minMinutes && stopsAway < minStops)) {
+        minMinutes = delta;
+        minStops = stopsAway;
+        foundRoute = trip.routeNumber;
+      }
+    }
+  }
+
+  if (minMinutes !== 999) {
+    return {
+      minutesOnChart: minMinutes,
+      stopsAway: minStops,
+      routeNumber: foundRoute,
+      formatted: `${minMinutes} min on chart (${minStops} stop${minStops > 1 ? 's' : ''})`,
+    };
+  }
+
+  return null;
+}
+
 export function getNearbyStations(stationNameQuery: string, maxKm: number = 3.5): NearbyStation[] {
   const target = getStopByName(stationNameQuery);
   if (!target) return [];
@@ -230,7 +271,7 @@ export function findNearbyDirectAlternatives(
   // 1. Nearby origins to fromStop that have a direct bus to toStop
   const candidateOriginMap = new Map<string, { stop: Stop; stopsAway?: number; routeTimeDeltaMins?: number; distanceKm: number; walkingMins: number; distanceFormatted: string }>();
 
-  // Extract adjacent stops along routes passing through fromStop within walkable range
+  // Extract adjacent stops along routes passing through fromStop within chart proximity
   for (const trip of schedules) {
     const fIdx = trip.stops.findIndex(s => matchStop(s.stop, fromStop));
     if (fIdx !== -1) {
@@ -239,20 +280,19 @@ export function findNearbyDirectAlternatives(
         for (const idx of checkIndices) {
           if (idx >= 0 && idx < trip.stops.length) {
             const adjStop = getStopByName(trip.stops[idx].stop);
-            if (!adjStop || adjStop.id === fromStop.id || adjStop.id === toStop.id || !adjStop.coordinates || !fromStop.coordinates) continue;
-            const dist = getDistanceKm(fromStop.coordinates.latitude, fromStop.coordinates.longitude, adjStop.coordinates.latitude, adjStop.coordinates.longitude);
-            // Must be realistically walkable as a departure origin (<= 2.5 km)
-            if (dist > 2.5) continue;
+            if (!adjStop || adjStop.id === fromStop.id || adjStop.id === toStop.id) continue;
             const delta = Math.abs(trip.stops[idx].mins - trip.stops[fIdx].mins);
-            const walkingMins = Math.max(1, Math.round((dist / 4.5) * 60));
-            if (!candidateOriginMap.has(adjStop.id) || (candidateOriginMap.get(adjStop.id)!.stopsAway || 99) > offset) {
+            // Timetable chart truth: within 20 minutes on chart
+            if (delta > 20) continue;
+            const walkingMins = delta;
+            if (!candidateOriginMap.has(adjStop.id) || (candidateOriginMap.get(adjStop.id)!.routeTimeDeltaMins || 99) > delta) {
               candidateOriginMap.set(adjStop.id, {
                 stop: adjStop,
                 stopsAway: offset,
                 routeTimeDeltaMins: delta,
-                distanceKm: dist,
+                distanceKm: Math.round(delta * 0.4 * 10) / 10,
                 walkingMins,
-                distanceFormatted: `${offset} stop${offset > 1 ? 's' : ''} away`,
+                distanceFormatted: `${delta} min on chart (${offset} stop${offset > 1 ? 's' : ''})`,
               });
             }
           }
@@ -292,47 +332,53 @@ export function findNearbyDirectAlternatives(
         }
       });
       if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
-        matching.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins, arrMins: trip.stops[tIdx].mins });
+        matching.push({
+          trip,
+          fIdx,
+          tIdx,
+          depMins: trip.stops[fIdx].mins,
+          arrMins: trip.stops[tIdx].mins,
+        });
       }
     }
 
     if (matching.length > 0) {
       matching.sort((a, b) => a.depMins - b.depMins);
-      const reachableToday = matching.filter(m => m.depMins >= earliestBoardingMins);
-      const pastToday = matching.filter(m => m.depMins < nowMins);
-      const lastDeparted = pastToday.length > 0 ? pastToday[pastToday.length - 1] : null;
 
-      let chosen: (typeof matching)[0];
-      let isToday = true;
+      let chosen = matching[0];
+      let isToday = false;
+      let lastDeparted: (typeof matching)[0] | null = null;
 
-      if (reachableToday.length > 0) {
-        chosen = reachableToday[0];
+      const futureTrips = matching.filter(m => m.depMins >= earliestBoardingMins);
+      if (futureTrips.length > 0) {
+        chosen = futureTrips[0];
+        isToday = true;
       } else {
-        chosen = matching[0];
-        isToday = false;
+        const pastTrips = matching.filter(m => m.depMins < earliestBoardingMins);
+        if (pastTrips.length > 0) {
+          lastDeparted = pastTrips[pastTrips.length - 1];
+        }
       }
 
-      const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : (chosen.arrMins + 1440 - chosen.depMins);
-      const minutesUntilDeparture = isToday
-        ? Math.max(0, chosen.depMins - nowMins)
-        : (chosen.depMins + 1440 - nowMins);
+      const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : chosen.arrMins + 1440 - chosen.depMins;
+      const minutesUntilDeparture = isToday ? Math.max(0, chosen.depMins - nowMins) : chosen.depMins + 1440 - nowMins;
 
       alternatives.push({
         type: 'nearby_origin',
         suggestedStop: nearby.stop,
         referenceStop: fromStop,
         targetStop: toStop,
+        stopsAway: nearby.stopsAway,
+        routeTimeDeltaMins: nearby.routeTimeDeltaMins,
         distanceKm: nearby.distanceKm,
         walkingMins: nearby.walkingMins,
         distanceFormatted: nearby.distanceFormatted,
-        stopsAway: nearby.stopsAway,
-        routeTimeDeltaMins: nearby.routeTimeDeltaMins,
         routeNumber: chosen.trip.routeNumber,
         routeName: chosen.trip.route,
         departureTime: chosen.trip.stops[chosen.fIdx].time,
         arrivalTime: chosen.trip.stops[chosen.tIdx].time,
         durationMins,
-        fare: getFare(nearby.stop.name, toStop.name),
+        fare: getFare(nearby.stop.name, toStop.name) || 10,
         depMins: chosen.depMins,
         minutesUntilDeparture,
         isToday,
@@ -354,18 +400,19 @@ export function findNearbyDirectAlternatives(
         for (const idx of checkIndices) {
           if (idx >= 0 && idx < trip.stops.length) {
             const adjStopObj = getStopByName(trip.stops[idx].stop);
-            if (!adjStopObj || adjStopObj.id === toStop.id || adjStopObj.id === fromStop.id || !adjStopObj.coordinates || !toStop.coordinates) continue;
-            const dist = getDistanceKm(adjStopObj.coordinates.latitude, adjStopObj.coordinates.longitude, toStop.coordinates.latitude, toStop.coordinates.longitude);
+            if (!adjStopObj || adjStopObj.id === toStop.id || adjStopObj.id === fromStop.id) continue;
             const delta = Math.abs(trip.stops[tIdx].mins - trip.stops[idx].mins);
-            const walkingMins = Math.max(1, Math.round((dist / 4.5) * 60));
-            if (!candidateDestMap.has(adjStopObj.id) || (candidateDestMap.get(adjStopObj.id)!.stopsAway || 99) > offset) {
+            // Timetable chart truth: within 20 minutes on chart
+            if (delta > 20) continue;
+            const walkingMins = delta;
+            if (!candidateDestMap.has(adjStopObj.id) || (candidateDestMap.get(adjStopObj.id)!.routeTimeDeltaMins || 99) > delta) {
               candidateDestMap.set(adjStopObj.id, {
                 stop: adjStopObj,
                 stopsAway: offset,
                 routeTimeDeltaMins: delta,
-                distanceKm: dist,
+                distanceKm: Math.round(delta * 0.4 * 10) / 10,
                 walkingMins,
-                distanceFormatted: `${offset} stop${offset > 1 ? 's' : ''} ${idx < tIdx ? 'before' : 'after'}`,
+                distanceFormatted: `${delta} min on chart (${offset} stop${offset > 1 ? 's' : ''} ${idx < tIdx ? 'before' : 'after'})`,
               });
             }
           }
@@ -374,7 +421,7 @@ export function findNearbyDirectAlternatives(
     }
   }
 
-  // Also include geographic nearby destinations as fallback
+  // Also include timetable adjacent destinations as fallback
   const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
   for (const nearby of nearbyDestinations) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
@@ -636,38 +683,17 @@ export function getOptimalProximityHop(
 ): OptimalProximityHop | null {
   if (!fromStop || !toStop || !fromStop.coordinates || !toStop.coordinates) return null;
 
-  const directDist = getDistanceKm(
-    fromStop.coordinates.latitude,
-    fromStop.coordinates.longitude,
-    toStop.coordinates.latitude,
-    toStop.coordinates.longitude
-  );
-
-  const directWalkingMins = Math.max(1, Math.round((directDist / 4.5) * 60));
-
-  // Candidate drop stops near toStop (within 3.5km or within 1-3 stops on any route corridor)
-  const candidateDrops = new Map<string, { stop: Stop; dist: number; isRouteAdjacent: boolean; offset: number; routeDelta: number }>();
+  // Candidate drop stops near toStop derived directly from the official timetable chart
+  const candidateDrops = new Map<string, { stop: Stop; offset: number; routeDelta: number }>();
   for (const s of stops) {
-    if (s.id === fromStop.id || s.id === toStop.id || !s.coordinates) continue;
-    const dist = getDistanceKm(s.coordinates.latitude, s.coordinates.longitude, toStop.coordinates.latitude, toStop.coordinates.longitude);
-    let isRouteAdjacent = false;
-    let minOffset = 99;
-    let minDelta = 99;
-    for (const trip of schedules) {
-      const tIdx = trip.stops.findIndex(st => matchStop(st.stop, toStop));
-      const sIdx = trip.stops.findIndex(st => matchStop(st.stop, s));
-      if (tIdx !== -1 && sIdx !== -1) {
-        const offset = Math.abs(tIdx - sIdx);
-        if (offset <= 3 && offset < minOffset) {
-          isRouteAdjacent = true;
-          minOffset = offset;
-          minDelta = Math.abs(trip.stops[tIdx].mins - trip.stops[sIdx].mins);
-        }
-      }
-    }
-    // Candidate if within 3.5 km or adjacent on route corridor
-    if (dist <= 3.5 || isRouteAdjacent) {
-      candidateDrops.set(s.id, { stop: s, dist, isRouteAdjacent, offset: minOffset, routeDelta: minDelta });
+    if (s.id === fromStop.id || s.id === toStop.id) continue;
+    const chartDelta = getTimetableChartDelta(s, toStop);
+    if (chartDelta && (chartDelta.stopsAway <= 3 || chartDelta.minutesOnChart <= 15)) {
+      candidateDrops.set(s.id, {
+        stop: s,
+        offset: chartDelta.stopsAway,
+        routeDelta: chartDelta.minutesOnChart,
+      });
     }
   }
 
@@ -677,12 +703,11 @@ export function getOptimalProximityHop(
     tIdx: number;
     dropStop: Stop;
     busRideMins: number;
-    walkDist: number;
     commuteFromDropMins: number;
     walkFromDropFormatted: string;
     totalCommuteMins: number;
     totalScore: number;
-    candDrop: { stop: Stop; dist: number; isRouteAdjacent: boolean; offset: number; routeDelta: number };
+    candDrop: { stop: Stop; offset: number; routeDelta: number };
   } | null = null;
 
   // Search trips on serviceDay for a direct bus from fromStop to any candidate drop stop
@@ -706,13 +731,8 @@ export function getOptimalProximityHop(
           : (depMins >= nowMins ? depMins - nowMins : depMins + 1440 - nowMins);
 
         const busRideMins = arrMins >= depMins ? arrMins - depMins : arrMins + 1440 - depMins;
-        const walkFromDropMins = candDrop.dist > 0 ? Math.max(1, Math.round((candDrop.dist / 4.5) * 60)) : 0;
-        const commuteFromDropMins = candDrop.isRouteAdjacent ? Math.min(walkFromDropMins, candDrop.routeDelta + 5) : walkFromDropMins;
-        const walkFromDropFormatted = candDrop.dist > 0
-          ? (candDrop.isRouteAdjacent
-              ? `${candDrop.offset} stop${candDrop.offset > 1 ? 's' : ''} on route (${formatDistance(candDrop.dist)})`
-              : formatDistance(candDrop.dist))
-          : '';
+        const commuteFromDropMins = candDrop.routeDelta;
+        const walkFromDropFormatted = `${candDrop.routeDelta} min on chart (${candDrop.offset} stop${candDrop.offset > 1 ? 's' : ''})`;
 
         const totalCommuteMins = busRideMins + commuteFromDropMins;
         const totalScore = waitMins * 2 + totalCommuteMins;
@@ -724,7 +744,6 @@ export function getOptimalProximityHop(
             tIdx,
             dropStop: candDrop.stop,
             busRideMins,
-            walkDist: candDrop.dist,
             commuteFromDropMins,
             walkFromDropFormatted,
             totalCommuteMins,
@@ -744,16 +763,15 @@ export function getOptimalProximityHop(
     // Return proximity hop if it saves significant time (>= 20 min) or transfer is very long (>= 60 min)
     if (
       minutesSaved >= 20 ||
-      (transferDurationMins >= 60 && bestHop.totalCommuteMins <= 35) ||
-      directDist <= 3.5
+      (transferDurationMins >= 60 && bestHop.totalCommuteMins <= 35)
     ) {
       const explanation = `${fromStop.shortName} se ${toStop.shortName} ke liye ${transferDurationMins} min bus transfer ke bajaye Bus ${bestHop.trip.routeNumber} se ${bestHop.dropStop.shortName} (sirf ${bestHop.busRideMins}m ride) utrein! Wahan se ${toStop.shortName} sirf ${bestHop.walkFromDropFormatted} door hai.`;
 
       return {
         isProximityRoute: true,
-        directDistanceKm: Math.round(directDist * 100) / 100,
-        directDistanceFormatted: formatDistance(directDist),
-        directWalkingMins,
+        directDistanceKm: Math.round(bestHop.candDrop.routeDelta * 0.4 * 10) / 10,
+        directDistanceFormatted: `${bestHop.candDrop.routeDelta} min on chart (${bestHop.candDrop.offset} stop${bestHop.candDrop.offset > 1 ? 's' : ''})`,
+        directWalkingMins: bestHop.candDrop.routeDelta,
         hasShortHopBus: true,
         shortHopBus: {
           busNumber: bestHop.trip.routeNumber,
@@ -767,7 +785,7 @@ export function getOptimalProximityHop(
           departureMins: bestHop.trip.stops[bestHop.fIdx].mins,
           arrivalMins: bestHop.trip.stops[bestHop.tIdx].mins,
           busRideMins: bestHop.busRideMins,
-          walkFromDropKm: Math.round(bestHop.walkDist * 100) / 100,
+          walkFromDropKm: Math.round(bestHop.candDrop.routeDelta * 0.4 * 10) / 10,
           walkFromDropFormatted: bestHop.walkFromDropFormatted,
           walkFromDropMins: bestHop.commuteFromDropMins,
           totalCommuteMins: bestHop.totalCommuteMins,
@@ -780,17 +798,18 @@ export function getOptimalProximityHop(
     }
   }
 
-  // Fallback: If stations are directly within walking distance (<= 3.5 km) and transfer is slow
-  if (directDist <= 3.5 && transferDurationMins > directWalkingMins) {
+  // Fallback: If stations are directly adjacent on timetable chart (<= 15 min on chart) and transfer is slow
+  const directChart = getTimetableChartDelta(fromStop, toStop);
+  if (directChart && directChart.minutesOnChart <= 15 && transferDurationMins > directChart.minutesOnChart) {
     return {
       isProximityRoute: true,
-      directDistanceKm: Math.round(directDist * 100) / 100,
-      directDistanceFormatted: formatDistance(directDist),
-      directWalkingMins,
+      directDistanceKm: Math.round(directChart.minutesOnChart * 0.4 * 10) / 10,
+      directDistanceFormatted: `${directChart.minutesOnChart} min on chart (${directChart.stopsAway} stop${directChart.stopsAway > 1 ? 's' : ''})`,
+      directWalkingMins: directChart.minutesOnChart,
       hasShortHopBus: false,
       circuitTransferDurationMins: transferDurationMins,
-      minutesSaved: Math.max(0, transferDurationMins - directWalkingMins),
-      explanation: `${fromStop.shortName} aur ${toStop.shortName} ke beech direct distance sirf ${formatDistance(directDist)} hai (~${directWalkingMins}m walk ya e-rickshaw).`
+      minutesSaved: Math.max(0, transferDurationMins - directChart.minutesOnChart),
+      explanation: `${fromStop.shortName} aur ${toStop.shortName} timetable chart par sirf ${directChart.minutesOnChart} min (${directChart.stopsAway} stop) door hain.`
     };
   }
 
