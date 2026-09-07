@@ -266,32 +266,36 @@ function NoServiceBusIllustration({ width = 145, height = 82 }: { width?: number
   );
 }
 
+// Module-level in-memory session store: persists during app run, resets when app is closed
+let sessionFromStation = '';
+let sessionToStation = '';
+
+if (typeof window !== 'undefined') {
+  try {
+    // Clear old localStorage entries so app close genuinely resets as requested
+    window.localStorage?.removeItem('brts_saved_from_station');
+    window.localStorage?.removeItem('brts_saved_to_station');
+    if (window.sessionStorage) {
+      sessionFromStation = window.sessionStorage.getItem('brts_session_from_station') || '';
+      sessionToStation = window.sessionStorage.getItem('brts_session_to_station') || '';
+    }
+  } catch (e) {}
+}
+
 export default function LiveBusScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string; to?: string }>();
   const insets = useSafeAreaInsets();
 
-  // Initial state: starts empty by default so the clean Popular Routes screen is the default home screen.
-  // Once the user enters stations (or taps a popular route), their chosen route is remembered as the active home screen.
+  // Session-persisted station state: stays preserved when clicking Home or switching tabs,
+  // but resets when the app is closed.
   const [fromStation, setFromStation] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        return window.localStorage.getItem('brts_saved_from_station') || '';
-      } catch (e) {
-        return '';
-      }
-    }
-    return '';
+    if (params.from) return params.from;
+    return sessionFromStation;
   });
   const [toStation, setToStation] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        return window.localStorage.getItem('brts_saved_to_station') || '';
-      } catch (e) {
-        return '';
-      }
-    }
-    return '';
+    if (params.to) return params.to;
+    return sessionToStation;
   });
 
   useEffect(() => {
@@ -304,24 +308,26 @@ export default function LiveBusScreen() {
   }, [params.from, params.to]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    sessionFromStation = fromStation;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
         if (fromStation) {
-          window.localStorage.setItem('brts_saved_from_station', fromStation);
+          window.sessionStorage.setItem('brts_session_from_station', fromStation);
         } else {
-          window.localStorage.removeItem('brts_saved_from_station');
+          window.sessionStorage.removeItem('brts_session_from_station');
         }
       } catch (e) {}
     }
   }, [fromStation]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    sessionToStation = toStation;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
         if (toStation) {
-          window.localStorage.setItem('brts_saved_to_station', toStation);
+          window.sessionStorage.setItem('brts_session_to_station', toStation);
         } else {
-          window.localStorage.removeItem('brts_saved_to_station');
+          window.sessionStorage.removeItem('brts_session_to_station');
         }
       } catch (e) {}
     }
@@ -656,7 +662,7 @@ export default function LiveBusScreen() {
     setSelectedTripId(null);
   };
 
-  // Comprehensive Back navigation handler
+  // Comprehensive Back navigation handler (closes modals/sheets/inspectors only)
   const handleBack = useCallback(() => {
     // 1. If station picker sheet is open, close it
     if (modalVisible) {
@@ -673,18 +679,10 @@ export default function LiveBusScreen() {
       setSelectedTripId(null);
       return true;
     }
-    // 4. If a route search / popular route is active, reset to empty home screen
-    if (fromStation || toStation) {
-      setFromStation('');
-      setToStation('');
-      setSelectedTripId(null);
-      triggerCardBounce();
-      return true;
-    }
     return false;
-  }, [modalVisible, allPopularModalVisible, selectedTripId, fromStation, toStation]);
+  }, [modalVisible, allPopularModalVisible, selectedTripId]);
 
-  const isBackable = modalVisible || allPopularModalVisible || !!selectedTripId || !!(fromStation || toStation);
+  const isBackable = modalVisible || allPopularModalVisible || !!selectedTripId;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
