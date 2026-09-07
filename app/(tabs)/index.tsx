@@ -1997,89 +1997,115 @@ export default function LiveBusScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* 4. LIGHTWEIGHT CONTEXTUAL ROUTE PROGRESS */}
-              <View style={styles.onboardLightRouteContainer}>
-                <View style={styles.onboardLightRouteHeader}>
-                  <Text style={styles.onboardLightRouteTitle}>ROUTE PROGRESS</Text>
-                  <Text style={styles.onboardLightRouteSub}>
-                    {journey.fromStop.shortName} → {journey.toStop.shortName}
-                  </Text>
+              {/* 4. LIVE ROUTE PROGRESS TIMELINE (IMAGE FORMAT) */}
+              <View style={styles.stopsTimelineContainer}>
+                <View style={styles.timelineHeaderRow}>
+                  <View style={[styles.scheduledRoutePill, { backgroundColor: '#E9ECFF' }]}>
+                    <Text style={[styles.scheduledRoutePillText, { color: '#18258F' }]}>LIVE GPS CORRIDOR</Text>
+                  </View>
+                  <Text style={styles.timelineTitle}>Route Progress</Text>
                 </View>
 
-                <View style={styles.lightTimelineWrapper}>
+                <View style={styles.timelineListContainer}>
                   {journey.intermediateStops.map((stopItem, index) => {
+                    const isFirst = index === 0;
                     const isLast = index === journey.intermediateStops.length - 1;
                     const isPassed = stopItem.passed;
-                    const isCurrentNext = stopItem.isCurrentNext;
+                    const isCurrent = stopItem.isCurrentNext;
 
                     return (
                       <View
                         key={`${stopItem.name}_${index}`}
                         style={[
-                          styles.lightTimelineRow,
-                          isCurrentNext && styles.lightTimelineRowNext,
+                          styles.timelineRow,
+                          isCurrent && styles.timelineRowCurrent,
                         ]}
                       >
-                        {/* Timeline Dot & Line */}
-                        <View style={styles.lightTimelineLineCol}>
+                        <View style={styles.timelineDotCol}>
                           {!isLast && (
                             <View
                               style={[
-                                styles.lightTimelineLine,
-                                isPassed && styles.lightTimelineLinePassed,
+                                styles.timelineVerticalLine,
+                                isPassed && styles.timelineVerticalLinePassed,
                               ]}
                             />
                           )}
-                          {isPassed ? (
-                            <View style={styles.lightDotPassed}>
-                              <Check size={10} color="#64748B" strokeWidth={2.8} />
+
+                          {isCurrent ? (
+                            <View style={styles.timelineCurrentMarkerBox}>
+                              <Bus size={11} color="#FFFFFF" strokeWidth={2.4} />
                             </View>
-                          ) : isCurrentNext ? (
-                            <View style={styles.lightDotNext}>
-                              <View style={styles.lightDotNextInner} />
+                          ) : isPassed ? (
+                            <View style={styles.timelineDotPassed}>
+                              <CheckCircle2 size={15} color="#10B981" />
+                            </View>
+                          ) : isFirst ? (
+                            <View style={[styles.timelineDot, styles.timelineDotOrigin]}>
+                              <View style={styles.timelineDotInnerWhite} />
                             </View>
                           ) : isLast ? (
-                            <View style={styles.lightDotDest}>
-                              <View style={styles.lightDotDestInner} />
+                            <View style={[styles.timelineDot, styles.timelineDotDest]}>
+                              <View style={styles.timelineDotInnerWhite} />
                             </View>
                           ) : (
-                            <View style={styles.lightDotFuture} />
+                            <View style={[styles.timelineDot, styles.timelineDotIntermediate]} />
                           )}
                         </View>
 
-                        {/* Station Name & Status */}
-                        <View style={styles.lightTimelineContentCol}>
-                          <Text
-                            style={[
-                              styles.lightTimelineStation,
-                              isPassed && styles.lightTimelineStationPassed,
-                              isCurrentNext && styles.lightTimelineStationNext,
-                              isLast && styles.lightTimelineStationDest,
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {stopItem.name}
-                          </Text>
+                        <View style={[styles.timelineInfoRow, isLast && { paddingBottom: 4 }]}>
+                          <View style={{ flex: 1, marginRight: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <Text
+                                style={[
+                                  styles.timelineStationName,
+                                  (isFirst || isLast || isCurrent) ? styles.timelineStationBold : styles.timelineStationMuted,
+                                  isPassed && styles.timelineStationPassed,
+                                  isCurrent && { color: '#18258F', fontWeight: '800' },
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {stopItem.name}
+                              </Text>
 
-                          <View style={styles.lightTimelineStatusCol}>
-                            {isPassed ? (
-                              <Text style={styles.lightPassedCheckmark}>✓</Text>
-                            ) : isCurrentNext ? (
-                              <View style={styles.lightNextTag}>
-                                <Text style={styles.lightNextTagText}>
-                                  {!journey.nextStopETA ||
-                                  journey.nextStopETA.toLowerCase().includes('now') ||
-                                  journey.nextStopETA === '0m' ||
-                                  journey.nextStopETA === '1m'
-                                    ? 'Arriving now'
-                                    : `~${journey.nextStopETA.replace('m', ' min')}`}
-                                </Text>
-                              </View>
+                              {isFirst ? (
+                                <View style={styles.originTagBadge}>
+                                  <Text style={styles.originTagBadgeText}>Boarding</Text>
+                                </View>
+                              ) : isLast ? (
+                                <View style={styles.destTagBadge}>
+                                  <Text style={styles.destTagBadgeText}>Drop-off</Text>
+                                </View>
+                              ) : isCurrent ? (
+                                <View style={[styles.originTagBadge, { backgroundColor: '#ECFDF5' }]}>
+                                  <Text style={[styles.originTagBadgeText, { color: '#059669' }]}>Approaching</Text>
+                                </View>
+                              ) : null}
+                            </View>
+
+                            {isFirst ? (
+                              <Text style={styles.timelineShelterSub}>Platform 1 · Gate opens 2m prior</Text>
                             ) : isLast ? (
-                              <Text style={styles.lightDestTimeText}>{journey.toTime}</Text>
+                              <Text style={styles.timelineShelterSub}>Final interchange terminal</Text>
+                            ) : isCurrent ? (
+                              <Text style={[styles.timelineShelterSub, { color: '#059669', fontWeight: '600' }]}>
+                                Approaching designated BRTS platform
+                              </Text>
                             ) : (
-                              <Text style={styles.lightFutureTimeText}>{stopItem.time}</Text>
+                              <Text style={styles.timelineShelterSub}>Nava Raipur BRTS Shelter</Text>
                             )}
+                          </View>
+
+                          <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                            <Text
+                              style={[
+                                styles.timelineTimeText,
+                                (isFirst || isLast || isCurrent) ? styles.timelineTimeBold : styles.timelineTimeMuted,
+                                isPassed && styles.timelineTimePassed,
+                                isCurrent && { color: '#18258F', fontWeight: '800' },
+                              ]}
+                            >
+                              {stopItem.time}
+                            </Text>
                           </View>
                         </View>
                       </View>
@@ -2087,14 +2113,14 @@ export default function LiveBusScreen() {
                   })}
                 </View>
 
-                {/* Route Actions Footer */}
+                {/* Footer actions */}
                 <View style={styles.onboardLightRouteFooter}>
                   <TouchableOpacity
                     style={styles.onboardViewFullRouteBtn}
                     onPress={() => setAllPopularModalVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.onboardViewFullRouteText}>View full route →</Text>
+                    <Text style={styles.onboardViewFullRouteText}>View all routes →</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
