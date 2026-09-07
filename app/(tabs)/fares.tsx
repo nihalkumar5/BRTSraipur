@@ -92,7 +92,7 @@ export default function FaresScreen() {
     setActivePicker(type);
     setSearchQuery('');
     setModalVisible(true);
-    drawerSlideAnim.setValue(600);
+    drawerSlideAnim.setValue(800);
     Animated.timing(drawerSlideAnim, {
       toValue: 0,
       duration: 250,
@@ -103,7 +103,7 @@ export default function FaresScreen() {
 
   const closePicker = () => {
     Animated.timing(drawerSlideAnim, {
-      toValue: 600,
+      toValue: 800,
       duration: 200,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: Platform.OS !== 'web',
@@ -407,6 +407,7 @@ export default function FaresScreen() {
               data={filteredStops}
               keyExtractor={item => item.id}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.drawerListContent}
               renderItem={({ item }) => {
                 const isSelected =
@@ -699,22 +700,26 @@ const styles = StyleSheet.create({
   /* MODAL STATION PICKER */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'flex-end',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
   drawerContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: '85%',
-    maxHeight: 700,
     width: '100%',
+    maxWidth: 480,
+    height: '100%',
+    flex: 1,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     overflow: 'hidden',
   },
   searchHeaderWrapper: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F2F4F7',
   },
