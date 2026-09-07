@@ -1,81 +1,50 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   Platform,
   TouchableOpacity,
-  Animated,
-  LayoutChangeEvent,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Bus, MapPin, Clock, IndianRupee } from 'lucide-react-native';
+import { Home, MapPin, Calendar, IndianRupee } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = Math.max(16, insets.bottom + 6);
-  const [tabBarWidth, setTabBarWidth] = useState(0);
-  const translateX = useRef(new Animated.Value(0)).current;
-
-  const TILE_SIZE = 44;
-  const NUM_TABS = state.routes.length;
-
-  const onLayout = (e: LayoutChangeEvent) => {
-    const width = e.nativeEvent.layout.width;
-    setTabBarWidth(width);
-  };
-
-  useEffect(() => {
-    if (tabBarWidth > 0) {
-      const horizontalPadding = 8;
-      const tabWidth = (tabBarWidth - horizontalPadding * 2) / NUM_TABS;
-      const targetX = horizontalPadding + state.index * tabWidth + (tabWidth - TILE_SIZE) / 2;
-
-      Animated.spring(translateX, {
-        toValue: targetX,
-        useNativeDriver: Platform.OS !== 'web',
-        damping: 18,
-        stiffness: 220,
-        mass: 0.8,
-      }).start();
-    }
-  }, [state.index, tabBarWidth]);
 
   return (
     <View style={[styles.tabBarWrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
       <View
         style={[
-          styles.tabBar,
+          styles.tabBarContainer,
           Platform.OS === 'web'
             ? ({
-                backdropFilter: 'blur(24px) saturate(190%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
               } as any)
             : {},
         ]}
-        onLayout={onLayout}
       >
-        {/* Active Navy Circle Capsule */}
-        {tabBarWidth > 0 && (
-          <Animated.View
-            style={[
-              styles.activeBlueTile,
-              {
-                width: TILE_SIZE,
-                height: TILE_SIZE,
-                transform: [{ translateX }],
-              },
-            ]}
-          />
-        )}
-
-        {/* 4 Tabs */}
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const { options } = descriptors[route.key];
 
           const onPress = () => {
+            LayoutAnimation.configureNext({
+              duration: 250,
+              update: { type: LayoutAnimation.Types.easeInEaseOut },
+            });
+
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
@@ -87,47 +56,66 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             }
           };
 
-          const renderIcon = () => {
-            const iconColor = isFocused ? '#FFFFFF' : '#64748B';
-            const strokeWidth = 1.85;
-            const size = 20;
-
-            switch (route.name) {
-              case 'index':
-                return <Bus size={size} color={iconColor} strokeWidth={strokeWidth} />;
-              case 'stops':
-                return <MapPin size={size} color={iconColor} strokeWidth={strokeWidth} />;
-              case 'timetable':
-                return <Clock size={size} color={iconColor} strokeWidth={strokeWidth} />;
-              case 'fares':
-                return <IndianRupee size={size} color={iconColor} strokeWidth={strokeWidth} />;
-              default:
-                return <Bus size={size} color={iconColor} strokeWidth={strokeWidth} />;
-            }
-          };
-
-          const accessibilityLabel =
+          const label =
             options.title !== undefined
               ? options.title
               : route.name === 'index'
-              ? 'Live Bus'
+              ? 'Home'
               : route.name === 'stops'
-              ? 'All Stops'
+              ? 'Stops'
               : route.name === 'timetable'
-              ? 'Timetable'
+              ? 'Schedule'
               : 'Fares';
+
+          const renderIcon = () => {
+            const iconColor = isFocused ? '#FFFFFF' : '#E4E4E7';
+            const strokeWidth = isFocused ? 2.3 : 1.9;
+            const size = 18;
+
+            switch (route.name) {
+              case 'index':
+                return <Home size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'stops':
+                return <MapPin size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'timetable':
+                return <Calendar size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'fares':
+                return <IndianRupee size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              default:
+                return <Home size={size} color={iconColor} strokeWidth={strokeWidth} />;
+            }
+          };
+
+          if (isFocused) {
+            return (
+              <TouchableOpacity
+                key={route.key}
+                onPress={onPress}
+                style={styles.activeTabPill}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityState={{ selected: true }}
+                accessibilityLabel={label}
+              >
+                <View style={styles.activeIconContainer}>{renderIcon()}</View>
+                <Text style={styles.activeTabText} numberOfLines={1}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          }
 
           return (
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
-              style={styles.tabItem}
-              activeOpacity={0.8}
+              style={styles.inactiveTabCircle}
+              activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={accessibilityLabel}
+              accessibilityState={{ selected: false }}
+              accessibilityLabel={label}
             >
-              <View style={styles.iconContainer}>{renderIcon()}</View>
+              {renderIcon()}
             </TouchableOpacity>
           );
         })}
@@ -144,9 +132,9 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Live Bus' }} />
-      <Tabs.Screen name="stops" options={{ title: 'All Stops' }} />
-      <Tabs.Screen name="timetable" options={{ title: 'Timetable' }} />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="stops" options={{ title: 'Stops' }} />
+      <Tabs.Screen name="timetable" options={{ title: 'Schedule' }} />
       <Tabs.Screen name="fares" options={{ title: 'Fares' }} />
     </Tabs>
   );
@@ -158,58 +146,61 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 100,
+    zIndex: 999,
   },
-  tabBar: {
-    width: 260,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: 'rgba(255, 255, 255, 0.78)', // Frosted glass translucency
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.85)', // Crisp glass rim
+  tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    elevation: 10,
+    backgroundColor: '#0F0F12', // Deep pitch dark capsule
+    borderRadius: 36,
+    padding: 6,
+    gap: 6,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.12)', // Subtle metallic glass rim
+    elevation: 14,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.38,
+    shadowRadius: 20,
+  },
+  activeTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18258F', // Signature Royal Blue
+    height: 48,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    gap: 8,
+    elevation: 6,
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
     ...(Platform.OS === 'web'
       ? ({
-          backdropFilter: 'blur(24px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(190%)',
-          boxShadow: '0 8px 32px rgba(24, 37, 143, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+          boxShadow: '0 4px 14px rgba(24, 37, 143, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
         } as any)
       : {}),
   },
-  activeBlueTile: {
-    position: 'absolute',
-    top: 7, // Vertically centered inside 58px height ((58 - 44) / 2 = 7px)
-    left: 0,
-    backgroundColor: '#18258F',
-    borderRadius: 22,
-    zIndex: 1,
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  tabItem: {
-    flex: 1,
-    height: 58,
+  activeIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2,
-    position: 'relative',
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
+  activeTabText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  inactiveTabCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#222226', // Charcoal dark circular button
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
 });
 
