@@ -191,6 +191,79 @@ function EditorialStopIcon({ size = 20, color = '#18258F' }: { size?: number; co
   );
 }
 
+function NoServiceBusIllustration({ width = 145, height = 82 }: { width?: number; height?: number }) {
+  return (
+    <View style={{ width, height, overflow: 'visible' }}>
+      <Svg width={width} height={height} viewBox="0 0 170 95" fill="none">
+        {/* Soft background skyline & street line */}
+        <Path d="M 0 70 L 170 70" stroke="#E2E8F0" strokeWidth="1.5" />
+        <Rect x="15" y="32" width="16" height="38" fill="#F1F5F9" />
+        <Rect x="26" y="24" width="14" height="46" fill="#E2E8F0" opacity="0.75" />
+        <Rect x="44" y="36" width="18" height="34" fill="#F1F5F9" />
+        <Circle cx="8" cy="54" r="8" fill="#E2E8F0" opacity="0.6" />
+        <Circle cx="14" cy="50" r="6" fill="#CBD5E1" opacity="0.5" />
+
+        {/* Bus Stop Shelter Canopy & Support Pillar */}
+        <Path d="M 116 28 C 124 25, 140 25, 156 30 L 156 33 C 140 28, 124 28, 116 31 Z" fill="#94A3B8" />
+        <Line x1="150" y1="30" x2="150" y2="70" stroke="#94A3B8" strokeWidth="2" />
+        <Line x1="126" y1="30" x2="126" y2="70" stroke="#CBD5E1" strokeWidth="1.5" />
+        {/* Shelter bench */}
+        <Rect x="131" y="53" width="17" height="3" rx="1.5" fill="#94A3B8" />
+        <Line x1="134" y1="56" x2="134" y2="70" stroke="#94A3B8" strokeWidth="1" />
+        <Line x1="145" y1="56" x2="145" y2="70" stroke="#94A3B8" strokeWidth="1" />
+
+        {/* Ground shadow beneath bus */}
+        <Path d="M 38 72 C 60 74, 112 74, 140 72" stroke="#CBD5E1" strokeWidth="3" strokeLinecap="round" />
+
+        {/* Sleek Modern BRTS Bus Body */}
+        <Path
+          d="M 44 67 L 44 32 C 44 29 47 28 50 28 L 118 28 C 125 28 133 30 136 34 L 139 50 C 140 54 139 64 137 67 Z"
+          fill="#FFFFFF"
+          stroke="#64748B"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+
+        {/* Aerodynamic Roof Pod */}
+        <Path d="M 64 26 C 64 24 68 23 74 23 L 98 23 C 104 23 108 24 108 26 Z" fill="#CBD5E1" />
+
+        {/* Dark Tinted Windshield */}
+        <Path
+          d="M 120 32 L 133 34 C 135 37 136 44 136 48 L 120 48 Z"
+          fill="#334155"
+        />
+        {/* Side Passenger Windows */}
+        <Rect x="48" y="32" width="14" height="15" rx="1" fill="#475569" />
+        <Rect x="64" y="32" width="16" height="15" rx="1" fill="#334155" />
+        <Rect x="82" y="32" width="16" height="15" rx="1" fill="#475569" />
+        <Rect x="100" y="32" width="16" height="15" rx="1" fill="#334155" />
+
+        {/* Driver side mirror */}
+        <Path d="M 137 37 L 141 38 L 140 42" stroke="#475569" strokeWidth="1.2" fill="none" />
+
+        {/* Front Headlight & Lower Bumper Line */}
+        <Path d="M 134 54 C 137 54 138 56 137 58 L 133 58" fill="#FBBF24" />
+        <Line x1="44" y1="59" x2="137" y2="59" stroke="#E2E8F0" strokeWidth="1" />
+
+        {/* Bus Wheels */}
+        {/* Rear Wheel */}
+        <Circle cx="58" cy="67" r="7.5" fill="#1E293B" />
+        <Circle cx="58" cy="67" r="4" fill="#94A3B8" />
+        <Circle cx="58" cy="67" r="1.5" fill="#F8FAFC" />
+        {/* Front Wheel */}
+        <Circle cx="120" cy="67" r="7.5" fill="#1E293B" />
+        <Circle cx="120" cy="67" r="4" fill="#94A3B8" />
+        <Circle cx="120" cy="67" r="1.5" fill="#F8FAFC" />
+
+        {/* Soft Red Prohibition Circle Overlay */}
+        <Circle cx="145" cy="22" r="15" fill="#FEE2E2" opacity="0.65" />
+        <Circle cx="145" cy="22" r="11" stroke="#EF4444" strokeWidth="2.2" fill="#FFFFFF" opacity="0.9" />
+        <Line x1="137" y1="14" x2="153" y2="30" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" opacity="0.9" />
+      </Svg>
+    </View>
+  );
+}
+
 export default function LiveBusScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string; to?: string }>();
@@ -1101,62 +1174,133 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
-                {/* NEXT BUS SIGNATURE HERO CARD */}
-                <Animated.View
-                  style={[
-                    styles.royalBlueHeroCard,
-                    journey.serviceEndedToday && styles.closedHeroCard,
-                    { transform: [{ scale: cardScaleAnim }] },
-                  ]}
-                >
-                  {journey.serviceEndedToday ? (
-                    <View style={styles.closedHeroContent}>
-                      <View style={styles.closedPill}>
-                        <Clock size={11} color="#FCA5A5" strokeWidth={2.4} />
-                        <Text style={styles.closedPillText}>SERVICE CLOSED TODAY</Text>
-                      </View>
-                      <Text style={styles.closedHeroTitle}>No Buses Left Tonight</Text>
-                      <Text style={styles.closedHeroSub}>
-                        {journey.lastDepartedTodayTime ? `Last bus was at ${journey.lastDepartedTodayTime}. ` : ''}
-                        Tomorrow's schedule active after 12:00 AM (Next: {journey.fromTime}).
-                      </Text>
-                      {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.some(a => a.isToday) && (
-                        <TouchableOpacity
-                          style={styles.heroAlternativeHintPill}
-                          onPress={() => {
-                            const firstActive = journey.nearbyDirectAlternatives?.find(a => a.isToday);
-                            if (firstActive) {
-                              if (firstActive.type === 'nearby_origin') {
-                                setFromStation(firstActive.suggestedStop.shortName);
-                              } else {
-                                setToStation(firstActive.suggestedStop.shortName);
-                              }
-                              setSelectedTripId(null);
-                              triggerCardBounce();
-                            }
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <Zap size={13} color="#FBBF24" strokeWidth={2.4} />
-                          <Text style={styles.heroAlternativeHintText}>
-                            {journey.nearbyDirectAlternatives.find(a => a.isToday)?.type === 'nearby_destination'
-                              ? `Take bus till ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight (${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway ? `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway} stop${(journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway || 1) > 1 ? 's' : ''} before ${journey.toStop.shortName}` : `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.distanceFormatted} to ${journey.toStop.shortName}`}) ➔`
-                              : `Board from ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight ➔`}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                      <View style={styles.heroRouteRow}>
-                        <Text style={styles.heroRouteCodes}>
-                          {journey.fromStop.code} <Text style={styles.heroArrowText}>→</Text> {journey.toStop.code}
+                {/* NEXT BUS SIGNATURE HERO CARD OR REDESIGNED NO SERVICE CARD */}
+                {journey.serviceEndedToday ? (
+                  <Animated.View
+                    style={[
+                      styles.noServiceCard,
+                      { transform: [{ scale: cardScaleAnim }] },
+                    ]}
+                  >
+                    {/* TOP SECTION: BADGE, HEADLINE, SUBTITLE & BUS SHELTER ILLUSTRATION */}
+                    <View style={styles.noServiceTopRow}>
+                      <View style={styles.noServiceLeftCol}>
+                        {/* NO SERVICE PILL BADGE */}
+                        <View style={styles.noServiceBadge}>
+                          <Clock size={12} color="#EF4444" strokeWidth={2.4} />
+                          <Text style={styles.noServiceBadgeText}>No Service Today</Text>
+                        </View>
+
+                        {/* HEADLINE */}
+                        <Text style={styles.noServiceTitle}>No Buses Left Today</Text>
+
+                        {/* SUBTITLE */}
+                        <Text style={styles.noServiceSubtitle}>
+                          {journey.lastDepartedTodayTime ? `The last bus departed at ${journey.lastDepartedTodayTime}.\n` : 'Service has ended for today.\n'}
+                          Tomorrow’s service will resume after 12:00 AM (next bus at {journey.fromTime}).
                         </Text>
                       </View>
-                      <Text style={styles.heroStationNames} numberOfLines={1}>
-                        {journey.originalOriginStop ? `${journey.originalOriginStop.shortName} ➔ ` : ''}
-                        {journey.fromStop.shortName} → {journey.toStop.shortName}
-                        {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
-                      </Text>
+
+                      {/* RIGHT ILLUSTRATION */}
+                      <View style={styles.noServiceIllustrationWrap} pointerEvents="none">
+                        <NoServiceBusIllustration width={138} height={82} />
+                      </View>
                     </View>
-                  ) : (
+
+                    {/* NEARBY ALTERNATIVE (IF ACTIVE TONIGHT) */}
+                    {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.some(a => a.isToday) && (
+                      <TouchableOpacity
+                        style={styles.heroAlternativeHintPill}
+                        onPress={() => {
+                          const firstActive = journey.nearbyDirectAlternatives?.find(a => a.isToday);
+                          if (firstActive) {
+                            if (firstActive.type === 'nearby_origin') {
+                              setFromStation(firstActive.suggestedStop.shortName);
+                            } else {
+                              setToStation(firstActive.suggestedStop.shortName);
+                            }
+                            setSelectedTripId(null);
+                            triggerCardBounce();
+                          }
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Zap size={13} color="#FBBF24" strokeWidth={2.4} />
+                        <Text style={styles.heroAlternativeHintText}>
+                          {journey.nearbyDirectAlternatives.find(a => a.isToday)?.type === 'nearby_destination'
+                            ? `Take bus till ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight (${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway ? `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway} stop${(journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway || 1) > 1 ? 's' : ''} before ${journey.toStop.shortName}` : `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.distanceFormatted} to ${journey.toStop.shortName}`}) ➔`
+                            : `Board from ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight ➔`}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* MIDDLE SECTION: ROUTE & BUS BOX (MATCHING UPLOADED IMAGE 1) */}
+                    <View style={styles.noServiceRouteBox}>
+                      {/* LEFT: ROUTE DETAILS */}
+                      <View style={styles.noServiceRouteCol}>
+                        <View style={styles.routePinTrack}>
+                          <MapPin size={15} color="#2563EB" strokeWidth={2.5} />
+                          <View style={styles.routePinDashLine} />
+                          <View style={styles.routePinDot} />
+                        </View>
+                        <View style={styles.routePinTextCol}>
+                          <Text style={styles.routeMicroLabel}>ROUTE</Text>
+                          <Text style={styles.routeCodeText}>
+                            {journey.fromStop.code}  <Text style={{ color: '#94A3B8' }}>→</Text>  {journey.toStop.code}
+                          </Text>
+                          <Text style={styles.routeStationNameText} numberOfLines={1}>
+                            {journey.fromStop.shortName} → {journey.toStop.shortName}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* VERTICAL DIVIDER */}
+                      <View style={styles.noServiceDivider} />
+
+                      {/* RIGHT: BUS SERVICE */}
+                      <View style={styles.noServiceBusCol}>
+                        <View style={styles.noServiceBusIconWrap}>
+                          <Bus size={18} color="#18258F" strokeWidth={2.2} />
+                        </View>
+                        <View style={styles.noServiceBusTextCol}>
+                          <Text style={styles.busRouteNumText}>
+                            {journey.routeBadge || `BRT ${journey.trip.routeNumber}`}
+                          </Text>
+                          <Text style={styles.busRouteStatusText} numberOfLines={1}>
+                            Service ended for today
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* BOTTOM SECTION: NEXT SERVICE REMINDER BANNER (MATCHING UPLOADED IMAGE 1) */}
+                    <TouchableOpacity
+                      style={styles.noServiceNextBox}
+                      onPress={handleScheduleNotifications}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.noServiceCalendarIconWrap}>
+                        <Calendar size={20} color="#18258F" strokeWidth={2.2} />
+                      </View>
+                      <View style={styles.noServiceNextTextCol}>
+                        <Text style={styles.nextServiceMicroLabel}>NEXT SERVICE</Text>
+                        <Text style={styles.nextServiceTimeText}>
+                          Tomorrow, {journey.fromTime}
+                        </Text>
+                        <Text style={styles.nextServiceSubText}>
+                          Set a reminder and we’ll notify you.
+                        </Text>
+                      </View>
+                      <ChevronRight size={18} color="#94A3B8" />
+                    </TouchableOpacity>
+                  </Animated.View>
+                ) : (
+                  <Animated.View
+                    style={[
+                      styles.royalBlueHeroCard,
+                      { transform: [{ scale: cardScaleAnim }] },
+                    ]}
+                  >
                     <View style={styles.heroInfoContent}>
                       <Text style={styles.heroPreLabel}>
                         {journey.isProximityOptimized
@@ -1175,43 +1319,31 @@ export default function LiveBusScreen() {
                         {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                       </Text>
                     </View>
-                  )}
 
-                  <View style={styles.heroIllustrationWrapper} pointerEvents="none">
-                    <EditorialBusIllustration />
-                  </View>
+                    <View style={styles.heroIllustrationWrapper} pointerEvents="none">
+                      <EditorialBusIllustration />
+                    </View>
 
-                  <View style={styles.heroBottomRow}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
-                      <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
-                        {journey.isProximityOptimized
-                          ? `Direct Bus · ₹${journey.fare}${journey.minutesSaved ? ` · Save ${journey.minutesSaved}m` : ''}`
-                          : journey.serviceEndedToday
-                          ? 'Service ended for today'
-                          : journey.isTransfer
-                          ? `Via ${journey.transferHub}`
-                          : 'AC Express'}
-                      </Text>
+                    <View style={styles.heroBottomRow}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
+                        <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
+                          {journey.isProximityOptimized
+                            ? `Direct Bus · ₹${journey.fare}${journey.minutesSaved ? ` · Save ${journey.minutesSaved}m` : ''}`
+                            : journey.isTransfer
+                            ? `Via ${journey.transferHub}`
+                            : 'AC Express'}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
+                        <Text style={styles.heroMetaTitle}>{journey.durationMins} min</Text>
+                        <Text style={styles.heroMetaDeparts} numberOfLines={1}>
+                          {journey.countdownText.toUpperCase()}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
-                      <Text style={styles.heroMetaTitle}>
-                        {journey.serviceEndedToday ? 'RESUMES' : `${journey.durationMins} min`}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.heroMetaDeparts,
-                          journey.serviceEndedToday && { color: '#FCA5A5' },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {journey.serviceEndedToday
-                          ? `AFTER 12:00 AM (${journey.fromTime})`
-                          : journey.countdownText.toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                </Animated.View>
+                  </Animated.View>
+                )}
 
                 {/* TRANSFER ALERT BANNER */}
                 {journey.isTransfer && (
@@ -3047,48 +3179,204 @@ const styles = StyleSheet.create({
     zIndex: 2,
     maxWidth: '56%',
   },
-  closedHeroCard: {
-    backgroundColor: '#0F172A',
-    borderColor: '#334155',
-    borderWidth: 1.5,
-    shadowColor: '#000000',
+  /* --- REDESIGNED "NO BUSES LEFT TODAY" CARD (MATCHING UPLOADED IMAGE 1) --- */
+  noServiceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#EFF2F7',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    elevation: 2,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
-  closedHeroContent: {
-    zIndex: 2,
-    maxWidth: '72%',
-    paddingBottom: 6,
+  noServiceTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  closedPill: {
+  noServiceLeftCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  noServiceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(239, 68, 68, 0.18)',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
     alignSelf: 'flex-start',
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
-  },
-  closedPillText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#FCA5A5',
-    letterSpacing: 0.6,
-  },
-  closedHeroTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.4,
-    marginBottom: 4,
-  },
-  closedHeroSub: {
-    fontSize: 11.5,
-    color: '#94A3B8',
-    lineHeight: 16,
+    backgroundColor: '#FEECEC',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 14,
     marginBottom: 10,
+  },
+  noServiceBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
+    marginLeft: 5,
+  },
+  noServiceTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 25,
+    lineHeight: 31,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+  },
+  noServiceSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    lineHeight: 18.5,
+    color: '#4B5563',
+    marginTop: 6,
+  },
+  noServiceIllustrationWrap: {
+    width: 140,
+    height: 82,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 6,
+  },
+  noServiceRouteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  noServiceRouteCol: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  routePinTrack: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    marginRight: 10,
+  },
+  routePinDashLine: {
+    width: 1.5,
+    height: 10,
+    backgroundColor: '#CBD5E1',
+    marginVertical: 2,
+  },
+  routePinDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  routePinTextCol: {
+    flex: 1,
+  },
+  routeMicroLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+    letterSpacing: 0.5,
+  },
+  routeCodeText: {
+    fontFamily: FONT.bold,
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 1,
+  },
+  routeStationNameText: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  noServiceDivider: {
+    width: 1,
+    height: 38,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 12,
+  },
+  noServiceBusCol: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noServiceBusIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#EFF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  noServiceBusTextCol: {
+    flex: 1,
+  },
+  busRouteNumText: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  busRouteStatusText: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  noServiceNextBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  noServiceCalendarIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  noServiceNextTextCol: {
+    flex: 1,
+  },
+  nextServiceMicroLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#4B5563',
+    letterSpacing: 0.5,
+  },
+  nextServiceTimeText: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#18258F',
+    marginTop: 1,
+  },
+  nextServiceSubText: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: '#4B5563',
+    marginTop: 2,
   },
   heroPreLabel: {
     fontSize: 10,
