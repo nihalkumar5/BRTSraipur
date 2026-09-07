@@ -223,7 +223,7 @@ export function findNearbyDirectAlternatives(
   toName: string,
   forceServiceDay?: 'weekday' | 'weekend',
   nowMins: number = getCurrentMinutesOfDay(),
-  maxRadiusKm: number = 3.5
+  maxRadiusKm: number = 4.5
 ): NearbyDirectAlternative[] {
   const fromStop = getStopByName(fromName);
   const toStop = getStopByName(toName);
@@ -1285,6 +1285,8 @@ export function calculateJourney(
     upcomingDepartures,
     serviceEndedToday,
     lastDepartedTodayTime,
+    nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),
+    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, durationMins),
   };
 }
 
