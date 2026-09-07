@@ -648,3 +648,60 @@ export function findTripByDesiredArrival(
     upcomingDepartures: []
   };
 }
+
+export interface StationDeparture {
+  tripId: string;
+  route: string;
+  routeNumber: string;
+  routeType: 'trunk' | 'feeder';
+  departureTime: string;
+  destination: string;
+  departureMins: number;
+  diffMins: number;
+  isNextDay: boolean;
+}
+
+export function getStationDepartures(
+  stationName: string,
+  nowMins: number = getCurrentMinutesOfDay()
+): StationDeparture[] {
+  const departures: StationDeparture[] = [];
+  const serviceDay = isWeekendDay() ? 'weekend' : 'weekday';
+  const q = stationName.trim().toLowerCase();
+
+  for (const trip of schedules) {
+    if (trip.serviceDay !== serviceDay) continue;
+    const stopIdx = trip.stops.findIndex(
+      s => s.stop.toLowerCase() === q || s.stop.toLowerCase().includes(q) || q.includes(s.stop.toLowerCase())
+    );
+    if (stopIdx !== -1 && stopIdx < trip.stops.length - 1) {
+      const depStop = trip.stops[stopIdx];
+      const diff = depStop.mins - nowMins;
+      departures.push({
+        tripId: trip.id,
+        route: trip.route,
+        routeNumber: trip.routeNumber,
+        routeType: trip.routeType || 'trunk',
+        departureTime: depStop.time,
+        destination: trip.destination,
+        departureMins: depStop.mins,
+        diffMins: diff >= 0 ? diff : diff + 1440,
+        isNextDay: diff < 0,
+      });
+    }
+  }
+
+  departures.sort((a, b) => a.diffMins - b.diffMins);
+  return departures.slice(0, 8);
+}
+
+export function getRoutesServingStation(stationName: string): string[] {
+  const q = stationName.trim().toLowerCase();
+  const routesSet = new Set<string>();
+  for (const trip of schedules) {
+    if (trip.stops.some(s => s.stop.toLowerCase() === q || s.stop.toLowerCase().includes(q) || q.includes(s.stop.toLowerCase()))) {
+      routesSet.add(trip.routeNumber);
+    }
+  }
+  return Array.from(routesSet);
+}

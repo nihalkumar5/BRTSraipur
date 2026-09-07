@@ -15,7 +15,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Compass,
   ArrowRight,
@@ -186,6 +186,8 @@ function EditorialStopIcon({ size = 20, color = '#18258F' }: { size?: number; co
 
 export default function LiveBusScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ from?: string; to?: string }>();
+
   // Initial state: starts empty by default so the clean Popular Routes screen is the default home screen.
   // Once the user enters stations (or taps a popular route), their chosen route is remembered as the active home screen.
   const [fromStation, setFromStation] = useState<string>(() => {
@@ -208,6 +210,15 @@ export default function LiveBusScreen() {
     }
     return '';
   });
+
+  useEffect(() => {
+    if (params.from) {
+      setFromStation(params.from);
+    }
+    if (params.to) {
+      setToStation(params.to);
+    }
+  }, [params.from, params.to]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
