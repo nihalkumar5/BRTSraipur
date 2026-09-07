@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 26, // Page title: 26 px / 700
     lineHeight: 32, // Line-height around 32 px
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     fontSize: 15.5, // Route name: 15–16 px / 700
     lineHeight: 22,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.1,
   },
   swapIconPill: {
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 18,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.3,
     marginBottom: 2,
     fontVariant: ['tabular-nums'],

@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     fontSize: 26, // Page title: 26 px / 700
     lineHeight: 32, // Line-height around 32 px
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
   },
   swapDividerRow: {
     flexDirection: 'row',
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 32, // Large heading: 30–32 px / 700
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.5,
     fontVariant: ['tabular-nums'],
   },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     marginTop: 2,
   },
   fareTypeSub: {
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 13,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 15, // Fare: 14–15 px / 700
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     fontVariant: ['tabular-nums'],
   },
   slabDivider: {
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   policyTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: 0.4,
   },
   policyBody: {

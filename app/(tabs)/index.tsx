@@ -2980,7 +2980,7 @@ const styles = StyleSheet.create({
     fontSize: 26, // Page title: 26 px / 700
     lineHeight: 32, // Line-height around 32 px
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.4,
     marginBottom: 2,
   },
@@ -3036,7 +3036,7 @@ const styles = StyleSheet.create({
     fontSize: 15.5, // Station name: 15–16 px / 700
     lineHeight: 22,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
   placeholderText: {
@@ -3088,7 +3088,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 12,
-    color: '#18258F',
+    color: '#334155',
     fontWeight: '600',
   },
   modeToggleRow: {
@@ -3245,7 +3245,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 14,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     fontVariant: ['tabular-nums'],
   },
   categoryChipsWrapper: {
@@ -3854,7 +3854,7 @@ const styles = StyleSheet.create({
   metricCardLabel: {
     fontSize: 10.5,
     fontWeight: '800',
-    color: '#17268F', // Navy label
+    color: '#64748B', // Clean neutral slate label
     letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
@@ -3889,7 +3889,7 @@ const styles = StyleSheet.create({
   metricCardValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#17268F', // Navy typography
+    color: '#0F172A', // Punchy deep black typography
     letterSpacing: -0.4,
     marginBottom: 2,
   },
@@ -4034,7 +4034,7 @@ const styles = StyleSheet.create({
   timelineTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
 
@@ -4057,7 +4057,7 @@ const styles = StyleSheet.create({
   timelineSummaryValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#18258F',
+    color: '#0F172A',
     letterSpacing: -0.3,
   },
   timelineSummarySub: {
@@ -4073,7 +4073,7 @@ const styles = StyleSheet.create({
   timelineSummaryDuration: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
   },
 
   /* TIMELINE LIST & ROWS */
@@ -4188,7 +4188,7 @@ const styles = StyleSheet.create({
   timelineStationBold: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
   },
   timelineStationMuted: {
     fontSize: 13.5,
@@ -4334,7 +4334,7 @@ const styles = StyleSheet.create({
   timelineTimeBold: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
   },
   timelineTimeMuted: {
     fontSize: 13,
@@ -4873,7 +4873,7 @@ const styles = StyleSheet.create({
   upcomingHeaderTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#0F172A',
     marginBottom: 12, // Heading ➔ departure cards = 12 px!
     letterSpacing: -0.2,
   },
@@ -4923,11 +4923,11 @@ const styles = StyleSheet.create({
   },
   depTimeTextSelected: {
     fontWeight: '800',
-    color: '#18258F',
+    color: '#0F172A',
   },
   depTimeTextFuture: {
     fontWeight: '600',
-    color: '#334155',
+    color: '#0F172A',
   },
   depStatusText: {
     fontSize: 11,

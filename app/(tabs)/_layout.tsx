@@ -63,82 +63,114 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     return () => sub.remove();
   }, [state.index, navigation]);
 
-  const bottomPadding = Math.max(8, insets.bottom);
-
   return (
-    <View style={[styles.bottomBarContainer, { paddingBottom: bottomPadding }]}>
-      {state.routes.map((route, index) => {
-        const isFocused = state.index === index;
-        const { options } = descriptors[route.key];
+    <View style={[styles.tabBarWrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
+      <View
+        style={[
+          styles.tabBarContainer,
+          Platform.OS === 'web'
+            ? ({
+                backdropFilter: 'blur(28px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+                boxShadow: '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
+              } as any)
+            : {},
+        ]}
+      >
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
+          const { options } = descriptors[route.key];
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
+          const onPress = () => {
+            LayoutAnimation.configureNext({
+              duration: 250,
+              update: { type: LayoutAnimation.Types.easeInEaseOut },
+            });
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          const label =
+            options.title !== undefined
+              ? options.title
+              : route.name === 'index'
+              ? 'Home'
+              : route.name === 'stops'
+              ? 'Stops'
+              : route.name === 'timetable'
+              ? 'Schedule'
+              : 'Fares';
+
+          const renderIcon = () => {
+            const iconColor = isFocused ? '#FFFFFF' : '#556080';
+            const strokeWidth = isFocused ? 2.3 : 1.9;
+            const size = 18;
+
+            switch (route.name) {
+              case 'index':
+                return <Home size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'stops':
+                return <MapPin size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'timetable':
+                return <Calendar size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              case 'fares':
+                return <IndianRupee size={size} color={iconColor} strokeWidth={strokeWidth} />;
+              default:
+                return <Home size={size} color={iconColor} strokeWidth={strokeWidth} />;
+            }
+          };
+
+          if (isFocused) {
+            return (
+              <TouchableOpacity
+                key={route.key}
+                onPress={onPress}
+                style={styles.activeTabPill}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityState={{ selected: true }}
+                accessibilityLabel={label}
+              >
+                <View style={styles.activeIconContainer}>{renderIcon()}</View>
+                <Text style={styles.activeTabText} numberOfLines={1}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
           }
-        };
 
-        const label =
-          options.title !== undefined
-            ? options.title
-            : route.name === 'index'
-            ? 'Home'
-            : route.name === 'stops'
-            ? 'Stops'
-            : route.name === 'timetable'
-            ? 'Schedule'
-            : 'Fares';
-
-        const color = isFocused ? '#2438B8' : '#667085';
-        const strokeWidth = isFocused ? 2.3 : 1.8;
-        const size = 20;
-
-        const renderIcon = () => {
-          switch (route.name) {
-            case 'index':
-              return <Home size={size} color={color} strokeWidth={strokeWidth} />;
-            case 'stops':
-              return <MapPin size={size} color={color} strokeWidth={strokeWidth} />;
-            case 'timetable':
-              return <Calendar size={size} color={color} strokeWidth={strokeWidth} />;
-            case 'fares':
-              return <IndianRupee size={size} color={color} strokeWidth={strokeWidth} />;
-            default:
-              return <Home size={size} color={color} strokeWidth={strokeWidth} />;
-          }
-        };
-
-        return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={onPress}
-            style={styles.tabItem}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isFocused }}
-            accessibilityLabel={label}
-          >
-            <View style={[styles.iconWrapper, isFocused && styles.iconWrapperActive]}>
-              {renderIcon()}
-            </View>
-            <Text
+          return (
+            <TouchableOpacity
+              key={route.key}
+              onPress={onPress}
               style={[
-                styles.tabLabel,
-                { color },
-                isFocused && styles.tabLabelActive,
+                styles.inactiveTabCircle,
+                Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
+                    } as any)
+                  : {},
               ]}
-              numberOfLines={1}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityState={{ selected: false }}
+              accessibilityLabel={label}
             >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              {renderIcon()}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -160,71 +192,69 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  bottomBarContainer: {
+  tabBarWrapper: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderTopWidth: 1,
-    borderTopColor: '#E4E7EC',
-    paddingTop: 8,
-    elevation: 8,
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.05,
+    backgroundColor: 'rgba(255, 255, 255, 0.82)', // Premium Frosted Glass Capsule
+    borderRadius: 36,
+    padding: 6,
+    gap: 6,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.95)', // Clean glass rim
+    elevation: 12,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+  },
+  activeTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18258F', // Signature Royal Blue
+    height: 48,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    gap: 8,
+    elevation: 6,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
     shadowRadius: 10,
-    zIndex: 999,
     ...(Platform.OS === 'web'
       ? ({
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 -4px 20px rgba(16, 24, 40, 0.06)',
+          boxShadow: '0 4px 14px rgba(24, 37, 143, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
         } as any)
       : {}),
   },
-  tabItem: {
-    flex: 1,
+  activeIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 2,
   },
-  iconWrapper: {
-    width: 42,
-    height: 28,
+  activeTabText: {
+    fontFamily: Platform.select({
+      web: "'Plus Jakarta Sans', sans-serif",
+      default: 'PlusJakartaSans_600SemiBold',
+    }),
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  inactiveTabCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(243, 245, 251, 0.85)', // Light glass button
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
-    marginBottom: 2,
-  },
-  iconWrapperActive: {
-    backgroundColor: 'rgba(36, 56, 184, 0.08)',
-  },
-  tabLabel: {
-    fontFamily: Platform.select({
-      web: "'Plus Jakarta Sans', sans-serif",
-      default: 'PlusJakartaSans_500Medium',
-    }),
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#667085',
-    letterSpacing: 0.1,
-  },
-  tabLabelActive: {
-    fontFamily: Platform.select({
-      web: "'Plus Jakarta Sans', sans-serif",
-      default: 'PlusJakartaSans_700Bold',
-    }),
-    fontWeight: '700',
-    color: '#2438B8',
+    borderWidth: 1,
+    borderColor: 'rgba(24, 37, 143, 0.06)',
   },
 });
-
-
-
-
-
-
