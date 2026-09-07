@@ -1158,7 +1158,46 @@ export function calculateJourney(
   }
 
   if (matchingTrips.length === 0) {
-    return calculateTransferJourney(fromStop, toStop, serviceDay, nowMins, mode, selectedTripId);
+    const transfer = calculateTransferJourney(fromStop, toStop, serviceDay, nowMins, mode, selectedTripId);
+
+    // If transfer is an irrelevant/absurd detour (duration >= 45m and saves >= 25m, or duration >= 60m)
+    // and a fast direct bus to an adjacent station of toStop exists:
+    if (
+      transfer &&
+      transfer.optimalProximity?.hasShortHopBus &&
+      transfer.optimalProximity.shortHopBus &&
+      (transfer.optimalProximity.minutesSaved >= 25 || transfer.durationMins >= 60)
+    ) {
+      const dropStop = getStopByName(transfer.optimalProximity.shortHopBus.dropStationShortName);
+      if (dropStop && dropStop.id !== toStop.id) {
+        const smartDirectJourney = calculateJourney(
+          fromStop.name,
+          dropStop.name,
+          nowMins,
+          mode,
+          selectedTripId?.startsWith('PROX_') ? selectedTripId.replace('PROX_', '') : selectedTripId,
+          serviceDay
+        );
+
+        if (smartDirectJourney) {
+          return {
+            ...smartDirectJourney,
+            isProximityOptimized: true,
+            targetDestinationStop: toStop,
+            proximityDropStop: dropStop,
+            proximityWalkFormatted: transfer.optimalProximity.shortHopBus.walkFromDropFormatted,
+            proximityWalkMins: transfer.optimalProximity.shortHopBus.walkFromDropMins,
+            circuitTransferDurationMins: transfer.durationMins,
+            circuitTransferFare: transfer.fare,
+            minutesSaved: transfer.optimalProximity.minutesSaved,
+            optimalProximity: transfer.optimalProximity,
+            detourExplanation: `Official transfer takes ${transfer.durationMins} min & ₹${transfer.fare} via ${transfer.transferHub} detour. Smart AI routed directly to ${dropStop.shortName} (1 stop away) in ${smartDirectJourney.durationMins}m for ₹${smartDirectJourney.fare}.`,
+          };
+        }
+      }
+    }
+
+    return transfer;
   }
 
   // Sort matching trips chronologically by departure time from the boarding station

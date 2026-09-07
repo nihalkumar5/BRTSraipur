@@ -814,7 +814,7 @@ export default function LiveBusScreen() {
               /* STATE 2: ACTIVE SEARCH RESULT */
               <View style={styles.activeSection}>
                 {/* ⚡ PROXIMITY SHORT-HOP INTELLIGENCE: OPTIMAL FASTEST COMMUTE */}
-                {journey.optimalProximity && (
+                {journey.optimalProximity && !journey.isProximityOptimized && (
                   <View style={styles.optimalProximityCard}>
                     <View style={styles.optimalProximityHeader}>
                       <View style={styles.optimalBadgeRow}>
@@ -999,6 +999,24 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
+                {/* ⚡ SMART OPTIMIZED ROUTE BANNER */}
+                {journey.isProximityOptimized && (
+                  <View style={styles.proximityOptimizedBanner}>
+                    <View style={styles.proximityOptimizedBadge}>
+                      <Zap size={13} color="#FFFFFF" strokeWidth={2.4} />
+                      <Text style={styles.proximityOptimizedBadgeText}>SMART DIRECT ROUTE</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.proximityOptimizedTitle}>
+                        Routed to {journey.toStop.shortName} ({journey.proximityWalkFormatted || '1 stop'} to {journey.targetDestinationStop?.shortName})
+                      </Text>
+                      <Text style={styles.proximityOptimizedSub}>
+                        {journey.circuitTransferDurationMins}m / ₹{journey.circuitTransferFare || 70} ka detour hata diya gaya hai. Direct Bus {journey.trip.routeNumber} se sirf {journey.durationMins} min me pahunchein (Sirf ₹{journey.fare})!
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
                 {/* NEXT BUS SIGNATURE HERO CARD */}
                 <Animated.View
                   style={[
@@ -1050,11 +1068,16 @@ export default function LiveBusScreen() {
                       </View>
                       <Text style={styles.heroStationNames} numberOfLines={1}>
                         {journey.fromStop.shortName} → {journey.toStop.shortName}
+                        {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                       </Text>
                     </View>
                   ) : (
                     <View style={styles.heroInfoContent}>
-                      <Text style={styles.heroPreLabel}>NEXT BUS</Text>
+                      <Text style={styles.heroPreLabel}>
+                        {journey.isProximityOptimized
+                          ? `⚡ SMART DIRECT ROUTE (SAVE ${journey.minutesSaved}M)`
+                          : 'NEXT BUS'}
+                      </Text>
                       <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
                       <View style={styles.heroRouteRow}>
                         <Text style={styles.heroRouteCodes}>
@@ -1063,6 +1086,7 @@ export default function LiveBusScreen() {
                       </View>
                       <Text style={styles.heroStationNames} numberOfLines={1}>
                         {journey.fromStop.shortName} → {journey.toStop.shortName}
+                        {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                       </Text>
                     </View>
                   )}
@@ -1075,7 +1099,9 @@ export default function LiveBusScreen() {
                     <View style={{ flex: 1, marginRight: 8 }}>
                       <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
                       <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
-                        {journey.serviceEndedToday
+                        {journey.isProximityOptimized
+                          ? `Direct Bus · ${journey.proximityWalkFormatted || '1 stop'} to ${journey.targetDestinationStop?.shortName}`
+                          : journey.serviceEndedToday
                           ? 'Service ended for today'
                           : journey.isTransfer
                           ? `Via ${journey.transferHub}`
@@ -4596,6 +4622,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#18258F',
+  },
+
+  proximityOptimizedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 12,
+    gap: 10,
+  },
+  proximityOptimizedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#059669',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  proximityOptimizedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  proximityOptimizedTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  proximityOptimizedSub: {
+    fontSize: 11.5,
+    color: '#047857',
+    marginTop: 2,
+    lineHeight: 16,
   },
 
   // OPTIMAL PROXIMITY CARD STYLES

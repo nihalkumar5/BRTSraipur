@@ -102,6 +102,15 @@ export interface ActiveJourney {
   optimalProximity?: OptimalProximityHop | null;
   serviceEndedToday?: boolean;
   lastDepartedTodayTime?: string;
+  isProximityOptimized?: boolean;
+  targetDestinationStop?: Stop;
+  proximityDropStop?: Stop;
+  proximityWalkFormatted?: string;
+  proximityWalkMins?: number;
+  circuitTransferDurationMins?: number;
+  circuitTransferFare?: number;
+  minutesSaved?: number;
+  detourExplanation?: string;
 }
 
 export interface OptimalProximityHop {
