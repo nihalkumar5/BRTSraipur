@@ -1879,6 +1879,21 @@ export default function LiveBusScreen() {
                   </View>
                   <ChevronRight size={15} color="#18258F" strokeWidth={2.2} />
                 </TouchableOpacity>
+
+                {/* FEATURE / PROMOTIONAL BANNER */}
+                <TouchableOpacity
+                  style={styles.homeDownBannerCard}
+                  activeOpacity={0.9}
+                  onPress={() => setPlanningMode('onboard')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Live Tracking, Smoother Journeys"
+                >
+                  <Image
+                    source={require('../../assets/images/homedown.webp')}
+                    style={styles.homeDownBannerImage}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.noRouteContainer}>
@@ -4044,7 +4059,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   cleanTimetableFooterLeft: {
     flexDirection: 'row',
@@ -4056,6 +4071,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#18258F',
+  },
+  homeDownBannerCard: {
+    width: '100%',
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  homeDownBannerImage: {
+    width: '100%',
+    aspectRatio: 2168 / 725,
+    borderRadius: 18,
   },
 
   royalBlueHeroCard: {
