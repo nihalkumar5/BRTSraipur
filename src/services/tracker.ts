@@ -2,7 +2,7 @@ import rawStops from '../data/stops.json';
 import rawSchedules from '../data/schedules.json';
 import rawFares from '../data/fares.json';
 import rawPopularRoutes from '../data/popular_routes.json';
-import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo } from '../types';
+import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo, NearbyStation, NearbyDirectAlternative } from '../types';
 
 export const stops: Stop[] = rawStops as Stop[];
 export const schedules: Trip[] = rawSchedules as Trip[];
@@ -62,6 +62,165 @@ export function formatMinutesToTime(mins: number): string {
   if (hours === 0) hours = 12;
   return `${hours}:${m.toString().padStart(2, '0')} ${period}`;
 }
+
+export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function formatDistance(distKm: number): string {
+  if (distKm < 1) {
+    return `${Math.round(distKm * 1000)}m`;
+  }
+  return `${distKm.toFixed(1)} km`;
+}
+
+export function getNearbyStations(stationNameQuery: string, maxKm: number = 2.5): NearbyStation[] {
+  const target = getStopByName(stationNameQuery);
+  if (!target || !target.coordinates) return [];
+
+  const results: NearbyStation[] = [];
+
+  for (const s of stops) {
+    if (s.id === target.id || !s.coordinates) continue;
+    const dist = getDistanceKm(
+      target.coordinates.latitude,
+      target.coordinates.longitude,
+      s.coordinates.latitude,
+      s.coordinates.longitude
+    );
+    if (dist <= maxKm) {
+      results.push({
+        stop: s,
+        distanceKm: Math.round(dist * 100) / 100,
+        walkingMins: Math.max(1, Math.round((dist / 4.5) * 60)),
+        distanceFormatted: formatDistance(dist),
+      });
+    }
+  }
+
+  results.sort((a, b) => a.distanceKm - b.distanceKm);
+  return results;
+}
+
+export function findNearbyDirectAlternatives(
+  fromName: string,
+  toName: string,
+  forceServiceDay?: 'weekday' | 'weekend',
+  nowMins: number = getCurrentMinutesOfDay(),
+  maxRadiusKm: number = 2.5
+): NearbyDirectAlternative[] {
+  const fromStop = getStopByName(fromName);
+  const toStop = getStopByName(toName);
+  if (!fromStop || !toStop) return [];
+
+  const serviceDay = forceServiceDay || (isWeekendDay() ? 'weekend' : 'weekday');
+  const alternatives: NearbyDirectAlternative[] = [];
+
+  // 1. Nearby origins to fromStop that have a direct bus to toStop
+  const nearbyOrigins = getNearbyStations(fromStop.name, maxRadiusKm);
+  for (const nearby of nearbyOrigins) {
+    const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1;
+      let tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        const sName = s.stop.toLowerCase();
+        if (fIdx === -1 && (sName === nearby.stop.name.toLowerCase() || sName.includes(nearby.stop.shortName.toLowerCase()) || nearby.stop.name.toLowerCase().includes(sName))) {
+          fIdx = idx;
+        }
+        if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()) || toStop.name.toLowerCase().includes(sName))) {
+          tIdx = idx;
+        }
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        matching.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins, arrMins: trip.stops[tIdx].mins });
+      }
+    }
+
+    if (matching.length > 0) {
+      matching.sort((a, b) => a.depMins - b.depMins);
+      const upcoming = matching.filter(m => m.depMins >= nowMins - 1);
+      const chosen = upcoming.length > 0 ? upcoming[0] : matching[0];
+      const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : (chosen.arrMins + 1440 - chosen.depMins);
+
+      alternatives.push({
+        type: 'nearby_origin',
+        suggestedStop: nearby.stop,
+        referenceStop: fromStop,
+        targetStop: toStop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+        routeNumber: chosen.trip.routeNumber,
+        routeName: chosen.trip.route,
+        departureTime: chosen.trip.stops[chosen.fIdx].time,
+        arrivalTime: chosen.trip.stops[chosen.tIdx].time,
+        durationMins,
+        fare: getFare(nearby.stop.name, toStop.name),
+      });
+    }
+  }
+
+  // 2. Nearby destinations to toStop that can be reached directly from fromStop
+  const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
+  for (const nearby of nearbyDestinations) {
+    const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1;
+      let tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        const sName = s.stop.toLowerCase();
+        if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()) || fromStop.name.toLowerCase().includes(sName))) {
+          fIdx = idx;
+        }
+        if (tIdx === -1 && fIdx !== -1 && (sName === nearby.stop.name.toLowerCase() || sName.includes(nearby.stop.shortName.toLowerCase()) || nearby.stop.name.toLowerCase().includes(sName))) {
+          tIdx = idx;
+        }
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        matching.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins, arrMins: trip.stops[tIdx].mins });
+      }
+    }
+
+    if (matching.length > 0) {
+      matching.sort((a, b) => a.depMins - b.depMins);
+      const upcoming = matching.filter(m => m.depMins >= nowMins - 1);
+      const chosen = upcoming.length > 0 ? upcoming[0] : matching[0];
+      const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : (chosen.arrMins + 1440 - chosen.depMins);
+
+      alternatives.push({
+        type: 'nearby_destination',
+        suggestedStop: nearby.stop,
+        referenceStop: toStop,
+        targetStop: fromStop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+        routeNumber: chosen.trip.routeNumber,
+        routeName: chosen.trip.route,
+        departureTime: chosen.trip.stops[chosen.fIdx].time,
+        arrivalTime: chosen.trip.stops[chosen.tIdx].time,
+        durationMins,
+        fare: getFare(fromStop.name, nearby.stop.name),
+      });
+    }
+  }
+
+  // Sort by closest distance first
+  alternatives.sort((a, b) => a.distanceKm - b.distanceKm);
+  return alternatives.slice(0, 4);
+}
+
 
 function calculateTransferJourney(
   fromStop: Stop,
@@ -320,6 +479,7 @@ function calculateTransferJourney(
     connectingFromTime: hubDepartureTime,
     connectingToTime: toTime,
     secondLegStops,
+    nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),
   };
 }
 

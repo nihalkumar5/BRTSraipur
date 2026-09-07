@@ -32,6 +32,7 @@ import {
   getStationDepartures,
   getRoutesServingStation,
   getCurrentMinutesOfDay,
+  getNearbyStations,
   StationDeparture,
 } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
@@ -455,6 +456,25 @@ export default function AllStopsScreen() {
                     </View>
                   ))}
                 </View>
+              </View>
+
+              {/* NEARBY SHELTERS & WALKING DISTANCES */}
+              <View style={styles.modalNearbyBox}>
+                <Text style={styles.modalFacilitiesTitle}>NEARBY STATIONS & WALKING DISTANCES</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modalNearbyRow}>
+                  {getNearbyStations(selectedStop.name, 3.0).slice(0, 5).map((ns, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.modalNearbyChip}
+                      onPress={() => setSelectedStop(ns.stop)}
+                      activeOpacity={0.7}
+                    >
+                      <MapPin size={11} color="#18258F" />
+                      <Text style={styles.modalNearbyName}>{ns.stop.shortName}</Text>
+                      <Text style={styles.modalNearbyDist}>({ns.distanceFormatted} · ~{ns.walkingMins}m)</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             </View>
           )}
@@ -1002,5 +1022,36 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#374151',
     fontWeight: '500',
+  },
+  modalNearbyBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 8,
+  },
+  modalNearbyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalNearbyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  modalNearbyName: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  modalNearbyDist: {
+    fontSize: 10.5,
+    color: '#64748B',
   },
 });

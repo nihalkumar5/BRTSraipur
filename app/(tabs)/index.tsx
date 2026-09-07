@@ -43,13 +43,15 @@ import {
   calculateJourney,
   getCurrentMinutesOfDay,
   formatMinutesToTime,
+  findNearbyDirectAlternatives,
+  getNearbyStations,
 } from '../../src/services/tracker';
 import {
   scheduleBusNotification,
   ScheduledReminder,
   getActiveReminders,
 } from '../../src/services/notifications';
-import { Stop, ActiveJourney, PopularRoute } from '../../src/types';
+import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative } from '../../src/types';
 
 function EditorialBusIllustration({
   width = 155,
@@ -393,6 +395,17 @@ export default function LiveBusScreen() {
       selectedTripId || undefined
     );
   }, [fromStation, toStation, currentTimeMins, planningMode, selectedTripId]);
+
+  // If no direct or transfer route found, find nearby stations that have direct service
+  const noRouteAlternatives: NearbyDirectAlternative[] = useMemo(() => {
+    if (journey || !fromStation || !toStation || fromStation === toStation) return [];
+    return findNearbyDirectAlternatives(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 3.0);
+  }, [journey, fromStation, toStation, planningMode, currentTimeMins]);
+
+  const nearbyOrigins = useMemo(() => {
+    if (journey || !fromStation) return [];
+    return getNearbyStations(fromStation, 3.0).slice(0, 4);
+  }, [journey, fromStation]);
 
   // Derived next stop details for live operational dashboard
   const nextStopObj = useMemo(() => {
@@ -978,6 +991,61 @@ export default function LiveBusScreen() {
                   </View>
                 </TouchableOpacity>
 
+                {/* NEARBY DIRECT ROUTE PRO-TIP / FASTER ALTERNATIVE */}
+                {journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
+                  <View style={styles.nearbyAlternativeCard}>
+                    <View style={styles.nearbyAltHeaderRow}>
+                      <View style={styles.nearbyAltIconWrap}>
+                        <Navigation size={16} color="#047857" strokeWidth={2.4} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <Text style={styles.nearbyAltTitle}>Direct Bus Available Nearby</Text>
+                          <View style={styles.nearbyAltSavePill}>
+                            <Text style={styles.nearbyAltSavePillText}>Avoid Transfer</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.nearbyAltSub}>
+                          {journey.nearbyDirectAlternatives[0].type === 'nearby_origin'
+                            ? `Paas ke station se direct bus pakdein aur transfer se bachein:`
+                            : `Destination ke paas direct bus se utrein:`}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {journey.nearbyDirectAlternatives.slice(0, 2).map((alt, idx) => (
+                      <View key={`alt-${idx}`} style={styles.nearbyAltItemRow}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={styles.nearbyAltStationName}>{alt.suggestedStop.shortName}</Text>
+                            <Text style={styles.nearbyAltDistText}>({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)</Text>
+                          </View>
+                          <Text style={styles.nearbyAltTripDesc}>
+                            Direct Bus {alt.routeNumber} ({alt.departureTime}) · Sirf {alt.durationMins}m me pahunchegi
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.nearbyAltSwitchBtn}
+                          onPress={() => {
+                            if (alt.type === 'nearby_origin') {
+                              setFromStation(alt.suggestedStop.shortName);
+                            } else {
+                              setToStation(alt.suggestedStop.shortName);
+                            }
+                            setSelectedTripId(null);
+                            triggerCardBounce();
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.nearbyAltSwitchBtnText}>
+                            {alt.type === 'nearby_origin' ? 'Board here' : 'Drop here'} ➔
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
                 {/* DEDICATED STEP-BY-STEP BUS CHANGE GUIDE CARD */}
                 {journey.isTransfer && (
                   <View style={styles.busChangeGuideCard}>
@@ -1289,11 +1357,84 @@ export default function LiveBusScreen() {
                 </View>
               </View>
             ) : (
-              <View style={styles.noRouteBox}>
-                <Text style={styles.noRouteTitle}>No Direct Route Found</Text>
-                <Text style={styles.noRouteSub}>
-                  Try swapping origin and destination or select an interchange stop like CBD or Telibandha.
-                </Text>
+              <View style={styles.noRouteContainer}>
+                <View style={styles.noRouteHeader}>
+                  <View style={styles.noRouteIconBox}>
+                    <MapPin size={22} color="#DC2626" />
+                  </View>
+                  <Text style={styles.noRouteHeaderTitle}>No Route Found Between Stations</Text>
+                  <Text style={styles.noRouteHeaderSub}>
+                    {fromStation} aur {toStation} ke beech direct ya connecting bus nahi mili.
+                  </Text>
+                </View>
+
+                {/* IF NEARBY DIRECT ALTERNATIVES EXIST */}
+                {noRouteAlternatives.length > 0 ? (
+                  <View style={styles.noRouteSuggestionsBox}>
+                    <View style={styles.noRouteSectionHeader}>
+                      <Navigation size={16} color="#047857" strokeWidth={2.4} />
+                      <Text style={styles.noRouteSectionTitle}>Nearby Stations with Direct Bus</Text>
+                    </View>
+                    <Text style={styles.noRouteSectionSub}>
+                      In paas ke stations se destination tak direct bus chal rahi hai:
+                    </Text>
+
+                    {noRouteAlternatives.map((alt, idx) => (
+                      <View key={`nra-${idx}`} style={styles.noRouteAltCard}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={styles.noRouteAltStationName}>{alt.suggestedStop.shortName}</Text>
+                            <Text style={styles.noRouteAltDistText}>({alt.distanceFormatted} · ~{alt.walkingMins}m walk)</Text>
+                          </View>
+                          <Text style={styles.noRouteAltDetail}>
+                            Direct Bus {alt.routeNumber} ({alt.departureTime}) · {alt.durationMins} min ride · ₹{alt.fare}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.noRouteAltBtn}
+                          onPress={() => {
+                            if (alt.type === 'nearby_origin') {
+                              setFromStation(alt.suggestedStop.shortName);
+                            } else {
+                              setToStation(alt.suggestedStop.shortName);
+                            }
+                            setSelectedTripId(null);
+                            triggerCardBounce();
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.noRouteAltBtnText}>
+                            {alt.type === 'nearby_origin' ? 'Board from here' : 'Drop off here'} ➔
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  /* IF NO DIRECT ALTERNATIVES, SHOW CLOSEST STATIONS */
+                  <View style={styles.noRouteSuggestionsBox}>
+                    <Text style={styles.noRouteSectionTitle}>Paas Ke Stations Check Karein:</Text>
+                    <Text style={styles.noRouteSectionSub}>
+                      {fromStation} ke paas ke bus shelters:
+                    </Text>
+                    <View style={styles.noRouteHubList}>
+                      {nearbyOrigins.map((ns, idx) => (
+                        <TouchableOpacity
+                          key={`no-${idx}`}
+                          style={styles.noRouteHubChip}
+                          onPress={() => {
+                            setFromStation(ns.stop.shortName);
+                            setSelectedTripId(null);
+                            triggerCardBounce();
+                          }}
+                        >
+                          <MapPin size={12} color="#18258F" />
+                          <Text style={styles.noRouteHubChipText}>From {ns.stop.shortName} ({ns.distanceFormatted})</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
             )}
           </>
@@ -3619,5 +3760,218 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#78350F',
     lineHeight: 16,
+  },
+  nearbyAlternativeCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    padding: 14,
+    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    shadowColor: '#047857',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  nearbyAltHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D1FAE5',
+  },
+  nearbyAltIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#D1FAE5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nearbyAltTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  nearbyAltSavePill: {
+    backgroundColor: '#047857',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  nearbyAltSavePillText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  nearbyAltSub: {
+    fontSize: 11.5,
+    color: '#047857',
+    marginTop: 2,
+  },
+  nearbyAltItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+  },
+  nearbyAltStationName: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  nearbyAltDistText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  nearbyAltTripDesc: {
+    fontSize: 11.5,
+    color: '#475569',
+    marginTop: 2,
+  },
+  nearbyAltSwitchBtn: {
+    backgroundColor: '#047857',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nearbyAltSwitchBtnText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  noRouteContainer: {
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
+  noRouteHeader: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginBottom: 16,
+  },
+  noRouteIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  noRouteHeaderTitle: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: '#991B1B',
+    textAlign: 'center',
+  },
+  noRouteHeaderSub: {
+    fontSize: 12.5,
+    color: '#B91C1C',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  noRouteSuggestionsBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  noRouteSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  noRouteSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  noRouteSectionSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 10,
+  },
+  noRouteAltCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  noRouteAltStationName: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  noRouteAltDistText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  noRouteAltDetail: {
+    fontSize: 11.5,
+    color: '#475569',
+    marginTop: 2,
+  },
+  noRouteAltBtn: {
+    backgroundColor: '#18258F',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noRouteAltBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  noRouteHubList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  noRouteHubChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  noRouteHubChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#18258F',
   },
 });

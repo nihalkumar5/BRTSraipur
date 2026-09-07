@@ -96,6 +96,30 @@ export interface ActiveJourney {
   connectingFromTime?: string;
   connectingToTime?: string;
   secondLegStops?: JourneyStopInfo[];
+  nearbyDirectAlternatives?: NearbyDirectAlternative[];
+}
+
+export interface NearbyStation {
+  stop: Stop;
+  distanceKm: number;
+  walkingMins: number;
+  distanceFormatted: string;
+}
+
+export interface NearbyDirectAlternative {
+  type: 'nearby_origin' | 'nearby_destination';
+  suggestedStop: Stop;
+  referenceStop: Stop;
+  targetStop: Stop;
+  distanceKm: number;
+  walkingMins: number;
+  distanceFormatted: string;
+  routeNumber: string;
+  routeName: string;
+  departureTime: string;
+  arrivalTime: string;
+  durationMins: number;
+  fare: number;
 }
 
 export interface PopularRoute {
