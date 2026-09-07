@@ -793,7 +793,9 @@ export default function LiveBusScreen() {
                   <View style={styles.heroBottomRow}>
                     <View>
                       <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
-                      <Text style={styles.heroMetaSubtitle}>AC Express</Text>
+                      <Text style={styles.heroMetaSubtitle}>
+                        {journey.isTransfer ? `Transfer at ${journey.transferHub}` : 'AC Express'}
+                      </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={styles.heroMetaTitle}>{journey.durationMins} min</Text>
@@ -801,6 +803,18 @@ export default function LiveBusScreen() {
                     </View>
                   </View>
                 </Animated.View>
+
+                {/* TRANSFER ALERT BANNER */}
+                {journey.isTransfer && (
+                  <View style={styles.transferAlertBanner}>
+                    <View style={styles.transferAlertBadge}>
+                      <Text style={styles.transferAlertBadgeText}>TRANSFER HUB</Text>
+                    </View>
+                    <Text style={styles.transferAlertText}>
+                      Change buses at <Text style={{ fontWeight: '700', color: '#18258F' }}>{journey.transferHub}</Text> ({journey.transferWaitMins}m sync wait)
+                    </Text>
+                  </View>
+                )}
 
                 {/* UPCOMING DEPARTURES STRIP */}
                 {journey.upcomingDepartures && journey.upcomingDepartures.length > 1 ? (
@@ -3091,5 +3105,35 @@ const styles = StyleSheet.create({
   depStatusTextFuture: {
     fontWeight: '600',
     color: '#64748B',
+  },
+  transferAlertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    gap: 8,
+  },
+  transferAlertBadge: {
+    backgroundColor: '#18258F',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  transferAlertBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.4,
+  },
+  transferAlertText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: '#1E3A8A',
+    fontWeight: '500',
   },
 });

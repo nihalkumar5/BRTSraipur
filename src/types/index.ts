@@ -36,6 +36,7 @@ export interface Trip {
   arrivalTime: string;
   departureMins: number;
   arrivalMins: number;
+  routeType?: 'trunk' | 'feeder';
   stops: TripStop[];
 }
 
@@ -87,6 +88,13 @@ export interface ActiveJourney {
   intermediateStopsCount: number;
   intermediateStops: JourneyStopInfo[];
   upcomingDepartures: UpcomingDeparture[];
+  isTransfer?: boolean;
+  transferHub?: string;
+  transferWaitMins?: number;
+  connectingTrip?: Trip;
+  connectingFromTime?: string;
+  connectingToTime?: string;
+  secondLegStops?: JourneyStopInfo[];
 }
 
 export interface PopularRoute {

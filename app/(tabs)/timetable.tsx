@@ -18,6 +18,7 @@ import { Trip } from '../../src/types';
 export default function TimetableScreen() {
   const [dayType, setDayType] = useState<'weekday' | 'weekend'>('weekday');
   const [direction, setDirection] = useState<'up' | 'down'>('up');
+  const [serviceFilter, setServiceFilter] = useState<'all' | 'trunk' | 'feeder'>('all');
   const [selectedRoute, setSelectedRoute] = useState<string>('all');
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
 
@@ -47,19 +48,25 @@ export default function TimetableScreen() {
 
   const availableRoutes = useMemo(() => {
     const list = schedules
-      .filter(s => s.serviceDay === dayType && s.direction === direction)
+      .filter(s => {
+        if (s.serviceDay !== dayType) return false;
+        if (s.direction !== direction) return false;
+        if (serviceFilter !== 'all' && (s.routeType || 'trunk') !== serviceFilter) return false;
+        return true;
+      })
       .map(s => s.route);
     return ['all', ...Array.from(new Set(list))];
-  }, [dayType, direction]);
+  }, [dayType, direction, serviceFilter]);
 
   const filteredTrips = useMemo(() => {
     return schedules.filter(s => {
       if (s.serviceDay !== dayType) return false;
       if (s.direction !== direction) return false;
+      if (serviceFilter !== 'all' && (s.routeType || 'trunk') !== serviceFilter) return false;
       if (selectedRoute !== 'all' && s.route !== selectedRoute) return false;
       return true;
     });
-  }, [dayType, direction, selectedRoute]);
+  }, [dayType, direction, serviceFilter, selectedRoute]);
 
   const toggleExpand = (id: string) => {
     setExpandedTripId(prev => (prev === id ? null : id));
@@ -99,7 +106,38 @@ export default function TimetableScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* 2. PRIMARY DIRECTION SELECTOR */}
+        {/* 2. NETWORK FILTER: ALL / TRUNK / FEEDER */}
+        <View style={styles.networkToggleRow}>
+          <TouchableOpacity
+            style={[styles.networkToggleBtn, serviceFilter === 'all' && styles.networkToggleBtnActive]}
+            onPress={() => { setServiceFilter('all'); setSelectedRoute('all'); }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.networkToggleText, serviceFilter === 'all' && styles.networkToggleTextActive]}>
+              All Services
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.networkToggleBtn, serviceFilter === 'trunk' && styles.networkToggleBtnActive]}
+            onPress={() => { setServiceFilter('trunk'); setSelectedRoute('all'); }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.networkToggleText, serviceFilter === 'trunk' && styles.networkToggleTextActive]}>
+              Trunk Express
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.networkToggleBtn, serviceFilter === 'feeder' && styles.networkToggleBtnActive]}
+            onPress={() => { setServiceFilter('feeder'); setSelectedRoute('all'); }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.networkToggleText, serviceFilter === 'feeder' && styles.networkToggleTextActive]}>
+              Feeder & Last-Mile
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 3. PRIMARY DIRECTION SELECTOR */}
         <TouchableOpacity
           style={styles.primaryDirectionBar}
           onPress={toggleDirection}
@@ -158,10 +196,15 @@ export default function TimetableScreen() {
             >
               {/* TOP BADGE & DURATION ROW */}
               <View style={styles.tripTopRow}>
-                <View style={styles.badge}>
-                  <Bus size={12} color="#18258F" style={{ marginRight: 4 }} />
-                  <Text style={styles.badgeText}>{item.route}</Text>
+                <View style={[styles.badge, item.routeType === 'feeder' && styles.feederBadge]}>
+                  <Bus size={12} color={item.routeType === 'feeder' ? '#059669' : '#18258F'} style={{ marginRight: 4 }} />
+                  <Text style={[styles.badgeText, item.routeType === 'feeder' && styles.feederBadgeText]}>{item.route}</Text>
                 </View>
+                {item.routeType === 'feeder' ? (
+                  <View style={styles.feederTag}>
+                    <Text style={styles.feederTagText}>Last-Mile Feeder</Text>
+                  </View>
+                ) : null}
                 <Text style={styles.durationText}>{duration} min</Text>
               </View>
 
@@ -309,6 +352,39 @@ const styles = StyleSheet.create({
     color: '#18258F',
     fontWeight: '700',
   },
+  networkToggleRow: {
+    height: 34,
+    flexDirection: 'row',
+    backgroundColor: '#F1F3FA',
+    borderRadius: 10,
+    padding: 2.5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#DDE2F0',
+  },
+  networkToggleBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  networkToggleBtnActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  networkToggleText: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  networkToggleTextActive: {
+    color: '#18258F',
+    fontWeight: '700',
+  },
 
   /* 2. PRIMARY ROUTE SELECTOR — SINGLE CLEAN CONTROL */
   primaryDirectionBar: {
@@ -418,6 +494,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#18258F',
     letterSpacing: 0.3,
+  },
+  feederBadge: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  feederBadgeText: {
+    color: '#047857',
+  },
+  feederTag: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  feederTagText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#047857',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   durationText: {
     fontSize: 12,

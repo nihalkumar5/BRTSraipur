@@ -690,5 +690,43 @@
       "latitude": 21.1585,
       "longitude": 81.793
     }
+  },
+  {
+    "id": "S17M",
+    "name": "Sector 17 Main Gate",
+    "shortName": "Sec 17 Gate",
+    "code": "S17M",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096d \u092e\u0947\u0928 \u0917\u0947\u091f",
+    "type": "station",
+    "corridor": "Feeder Corridor",
+    "landmark": "Sector 17 Residential Main Gate",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "Pedestrian Access"
+    ],
+    "coordinates": {
+      "latitude": 21.1592,
+      "longitude": 81.7675
+    }
+  },
+  {
+    "id": "S18M",
+    "name": "Sector 18 Main Gate",
+    "shortName": "Sec 18 Gate",
+    "code": "S18M",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096e \u092e\u0947\u0928 \u0917\u0947\u091f",
+    "type": "station",
+    "corridor": "Feeder Corridor",
+    "landmark": "Sector 18 Residential Main Gate",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "Pedestrian Access"
+    ],
+    "coordinates": {
+      "latitude": 21.161,
+      "longitude": 81.763
+    }
   }
 ]

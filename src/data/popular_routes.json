@@ -48,5 +48,25 @@
     "tag": "Fast Shuttle",
     "typicalDuration": "26m",
     "fare": 10
+  },
+  {
+    "id": "pop-6",
+    "from": "North Block",
+    "to": "Satya Sai Hospital",
+    "fromDisplay": "North Block",
+    "toDisplay": "Satya Sai Hospital",
+    "tag": "Hospital Feeder 301",
+    "typicalDuration": "15m",
+    "fare": 10
+  },
+  {
+    "id": "pop-7",
+    "from": "CBD",
+    "to": "Sector 30",
+    "fromDisplay": "CBD",
+    "toDisplay": "Sector 30",
+    "tag": "Sectors Loop 501",
+    "typicalDuration": "17m",
+    "fare": 10
   }
 ]

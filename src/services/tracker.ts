@@ -2,7 +2,7 @@ import rawStops from '../data/stops.json';
 import rawSchedules from '../data/schedules.json';
 import rawFares from '../data/fares.json';
 import rawPopularRoutes from '../data/popular_routes.json';
-import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture } from '../types';
+import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo } from '../types';
 
 export const stops: Stop[] = rawStops as Stop[];
 export const schedules: Trip[] = rawSchedules as Trip[];
@@ -61,6 +61,199 @@ export function formatMinutesToTime(mins: number): string {
   if (hours > 12) hours -= 12;
   if (hours === 0) hours = 12;
   return `${hours}:${m.toString().padStart(2, '0')} ${period}`;
+}
+
+function calculateTransferJourney(
+  fromStop: Stop,
+  toStop: Stop,
+  serviceDay: 'weekday' | 'weekend',
+  nowMins: number,
+  mode: 'next' | 'onboard' = 'next'
+): ActiveJourney | null {
+  const hubs = ['North Block', 'CBD', 'Sector 22', 'Navagaon'];
+
+  interface TransferOption {
+    hub: string;
+    leg1Trip: Trip;
+    leg2Trip: Trip;
+    f1Idx: number;
+    t1Idx: number;
+    f2Idx: number;
+    t2Idx: number;
+    depMins1: number;
+    arrMins1: number;
+    depMins2: number;
+    arrMins2: number;
+    waitMins: number;
+    totalDuration: number;
+  }
+
+  const transferOptions: TransferOption[] = [];
+
+  for (const hubName of hubs) {
+    const hubStop = getStopByName(hubName);
+    if (!hubStop) continue;
+    if (hubStop.id === fromStop.id || hubStop.id === toStop.id) continue;
+
+    // Find all trips from fromStop to hub
+    const leg1Trips: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1;
+      let tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        const sName = s.stop.toLowerCase();
+        if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()) || fromStop.name.toLowerCase().includes(sName))) {
+          fIdx = idx;
+        }
+        if (tIdx === -1 && fIdx !== -1 && (sName === hubStop.name.toLowerCase() || sName.includes(hubStop.shortName.toLowerCase()) || hubStop.name.toLowerCase().includes(sName))) {
+          tIdx = idx;
+        }
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        leg1Trips.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins, arrMins: trip.stops[tIdx].mins });
+      }
+    }
+
+    // Find all trips from hub to toStop
+    const leg2Trips: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1;
+      let tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        const sName = s.stop.toLowerCase();
+        if (fIdx === -1 && (sName === hubStop.name.toLowerCase() || sName.includes(hubStop.shortName.toLowerCase()) || hubStop.name.toLowerCase().includes(sName))) {
+          fIdx = idx;
+        }
+        if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()) || toStop.name.toLowerCase().includes(sName))) {
+          tIdx = idx;
+        }
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        leg2Trips.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins, arrMins: trip.stops[tIdx].mins });
+      }
+    }
+
+    // Pair them up with a transfer window of 2 to 60 minutes
+    for (const l1 of leg1Trips) {
+      for (const l2 of leg2Trips) {
+        const wait = l2.depMins - l1.arrMins;
+        if (wait >= 2 && wait <= 60) {
+          const totalDuration = l2.arrMins - l1.depMins;
+          transferOptions.push({
+            hub: hubName,
+            leg1Trip: l1.trip,
+            leg2Trip: l2.trip,
+            f1Idx: l1.fIdx,
+            t1Idx: l1.tIdx,
+            f2Idx: l2.fIdx,
+            t2Idx: l2.tIdx,
+            depMins1: l1.depMins,
+            arrMins1: l1.arrMins,
+            depMins2: l2.depMins,
+            arrMins2: l2.arrMins,
+            waitMins: wait,
+            totalDuration,
+          });
+        }
+      }
+    }
+  }
+
+  if (transferOptions.length === 0) {
+    return null;
+  }
+
+  // Filter for upcoming departures
+  transferOptions.sort((a, b) => a.depMins1 - b.depMins1);
+  const upcomingTransfers = transferOptions.filter(t => t.depMins1 >= nowMins - 1);
+  const chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
+  const isNextDay = upcomingTransfers.length === 0;
+
+  const fare1 = getFare(fromStop.name, chosen.hub);
+  const fare2 = getFare(chosen.hub, toStop.name);
+  const totalFare = fare1 + fare2;
+
+  const fromTime = chosen.leg1Trip.stops[chosen.f1Idx].time;
+  const toTime = chosen.leg2Trip.stops[chosen.t2Idx].time;
+  const hubDepartureTime = chosen.leg2Trip.stops[chosen.f2Idx].time;
+
+  // Leg 1 stops
+  const intermediateStops: JourneyStopInfo[] = chosen.leg1Trip.stops
+    .slice(chosen.f1Idx, chosen.t1Idx + 1)
+    .map((s, idx, arr) => {
+      const matched = getStopByName(s.stop);
+      return {
+        name: s.stop,
+        code: matched ? matched.code : s.stop.slice(0, 3).toUpperCase(),
+        time: s.time,
+        mins: s.mins,
+        passed: s.mins < nowMins,
+        isCurrentNext: false,
+        isBoarding: idx === 0,
+        isDropoff: idx === arr.length - 1,
+      };
+    });
+
+  // Leg 2 stops
+  const secondLegStops: JourneyStopInfo[] = chosen.leg2Trip.stops
+    .slice(chosen.f2Idx, chosen.t2Idx + 1)
+    .map((s, idx, arr) => {
+      const matched = getStopByName(s.stop);
+      return {
+        name: s.stop,
+        code: matched ? matched.code : s.stop.slice(0, 3).toUpperCase(),
+        time: s.time,
+        mins: s.mins,
+        passed: false,
+        isCurrentNext: false,
+        isBoarding: idx === 0,
+        isDropoff: idx === arr.length - 1,
+      };
+    });
+
+  const diffMins = isNextDay ? chosen.depMins1 + 1440 - nowMins : Math.max(0, chosen.depMins1 - nowMins);
+  const timeStr = diffMins > 60 ? `${Math.floor(diffMins / 60)}h ${diffMins % 60}m` : `${diffMins}m`;
+
+  return {
+    trip: chosen.leg1Trip,
+    fromStop,
+    toStop,
+    fromTime,
+    toTime,
+    departureMins: chosen.depMins1,
+    arrivalMins: chosen.arrMins2,
+    durationMins: chosen.totalDuration,
+    fare: totalFare,
+    classFareText: `₹${totalFare} · 1 Transfer via ${chosen.hub}`,
+    routeBadge: `${chosen.leg1Trip.routeNumber} ➔ ${chosen.leg2Trip.routeNumber}`,
+    countdownText: `Transfer at ${chosen.hub} (${chosen.waitMins}m wait)`,
+    timeRemainingText: isNextDay ? `Tomorrow ${fromTime}` : `in ${timeStr}`,
+    progressPercent: 0,
+    isUpcoming: true,
+    isInTransit: false,
+    currentStatusText: `Change at ${chosen.hub} · ${chosen.waitMins} min transfer sync`,
+    intermediateStopsCount: intermediateStops.length + secondLegStops.length - 1,
+    intermediateStops,
+    upcomingDepartures: transferOptions.slice(0, 5).map(o => ({
+      tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
+      route: `${o.leg1Trip.routeNumber} ➔ ${o.leg2Trip.routeNumber}`,
+      departureTime: o.leg1Trip.stops[o.f1Idx].time,
+      arrivalTime: o.leg2Trip.stops[o.t2Idx].time,
+      departureMins: o.depMins1,
+      diffMins: Math.max(0, o.depMins1 - nowMins),
+      isNextDay: o.depMins1 < nowMins,
+      isInTransit: false,
+    })),
+    isTransfer: true,
+    transferHub: chosen.hub,
+    transferWaitMins: chosen.waitMins,
+    connectingTrip: chosen.leg2Trip,
+    connectingFromTime: hubDepartureTime,
+    connectingToTime: toTime,
+    secondLegStops,
+  };
 }
 
 export function calculateJourney(
@@ -149,7 +342,7 @@ export function calculateJourney(
   }
 
   if (matchingTrips.length === 0) {
-    return null;
+    return calculateTransferJourney(fromStop, toStop, serviceDay, nowMins, mode);
   }
 
   // Sort matching trips chronologically by departure time from the boarding station
