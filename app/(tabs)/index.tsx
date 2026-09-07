@@ -31,6 +31,7 @@ import {
   MapPin,
   CheckCircle2,
   Check,
+  RotateCcw,
   Bell,
   BellRing,
   Calendar,
@@ -531,19 +532,67 @@ export default function LiveBusScreen() {
     return journey.intermediateStops[nextStopIdx + 1];
   }, [journey, nextStopIdx]);
 
+  // Onboard departure and arrival states
+  const isBeforeDeparture = useMemo(() => {
+    if (!journey) return false;
+    return currentTimeMins < journey.departureMins;
+  }, [journey, currentTimeMins]);
+
+  const isJourneyCompleted = useMemo(() => {
+    if (!journey) return false;
+    return currentTimeMins >= journey.arrivalMins;
+  }, [journey, currentTimeMins]);
+
   // Active current stop index for Onboard
   const activeCurrentStopIdx = useMemo(() => {
     if (!journey) return -1;
     if (nextStopIdx >= 0) return nextStopIdx;
+    if (currentTimeMins < journey.departureMins) return 0;
+    if (journey.intermediateStops.every(s => s.passed)) return journey.intermediateStops.length - 1;
     const firstUnpassed = journey.intermediateStops.findIndex(s => !s.passed);
     return firstUnpassed >= 0 ? firstUnpassed : 0;
-  }, [journey, nextStopIdx]);
+  }, [journey, nextStopIdx, currentTimeMins]);
 
   // Stops left count for Onboard
   const onboardStopsLeftCount = useMemo(() => {
     if (!journey) return 0;
+    if (isJourneyCompleted) return 0;
     return journey.remainingStopsCount ?? Math.max(1, journey.intermediateStops.length - 1 - Math.max(0, activeCurrentStopIdx));
-  }, [journey, activeCurrentStopIdx]);
+  }, [journey, isJourneyCompleted, activeCurrentStopIdx]);
+
+  // Dynamic next stop name for Hero
+  const heroStationName = useMemo(() => {
+    if (!journey) return 'Sector 29';
+    if (isBeforeDeparture) {
+      return journey.fromStop.shortName || journey.fromStop.name;
+    }
+    if (isJourneyCompleted) {
+      return journey.toStop.shortName || journey.toStop.name;
+    }
+    if (journey.nextStopName) {
+      return journey.nextStopName;
+    }
+    if (activeCurrentStopIdx >= 0 && activeCurrentStopIdx < journey.intermediateStops.length) {
+      return journey.intermediateStops[activeCurrentStopIdx].name;
+    }
+    return journey.toStop.shortName || journey.toStop.name;
+  }, [journey, isBeforeDeparture, isJourneyCompleted, activeCurrentStopIdx]);
+
+  // Dynamic ETA badge text for Hero
+  const heroEtaBadgeText = useMemo(() => {
+    if (!journey) return '● Arriving now';
+    if (isBeforeDeparture) {
+      const diff = Math.max(0, journey.departureMins - currentTimeMins);
+      return diff <= 5 && diff > 0 ? `● Departs in ${diff} min` : `● Departs at ${journey.fromTime}`;
+    }
+    if (isJourneyCompleted) {
+      return `● Arrived at ${journey.toTime}`;
+    }
+    if (!journey.nextStopETA || journey.nextStopETA.toLowerCase().includes('now') || journey.nextStopETA === '0m' || journey.nextStopETA === '1m') {
+      return '● Arriving now';
+    }
+    return `● Arriving in ~${journey.nextStopETA.replace('m', ' min')}`;
+  }, [journey, isBeforeDeparture, isJourneyCompleted, currentTimeMins]);
 
   // Focused stops to display in compact journey map (up to 3 passed + current + next 4 upcoming)
   const displayedOnboardStops = useMemo(() => {
@@ -2002,23 +2051,20 @@ export default function LiveBusScreen() {
                 </View>
 
                 {/* Next Stop Label */}
-                <Text style={styles.onboardHeroNextStopLabel}>NEXT STOP</Text>
+                <Text style={styles.onboardHeroNextStopLabel}>
+                  {isBeforeDeparture ? 'DEPARTING FROM' : isJourneyCompleted ? 'DESTINATION' : 'NEXT STOP'}
+                </Text>
 
                 {/* Station Name */}
                 <Text style={styles.onboardHeroNextStopTitle} numberOfLines={1}>
-                  {journey.nextStopName || 'Sector 29'}
+                  {heroStationName}
                 </Text>
 
                 {/* Arrival Status */}
                 <View style={styles.onboardHeroEtaRow}>
                   <View style={styles.onboardHeroEtaBadge}>
                     <Text style={styles.onboardHeroEtaText}>
-                      {!journey.nextStopETA ||
-                      journey.nextStopETA.toLowerCase().includes('now') ||
-                      journey.nextStopETA === '0m' ||
-                      journey.nextStopETA === '1m'
-                        ? '● Arriving now'
-                        : `● Arriving in ~${journey.nextStopETA.replace('m', ' min')}`}
+                      {heroEtaBadgeText}
                     </Text>
                   </View>
                 </View>
@@ -2105,10 +2151,35 @@ export default function LiveBusScreen() {
               {/* 3. YOUR JOURNEY (COMPACT ROUTE PROGRESS MAP) */}
               <View style={styles.compactJourneyCard}>
                 <View style={styles.compactJourneyHeader}>
-                  <Text style={styles.compactJourneyTitle}>YOUR JOURNEY</Text>
-                  <Text style={styles.compactJourneyStopsLeft}>
-                    {onboardStopsLeftCount} {onboardStopsLeftCount === 1 ? 'stop' : 'stops'}
-                  </Text>
+                  <View style={styles.compactJourneyHeaderLeft}>
+                    <Text style={styles.compactJourneyTitle}>YOUR JOURNEY</Text>
+                    {!isLiveClock && (
+                      <View style={styles.compactJourneySimBadge}>
+                        <Text style={styles.compactJourneySimBadgeText}>PREVIEW</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {!isLiveClock ? (
+                    <TouchableOpacity
+                      style={styles.compactJourneyResetLiveBtn}
+                      onPress={() => {
+                        setIsLiveClock(true);
+                        setCurrentTimeMins(getCurrentMinutesOfDay());
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <RotateCcw size={11} color="#18258F" strokeWidth={2.4} />
+                      <Text style={styles.compactJourneyResetLiveText}>Reset to Live</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.compactJourneyStopsLeftWrap}>
+                      <View style={styles.liveGreenDotSmall} />
+                      <Text style={styles.compactJourneyStopsLeft}>
+                        {onboardStopsLeftCount} {onboardStopsLeftCount === 1 ? 'stop' : 'stops'} left
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.compactJourneyList}>
@@ -2117,28 +2188,43 @@ export default function LiveBusScreen() {
                     const isPassed = originalIndex < activeCurrentStopIdx;
                     const isLast = originalIndex === journey.intermediateStops.length - 1;
                     const isLastInDisplayed = localIndex === displayedOnboardStops.length - 1;
+                    const isBoardingStop = isBeforeDeparture && originalIndex === 0;
+                    const isArrivedAtDest = isJourneyCompleted && isLast;
+                    const minsDiff = Math.max(0, stopItem.mins - currentTimeMins);
 
                     return (
-                      <View
+                      <TouchableOpacity
                         key={`${stopItem.name}_${originalIndex}`}
                         style={[
                           styles.compactJourneyRow,
                           isPassed && styles.compactJourneyRowPassed,
                           isCurrent && styles.compactJourneyRowCurrent,
                         ]}
+                        onPress={() => {
+                          setCurrentTimeMins(stopItem.mins);
+                          setIsLiveClock(false);
+                        }}
+                        activeOpacity={0.7}
                       >
                         {/* DOT / TRACK CONNECTOR */}
                         <View style={styles.compactJourneyDotCol}>
                           {!isLastInDisplayed && (
-                            <View style={styles.compactJourneyVerticalLine} />
+                            <View
+                              style={[
+                                styles.compactJourneyVerticalLine,
+                                isPassed && styles.compactJourneyVerticalLinePassed,
+                              ]}
+                            />
                           )}
 
                           {isPassed ? (
                             <View style={styles.compactJourneyPassedDotWrap}>
-                              <Check size={11} color="#94A3B8" strokeWidth={2.4} />
+                              <Check size={10} color="#94A3B8" strokeWidth={2.6} />
                             </View>
                           ) : isCurrent ? (
-                            <View style={styles.compactJourneyCurrentDot} />
+                            <View style={styles.compactJourneyCurrentDotWrap}>
+                              <View style={styles.compactJourneyCurrentDot} />
+                            </View>
                           ) : isLast ? (
                             <View style={styles.compactJourneyDestDot}>
                               <View style={styles.compactJourneyDestDotInner} />
@@ -2162,10 +2248,28 @@ export default function LiveBusScreen() {
                             {stopItem.name}
                           </Text>
 
-                          {isCurrent ? (
-                            <View style={styles.compactJourneyNowBadge}>
-                              <Text style={styles.compactJourneyNowBadgeText}>ARRIVING NOW</Text>
+                          {isBoardingStop ? (
+                            <View style={styles.compactJourneyBoardingBadge}>
+                              <Text style={styles.compactJourneyBoardingBadgeText}>
+                                {journey.departureMins - currentTimeMins <= 5 && journey.departureMins - currentTimeMins > 0
+                                  ? `DEPARTS IN ${journey.departureMins - currentTimeMins}M`
+                                  : `BOARDING · ${stopItem.time}`}
+                              </Text>
                             </View>
+                          ) : isArrivedAtDest ? (
+                            <View style={styles.compactJourneyArrivedBadge}>
+                              <Text style={styles.compactJourneyArrivedBadgeText}>ARRIVED</Text>
+                            </View>
+                          ) : isCurrent ? (
+                            minsDiff <= 1 ? (
+                              <View style={styles.compactJourneyNowBadge}>
+                                <Text style={styles.compactJourneyNowBadgeText}>ARRIVING NOW</Text>
+                              </View>
+                            ) : (
+                              <View style={styles.compactJourneyInMinBadge}>
+                                <Text style={styles.compactJourneyInMinBadgeText}>IN {minsDiff} MIN</Text>
+                              </View>
+                            )
                           ) : isPassed ? null : (
                             <Text
                               style={[
@@ -2177,7 +2281,7 @@ export default function LiveBusScreen() {
                             </Text>
                           )}
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })}
                 </View>
@@ -4787,6 +4891,48 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
+  compactJourneyHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  compactJourneySimBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  compactJourneySimBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#2563EB',
+    letterSpacing: 0.5,
+  },
+  compactJourneyStopsLeftWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  compactJourneyResetLiveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    gap: 4,
+  },
+  compactJourneyResetLiveText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#18258F',
+  },
   compactJourneyTitle: {
     fontFamily: FONT.bold,
     fontSize: 11.5,
@@ -4839,6 +4985,9 @@ const styles = StyleSheet.create({
     left: 9,
     zIndex: 1,
   },
+  compactJourneyVerticalLinePassed: {
+    backgroundColor: '#CBD5E1',
+  },
   compactJourneyPassedDotWrap: {
     width: 14,
     height: 14,
@@ -4846,6 +4995,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     backgroundColor: '#FFFFFF',
+  },
+  compactJourneyCurrentDotWrap: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(24, 37, 143, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   compactJourneyCurrentDot: {
     width: 10,
@@ -4924,6 +5082,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#18258F',
     letterSpacing: 0.5,
+  },
+  compactJourneyBoardingBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  compactJourneyBoardingBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+    letterSpacing: 0.5,
+  },
+  compactJourneyArrivedBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  compactJourneyArrivedBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#15803D',
+    letterSpacing: 0.5,
+  },
+  compactJourneyInMinBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  compactJourneyInMinBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#334155',
+    letterSpacing: 0.4,
   },
   compactJourneyTimeText: {
     fontFamily: FONT.medium,

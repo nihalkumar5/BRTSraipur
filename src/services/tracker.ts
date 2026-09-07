@@ -1327,15 +1327,42 @@ export function calculateJourney(
 
   const intermediateStops = trip.stops.slice(fromIndex, toIndex + 1).map((s, idx, arr) => {
     const matchedStop = getStopByName(s.stop);
-    const passed = s.mins < nowMins;
+    // In transit: passed if stop time is earlier than current minute
+    // After trip completion: all intermediate stops are passed
+    // Before trip departure: none passed yet
+    const passed = isInTransit
+      ? s.mins < nowMins
+      : (nowMins > arrMins ? true : false);
+
     let isCurrentNext = false;
 
-    if (isInTransit && !passed && !nextFound) {
-      isCurrentNext = true;
-      nextFound = true;
-      nextStopName = matchedStop ? matchedStop.shortName : s.stop;
-      const etaMins = Math.max(0, s.mins - nowMins);
-      nextStopETA = etaMins === 0 ? 'Now' : `${etaMins}m`;
+    if (isInTransit) {
+      if (!passed && !nextFound) {
+        isCurrentNext = true;
+        nextFound = true;
+        nextStopName = matchedStop ? matchedStop.shortName : s.stop;
+        const etaMins = Math.max(0, s.mins - nowMins);
+        nextStopETA = etaMins <= 1 ? 'Now' : `${etaMins}m`;
+      }
+    } else if (mode === 'onboard') {
+      if (nowMins < depMins) {
+        // Pre-departure: currently boarding at origin station (idx 0)
+        if (idx === 0) {
+          isCurrentNext = true;
+          nextFound = true;
+          nextStopName = matchedStop ? matchedStop.shortName : s.stop;
+          const diff = Math.max(0, depMins - nowMins);
+          nextStopETA = diff <= 1 ? 'Now' : diff <= 60 ? `${diff}m` : s.time;
+        }
+      } else {
+        // Post-arrival: at destination terminal (last stop)
+        if (idx === arr.length - 1) {
+          isCurrentNext = true;
+          nextFound = true;
+          nextStopName = matchedStop ? matchedStop.shortName : s.stop;
+          nextStopETA = 'Arrived';
+        }
+      }
     }
 
     return {
