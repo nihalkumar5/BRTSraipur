@@ -576,64 +576,80 @@ export default function LiveBusScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* --- TOP PLANNING MODE SWITCHER (PILL SEGMENT CONTROL) --- */}
+      {/* --- REDBUS-STYLE 2-SECTION TOP HEADER (BLUE ACTIVE) --- */}
       <View style={styles.topTabBar}>
-        {/* TAB 1: Bus Search */}
+        {/* SECTION 1: Bus tickets */}
         <TouchableOpacity
-          style={[
-            styles.topTabItem,
-            planningMode === 'next' && styles.topTabItemActive,
-          ]}
+          style={styles.topTabItem}
           onPress={() => {
             setPlanningMode('next');
             setSelectedTripId(null);
             triggerCardBounce();
           }}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Bus
-            size={15}
-            color={planningMode === 'next' ? '#18258F' : '#556080'}
-            strokeWidth={planningMode === 'next' ? 2 : 1.75}
-            style={{ marginRight: 6 }}
-          />
-          <Text
+          <View style={styles.topTabContent}>
+            <View style={styles.topTabIconBox}>
+              <Bus
+                size={23}
+                color={planningMode === 'next' ? '#18258F' : '#64748B'}
+                strokeWidth={planningMode === 'next' ? 2.2 : 1.75}
+              />
+            </View>
+            <Text
+              style={[
+                styles.topTabLabel,
+                planningMode === 'next'
+                  ? styles.topTabLabelActive
+                  : styles.topTabLabelInactive,
+              ]}
+            >
+              Bus tickets
+            </Text>
+          </View>
+          <View
             style={[
-              styles.topTabLabel,
-              planningMode === 'next' && styles.topTabLabelActive,
+              styles.topTabIndicator,
+              planningMode === 'next' && styles.topTabIndicatorActive,
             ]}
-          >
-            Bus tickets
-          </Text>
+          />
         </TouchableOpacity>
 
-        {/* TAB 2: I'm Onboard */}
+        {/* SECTION 2: I'm onboard */}
         <TouchableOpacity
-          style={[
-            styles.topTabItem,
-            planningMode === 'onboard' && styles.topTabItemActive,
-          ]}
+          style={styles.topTabItem}
           onPress={() => {
             setPlanningMode('onboard');
             setSelectedTripId(null);
             triggerCardBounce();
           }}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Navigation
-            size={15}
-            color={planningMode === 'onboard' ? '#18258F' : '#556080'}
-            strokeWidth={planningMode === 'onboard' ? 2 : 1.75}
-            style={{ marginRight: 6 }}
-          />
-          <Text
+          <View style={styles.topTabContent}>
+            <View style={styles.topTabIconBox}>
+              <Navigation
+                size={22}
+                color={planningMode === 'onboard' ? '#18258F' : '#64748B'}
+                strokeWidth={planningMode === 'onboard' ? 2.2 : 1.75}
+              />
+            </View>
+            <Text
+              style={[
+                styles.topTabLabel,
+                planningMode === 'onboard'
+                  ? styles.topTabLabelActive
+                  : styles.topTabLabelInactive,
+              ]}
+            >
+              I'm onboard
+            </Text>
+          </View>
+          <View
             style={[
-              styles.topTabLabel,
-              planningMode === 'onboard' && styles.topTabLabelActive,
+              styles.topTabIndicator,
+              planningMode === 'onboard' && styles.topTabIndicatorActive,
             ]}
-          >
-            I'm onboard
-          </Text>
+          />
         </TouchableOpacity>
       </View>
 
@@ -2387,49 +2403,64 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 110,
   },
-  /* TOP MODE TAB BAR (PILL SEGMENT CONTROL) */
+  /* RED-BUS STYLE 2-SECTION TOP HEADER */
   topTabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(247, 247, 244, 0.92)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(24, 37, 143, 0.08)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    gap: 8,
-    zIndex: 20,
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(22px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(22px) saturate(180%)',
-        } as any)
-      : {}),
-  },
-  topTabItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    backgroundColor: 'transparent',
-  },
-  topTabItemActive: {
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#ECEEF2',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    overflow: 'hidden',
+    zIndex: 20,
+    elevation: 2,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
-    elevation: 1,
+  },
+  topTabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  topTabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 7,
+  },
+  topTabIconBox: {
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   topTabLabel: {
-    fontSize: 11.5,
-    fontWeight: '500',
-    color: '#556080',
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    letterSpacing: 0.1,
   },
   topTabLabelActive: {
-    color: '#18258F',
+    fontFamily: FONT.bold,
     fontWeight: '700',
+    color: '#18258F',
+  },
+  topTabLabelInactive: {
+    fontFamily: FONT.medium,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  topTabIndicator: {
+    width: '88%',
+    height: 3,
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
+  topTabIndicatorActive: {
+    backgroundColor: '#18258F', // Signature Royal Blue underline bar
   },
 
   /* HERO BANNER (INITIAL UNSEARCHED STATE) */
