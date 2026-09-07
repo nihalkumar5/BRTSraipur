@@ -995,7 +995,9 @@ export default function LiveBusScreen() {
                                     {isDest ? `Drop at ${alt.suggestedStop.shortName}` : alt.suggestedStop.shortName}
                                   </Text>
                                   <Text style={styles.serviceEndedDistBadge}>
-                                    ({alt.distanceFormatted} {isDest ? `from ${journey.toStop.shortName}` : 'away'} · ~{alt.walkingMins}m walk)
+                                    ({alt.stopsAway
+                                      ? `${alt.stopsAway} stop${alt.stopsAway > 1 ? 's' : ''} before ${journey.toStop.shortName} · ~${alt.routeTimeDeltaMins}m on route`
+                                      : `${alt.distanceFormatted} ${isDest ? `from ${journey.toStop.shortName}` : 'away'} · ~${alt.walkingMins}m walk`})
                                   </Text>
                                 </View>
                                 <Text style={styles.serviceEndedTripInfo}>
@@ -1055,7 +1057,7 @@ export default function LiveBusScreen() {
                           <Zap size={13} color="#FBBF24" strokeWidth={2.4} />
                           <Text style={styles.heroAlternativeHintText}>
                             {journey.nearbyDirectAlternatives.find(a => a.isToday)?.type === 'nearby_destination'
-                              ? `Take bus till ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight (${journey.nearbyDirectAlternatives.find(a => a.isToday)?.distanceFormatted} to ${journey.toStop.shortName}) ➔`
+                              ? `Take bus till ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight (${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway ? `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway} stop${(journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway || 1) > 1 ? 's' : ''} before ${journey.toStop.shortName}` : `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.distanceFormatted} to ${journey.toStop.shortName}`}) ➔`
                               : `Board from ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight ➔`}
                           </Text>
                         </TouchableOpacity>
@@ -1312,7 +1314,11 @@ export default function LiveBusScreen() {
                         <View style={{ flex: 1, marginRight: 8 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                             <Text style={styles.nearbyAltStationName}>{alt.suggestedStop.shortName}</Text>
-                            <Text style={styles.nearbyAltDistText}>({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)</Text>
+                            <Text style={styles.nearbyAltDistText}>
+                              ({alt.stopsAway
+                                ? `${alt.stopsAway} stop${alt.stopsAway > 1 ? 's' : ''} on route · ~${alt.routeTimeDeltaMins}m`
+                                : `${alt.distanceFormatted} away · ~${alt.walkingMins}m walk`})
+                            </Text>
                             {alt.isReachableNow && (
                               <View style={styles.reachableNowPill}>
                                 <Text style={styles.reachableNowPillText}>Reachable</Text>

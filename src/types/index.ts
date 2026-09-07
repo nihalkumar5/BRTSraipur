@@ -173,6 +173,8 @@ export interface NearbyDirectAlternative {
   isToday: boolean;
   previousDepartureTime?: string;
   isReachableNow?: boolean;
+  stopsAway?: number;
+  routeTimeDeltaMins?: number;
 }
 
 export interface PopularRoute {

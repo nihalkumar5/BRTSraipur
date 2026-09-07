@@ -233,10 +233,49 @@ export function findNearbyDirectAlternatives(
   const alternatives: NearbyDirectAlternative[] = [];
 
   // 1. Nearby origins to fromStop that have a direct bus to toStop
+  const candidateOriginMap = new Map<string, { stop: Stop; stopsAway?: number; routeTimeDeltaMins?: number; distanceKm: number; walkingMins: number; distanceFormatted: string }>();
+
+  // Extract adjacent stops along routes passing through fromStop
+  for (const trip of schedules) {
+    const fIdx = trip.stops.findIndex(s => matchStop(s.stop, fromStop));
+    if (fIdx !== -1) {
+      for (let offset = 1; offset <= 3; offset++) {
+        const checkIndices = [fIdx - offset, fIdx + offset];
+        for (const idx of checkIndices) {
+          if (idx >= 0 && idx < trip.stops.length) {
+            const adjStop = getStopByName(trip.stops[idx].stop);
+            if (!adjStop || adjStop.id === fromStop.id || adjStop.id === toStop.id) continue;
+            const delta = Math.abs(trip.stops[idx].mins - trip.stops[fIdx].mins);
+            if (!candidateOriginMap.has(adjStop.id) || (candidateOriginMap.get(adjStop.id)!.stopsAway || 99) > offset) {
+              candidateOriginMap.set(adjStop.id, {
+                stop: adjStop,
+                stopsAway: offset,
+                routeTimeDeltaMins: delta,
+                distanceKm: offset * 0.8,
+                walkingMins: Math.max(1, delta),
+                distanceFormatted: `${offset} stop${offset > 1 ? 's' : ''} away`,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
   const nearbyOrigins = getNearbyStations(fromStop.name, maxRadiusKm);
   for (const nearby of nearbyOrigins) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+    if (!candidateOriginMap.has(nearby.stop.id)) {
+      candidateOriginMap.set(nearby.stop.id, {
+        stop: nearby.stop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+      });
+    }
+  }
 
+  for (const nearby of candidateOriginMap.values()) {
     // Strict walking buffer: bus departure must be after the user finishes walking there
     const earliestBoardingMins = nowMins + Math.max(1, nearby.walkingMins - 1);
 
@@ -287,6 +326,8 @@ export function findNearbyDirectAlternatives(
         distanceKm: nearby.distanceKm,
         walkingMins: nearby.walkingMins,
         distanceFormatted: nearby.distanceFormatted,
+        stopsAway: nearby.stopsAway,
+        routeTimeDeltaMins: nearby.routeTimeDeltaMins,
         routeNumber: chosen.trip.routeNumber,
         routeName: chosen.trip.route,
         departureTime: chosen.trip.stops[chosen.fIdx].time,
@@ -302,10 +343,46 @@ export function findNearbyDirectAlternatives(
     }
   }
 
-  // 2. Nearby destinations to toStop that can be reached directly from fromStop
+  // 2. Candidate destinations to toStop:
+  // First, find preceding stops on routes that serve toStop (exact schedule sequence & time delta)
+  const candidateDestMap = new Map<string, { stop: Stop; stopsAway?: number; routeTimeDeltaMins?: number; distanceKm: number; walkingMins: number; distanceFormatted: string }>();
+
+  for (const trip of schedules) {
+    const tIdx = trip.stops.findIndex(s => matchStop(s.stop, toStop));
+    if (tIdx > 0) {
+      for (let offset = 1; offset <= 4 && (tIdx - offset) >= 0; offset++) {
+        const prevStopObj = getStopByName(trip.stops[tIdx - offset].stop);
+        if (!prevStopObj || prevStopObj.id === toStop.id || prevStopObj.id === fromStop.id) continue;
+        const delta = Math.abs(trip.stops[tIdx].mins - trip.stops[tIdx - offset].mins);
+        if (!candidateDestMap.has(prevStopObj.id) || (candidateDestMap.get(prevStopObj.id)!.stopsAway || 99) > offset) {
+          candidateDestMap.set(prevStopObj.id, {
+            stop: prevStopObj,
+            stopsAway: offset,
+            routeTimeDeltaMins: delta,
+            distanceKm: offset * 0.8,
+            walkingMins: delta,
+            distanceFormatted: `${offset} stop${offset > 1 ? 's' : ''} before`,
+          });
+        }
+      }
+    }
+  }
+
+  // Also include geographic nearby destinations as fallback
   const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
   for (const nearby of nearbyDestinations) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+    if (!candidateDestMap.has(nearby.stop.id)) {
+      candidateDestMap.set(nearby.stop.id, {
+        stop: nearby.stop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+      });
+    }
+  }
+
+  for (const nearby of candidateDestMap.values()) {
     if (alternatives.some(a => a.suggestedStop.id === nearby.stop.id)) continue;
 
     const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
@@ -355,6 +432,8 @@ export function findNearbyDirectAlternatives(
         distanceKm: nearby.distanceKm,
         walkingMins: nearby.walkingMins,
         distanceFormatted: nearby.distanceFormatted,
+        stopsAway: nearby.stopsAway,
+        routeTimeDeltaMins: nearby.routeTimeDeltaMins,
         routeNumber: chosen.trip.routeNumber,
         routeName: chosen.trip.route,
         departureTime: chosen.trip.stops[chosen.fIdx].time,
@@ -370,12 +449,15 @@ export function findNearbyDirectAlternatives(
     }
   }
 
-  // Prioritize active trips running today, then nearest distance
+  // Prioritize active trips running today, then nearest in route timetable / time delta
   alternatives.sort((a, b) => {
     if (a.isToday && !b.isToday) return -1;
     if (!a.isToday && b.isToday) return 1;
     if (a.isReachableNow && !b.isReachableNow) return -1;
     if (!a.isReachableNow && b.isReachableNow) return 1;
+    const aTimeDelta = a.routeTimeDeltaMins ?? (a.distanceKm * 15);
+    const bTimeDelta = b.routeTimeDeltaMins ?? (b.distanceKm * 15);
+    if (aTimeDelta !== bTimeDelta) return aTimeDelta - bTimeDelta;
     return a.distanceKm - b.distanceKm;
   });
 
