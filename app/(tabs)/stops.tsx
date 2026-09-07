@@ -10,7 +10,6 @@ import {
   Platform,
   Modal,
   Linking,
-  Share,
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,9 +23,7 @@ import {
   ArrowRight,
   Clock,
   ChevronRight,
-  ShieldCheck,
   CheckCircle2,
-  ExternalLink,
 } from 'lucide-react-native';
 import {
   stops,
@@ -39,10 +36,21 @@ import {
 import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
+// DESIGN SYSTEM TOKENS (CONSISTENT WITH BUS TICKETS PAGE)
+const PRIMARY = '#2438B8';
+const PRIMARY_DARK = '#17247A';
+const BG_COLOR = '#F7F8FA';
+const CARD_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#101828';
+const TEXT_SECONDARY = '#667085';
+const TEXT_MUTED = '#98A2B3';
+const BORDER_COLOR = '#E4E7EC';
+const LIVE_GREEN = '#12B76A';
+
 export default function AllStopsScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'hub' | 'hospital' | 'campus' | 'feeder' | 'corridor'>('all');
+  const [filter, setFilter] = useState<'all' | 'hub' | 'hospital' | 'campus'>('all');
   const [isFocused, setIsFocused] = useState(false);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
 
@@ -97,24 +105,29 @@ export default function AllStopsScreen() {
 
   const nowMins = getCurrentMinutesOfDay();
 
-  // Categorize stops
-  const getStopCategory = (stop: Stop): { label: string; color: string; bg: string; border: string } => {
+  // Categorize stops cleanly
+  const matchesFilter = (stop: Stop, selectedFilter: 'all' | 'hub' | 'hospital' | 'campus'): boolean => {
+    if (selectedFilter === 'all') return true;
     const nameLower = stop.name.toLowerCase();
     const lmarkLower = stop.landmark.toLowerCase();
 
-    if (stop.interchange || stop.id === 'NBK' || stop.id === 'CBD' || stop.id === 'RRS' || stop.id === 'TEL') {
-      return { label: 'Transfer Hub', color: '#18258F', bg: '#EFF6FF', border: '#BFDBFE' };
+    if (selectedFilter === 'hub') {
+      return stop.interchange || stop.id === 'NBK' || stop.id === 'CBD' || stop.id === 'RRS' || stop.id === 'TEL';
     }
-    if (nameLower.includes('hospital') || lmarkLower.includes('hospital') || stop.id === 'BMC') {
-      return { label: 'Hospital', color: '#047857', bg: '#ECFDF5', border: '#A7F3D0' };
+    if (selectedFilter === 'hospital') {
+      return nameLower.includes('hospital') || lmarkLower.includes('hospital') || stop.id === 'BMC';
     }
-    if (nameLower.includes('iim') || nameLower.includes('iiit') || nameLower.includes('iit') || nameLower.includes('college') || nameLower.includes('university') || nameLower.includes('hnlu')) {
-      return { label: 'Campus', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' };
+    if (selectedFilter === 'campus') {
+      return (
+        nameLower.includes('iim') ||
+        nameLower.includes('iiit') ||
+        nameLower.includes('iit') ||
+        nameLower.includes('college') ||
+        nameLower.includes('university') ||
+        nameLower.includes('hnlu')
+      );
     }
-    if (stop.corridor.includes('Feeder') || nameLower.includes('gate') || nameLower.includes('block')) {
-      return { label: 'Feeder Loop', color: '#B45309', bg: '#FFFBEB', border: '#FDE68A' };
-    }
-    return { label: 'Corridor 1', color: '#4B5563', bg: '#F3F4F6', border: '#E5E7EB' };
+    return true;
   };
 
   const filtered = useMemo(() => {
@@ -128,14 +141,7 @@ export default function AllStopsScreen() {
         s.landmark.toLowerCase().includes(search.toLowerCase());
 
       if (!matchSearch) return false;
-
-      const cat = getStopCategory(s);
-      if (filter === 'hub') return cat.label === 'Transfer Hub';
-      if (filter === 'hospital') return cat.label === 'Hospital';
-      if (filter === 'campus') return cat.label === 'Campus';
-      if (filter === 'feeder') return cat.label === 'Feeder Loop';
-      if (filter === 'corridor') return s.corridor === 'Corridor 1';
-      return true;
+      return matchesFilter(s, filter);
     });
   }, [search, filter]);
 
@@ -175,27 +181,38 @@ export default function AllStopsScreen() {
     router.navigate({ pathname: '/', params: { to: stopName } });
   };
 
+  // Format clean human ETA string
+  const formatEta = (diffMins: number): string => {
+    if (diffMins === 0) return 'Due now';
+    if (diffMins > 60) {
+      const hrs = Math.floor(diffMins / 60);
+      const rem = diffMins % 60;
+      return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
+    }
+    return `in ${diffMins}m`;
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* 1. TOP HEADER */}
+      {/* 1. HEADER (CLEAN DIRECTORY STYLE) */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <Text style={styles.title}>Stations & Shelters</Text>
-          <View style={styles.totalBadge}>
-            <Text style={styles.totalBadgeText}>{stops.length} Shelters</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>{stops.length}</Text>
           </View>
         </View>
         <Text style={styles.subtitle}>
-          Live departure boards & directions for all Tatpar BRTS bus shelters
+          Live departure boards & directions for Tatpar BRTS shelters
         </Text>
 
-        {/* 2. SEARCH BAR */}
+        {/* 2. SEARCH BOX */}
         <View style={[styles.searchBar, isFocused && styles.searchBarFocused]}>
-          <Search size={16} color={isFocused ? '#18258F' : '#6B7280'} />
+          <Search size={16} color={isFocused ? PRIMARY : TEXT_SECONDARY} />
           <TextInput
             style={[styles.searchInput, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
-            placeholder="Search shelter, hospital, campus, landmark..."
-            placeholderTextColor="#9CA3AF"
+            placeholder="Search stations, hospitals..."
+            placeholderTextColor={TEXT_MUTED}
             value={search}
             onChangeText={setSearch}
             onFocus={() => setIsFocused(true)}
@@ -203,149 +220,124 @@ export default function AllStopsScreen() {
           />
           {search ? (
             <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <X size={15} color="#6B7280" />
+              <X size={15} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ) : null}
         </View>
 
-        {/* 3. QUICK CATEGORY FILTER CHIPS */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-          contentContainerStyle={styles.filterRow}
-        >
+        {/* 3. FILTERS (ONLY ONE ACTIVE BLUE, OTHERS SUBTLE GRAY, NO EMOJIS) */}
+        <View style={styles.filterRow}>
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+            style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
             onPress={() => setFilter('all')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-              All ({stops.length})
+            <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
+              All
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'hub' && styles.filterChipActive]}
+            style={[styles.filterTab, filter === 'hub' && styles.filterTabActive]}
             onPress={() => setFilter('hub')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, filter === 'hub' && styles.filterTextActive]}>
-              ⚡ Interchange Hubs
+            <Text style={[styles.filterTabText, filter === 'hub' && styles.filterTabTextActive]}>
+              Interchange
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'hospital' && styles.filterChipActive]}
+            style={[styles.filterTab, filter === 'hospital' && styles.filterTabActive]}
             onPress={() => setFilter('hospital')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, filter === 'hospital' && styles.filterTextActive]}>
-              🏥 Hospitals
+            <Text style={[styles.filterTabText, filter === 'hospital' && styles.filterTabTextActive]}>
+              Hospitals
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'campus' && styles.filterChipActive]}
+            style={[styles.filterTab, filter === 'campus' && styles.filterTabActive]}
             onPress={() => setFilter('campus')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, filter === 'campus' && styles.filterTextActive]}>
-              🎓 Universities
+            <Text style={[styles.filterTabText, filter === 'campus' && styles.filterTabTextActive]}>
+              Campuses
             </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterChip, filter === 'feeder' && styles.filterChipActive]}
-            onPress={() => setFilter('feeder')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterText, filter === 'feeder' && styles.filterTextActive]}>
-              Feeder Loops
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterChip, filter === 'corridor' && styles.filterChipActive]}
-            onPress={() => setFilter('corridor')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterText, filter === 'corridor' && styles.filterTextActive]}>
-              Trunk Corridor 1
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+        </View>
       </View>
 
-      {/* 4. STATION CARDS LIST */}
+      {/* 4. STATION LIST ITEMS (CLEAN DIRECTORY ROWS WITH ZERO CHROMATIC CLUTTER) */}
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
-          const category = getStopCategory(item);
           const nextDepartures = getStationDepartures(item.name, nowMins);
           const nextBus = nextDepartures.length > 0 ? nextDepartures[0] : null;
           const routes = getRoutesServingStation(item.name);
 
           return (
             <TouchableOpacity
-              style={styles.stopCard}
+              style={styles.stationCard}
               onPress={() => setSelectedStop(item)}
-              activeOpacity={0.8}
+              activeOpacity={0.72}
             >
-              {/* TOP HEADER ROW: STATION NAME & CODE */}
-              <View style={styles.stopTopRow}>
-                <View style={styles.stopNameBlock}>
-                  <Text style={styles.stopNameText} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.hindiNameText}>{item.hindiName}</Text>
-                </View>
-                <View style={styles.badgeCode}>
-                  <Text style={styles.badgeCodeText}>{item.code}</Text>
-                </View>
+              {/* STATION NAME & CODE */}
+              <View style={styles.stationTopRow}>
+                <Text style={styles.stationNameText} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.stationCodeBadge}>{item.code}</Text>
               </View>
 
-              {/* LANDMARK & CATEGORY */}
-              <View style={styles.landmarkRow}>
-                <MapPin size={12.5} color="#6B7280" style={{ marginRight: 5, marginTop: 1 }} />
-                <Text style={styles.landmarkText} numberOfLines={1}>
+              {/* HINDI LOCAL NAME */}
+              {item.hindiName ? (
+                <Text style={styles.stationHindiText}>{item.hindiName}</Text>
+              ) : null}
+
+              {/* LANDMARK LOCATION */}
+              <View style={styles.stationLocationRow}>
+                <Text style={styles.locationSymbol}>⌖</Text>
+                <Text style={styles.stationLocationText} numberOfLines={1}>
                   {item.landmark}
                 </Text>
               </View>
 
-              {/* LIVE NEXT BUS INDICATOR ROW */}
+              {/* NEXT BUS INFORMATION (TYPOGRAPHY HIERARCHY, CALM GREEN LIVE DOT) */}
               {nextBus ? (
-                <View style={styles.nextBusStrip}>
-                  <View style={styles.nextBusPulseDot} />
-                  <Text style={styles.nextBusLabel}>Next bus:</Text>
-                  <Text style={styles.nextBusRoute}>{nextBus.route}</Text>
-                  <Text style={styles.nextBusTime}>({nextBus.departureTime})</Text>
-                  <View style={styles.nextBusDiffBadge}>
-                    <Text style={styles.nextBusDiffText}>
-                      {nextBus.diffMins === 0 ? 'NOW' : `in ${nextBus.diffMins}m`}
+                <View style={styles.nextBusSection}>
+                  <Text style={styles.nextBusPreLabel}>Next bus</Text>
+                  <View style={styles.nextBusDataRow}>
+                    <Text style={styles.nextBusRouteTime}>
+                      {nextBus.route} · {nextBus.departureTime}
                     </Text>
+                    <View style={styles.nextBusEtaWrapper}>
+                      <Text style={styles.nextBusEtaText}>{formatEta(nextBus.diffMins)}</Text>
+                      <View style={styles.liveGreenDot} />
+                    </View>
                   </View>
                 </View>
               ) : null}
 
-              {/* FOOTER: CONNECTING ROUTES & TAP CTA */}
-              <View style={styles.cardFooterRow}>
-                <View style={styles.routesPillsContainer}>
-                  <Text style={styles.routesLabel}>Routes:</Text>
+              {/* ROUTE NUMBERS & LIVE BOARD CTA */}
+              <View style={styles.stationFooterRow}>
+                <View style={styles.routesRow}>
                   {routes.slice(0, 4).map(r => (
-                    <View key={r} style={styles.routeMiniPill}>
-                      <Text style={styles.routeMiniPillText}>{r}</Text>
-                    </View>
+                    <Text key={r} style={styles.routeNumberText}>
+                      {r}
+                    </Text>
                   ))}
                   {routes.length > 4 ? (
                     <Text style={styles.routesMoreText}>+{routes.length - 4}</Text>
                   ) : null}
                 </View>
 
-                <View style={styles.viewDetailsRow}>
-                  <Text style={styles.viewDetailsText}>Live Board</Text>
-                  <ChevronRight size={13} color="#18258F" />
+                <View style={styles.liveBoardLink}>
+                  <Text style={styles.liveBoardText}>Live board →</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -376,14 +368,12 @@ export default function AllStopsScreen() {
                 <View style={{ flex: 1 }}>
                   <View style={styles.modalTitleRow}>
                     <Text style={styles.modalTitleText}>{selectedStop.name}</Text>
-                    <View style={styles.modalCodeBadge}>
-                      <Text style={styles.modalCodeText}>{selectedStop.code}</Text>
-                    </View>
+                    <Text style={styles.stationCodeBadge}>{selectedStop.code}</Text>
                   </View>
-                  <Text style={styles.modalHindiText}>{selectedStop.hindiName}</Text>
-                  <View style={styles.modalLandmarkRow}>
-                    <MapPin size={12} color="#6B7280" style={{ marginRight: 4 }} />
-                    <Text style={styles.modalLandmarkText}>{selectedStop.landmark}</Text>
+                  <Text style={styles.stationHindiText}>{selectedStop.hindiName}</Text>
+                  <View style={styles.stationLocationRow}>
+                    <Text style={styles.locationSymbol}>⌖</Text>
+                    <Text style={styles.stationLocationText}>{selectedStop.landmark}</Text>
                   </View>
                 </View>
 
@@ -391,7 +381,7 @@ export default function AllStopsScreen() {
                   style={styles.modalCloseBtn}
                   onPress={() => setSelectedStop(null)}
                 >
-                  <X size={18} color="#374151" />
+                  <X size={18} color={TEXT_SECONDARY} />
                 </TouchableOpacity>
               </View>
 
@@ -411,7 +401,7 @@ export default function AllStopsScreen() {
                   onPress={() => planToHere(selectedStop.name)}
                   activeOpacity={0.8}
                 >
-                  <ArrowRight size={14} color="#18258F" style={{ marginRight: 6 }} />
+                  <ArrowRight size={14} color={PRIMARY} style={{ marginRight: 6 }} />
                   <Text style={styles.actionBtnSecondaryText}>Go Here</Text>
                 </TouchableOpacity>
 
@@ -420,7 +410,7 @@ export default function AllStopsScreen() {
                   onPress={() => openNavigation(selectedStop)}
                   activeOpacity={0.8}
                 >
-                  <Navigation size={14} color="#047857" style={{ marginRight: 5 }} />
+                  <Navigation size={14} color="#059669" style={{ marginRight: 5 }} />
                   <Text style={styles.actionBtnNavText}>Maps</Text>
                 </TouchableOpacity>
               </View>
@@ -428,11 +418,8 @@ export default function AllStopsScreen() {
               {/* LIVE DEPARTURES BOARD TABLE */}
               <View style={styles.departuresSection}>
                 <View style={styles.departuresHeaderRow}>
-                  <Clock size={13} color="#18258F" style={{ marginRight: 5 }} />
+                  <Clock size={14} color={PRIMARY} style={{ marginRight: 6 }} />
                   <Text style={styles.departuresHeaderTitle}>Live Station Departures</Text>
-                  <View style={styles.liveSyncBadge}>
-                    <Text style={styles.liveSyncText}>UPDATED</Text>
-                  </View>
                 </View>
 
                 <ScrollView
@@ -443,21 +430,7 @@ export default function AllStopsScreen() {
                     selectedStopDepartures.map((dep, idx) => (
                       <View key={idx} style={styles.departureItemRow}>
                         <View style={styles.depRouteCol}>
-                          <View
-                            style={[
-                              styles.depRoutePill,
-                              dep.routeType === 'feeder' && styles.depRoutePillFeeder,
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.depRoutePillText,
-                                dep.routeType === 'feeder' && styles.depRoutePillFeederText,
-                              ]}
-                            >
-                              {dep.route}
-                            </Text>
-                          </View>
+                          <Text style={styles.depRouteNumber}>{dep.route}</Text>
                         </View>
 
                         <View style={styles.depDestCol}>
@@ -468,21 +441,10 @@ export default function AllStopsScreen() {
                         </View>
 
                         <View style={styles.depEtaCol}>
-                          <View
-                            style={[
-                              styles.etaBadge,
-                              dep.diffMins <= 5 && styles.etaBadgeUrgent,
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.etaBadgeText,
-                                dep.diffMins <= 5 && styles.etaBadgeUrgentText,
-                              ]}
-                            >
-                              {dep.diffMins === 0 ? 'NOW' : `${dep.diffMins}m`}
-                            </Text>
-                          </View>
+                          <Text style={styles.depEtaText}>
+                            {dep.diffMins === 0 ? 'NOW' : `${dep.diffMins}m`}
+                          </Text>
+                          <View style={styles.liveGreenDot} />
                         </View>
                       </View>
                     ))
@@ -497,17 +459,19 @@ export default function AllStopsScreen() {
               </View>
 
               {/* STATION AMENITIES & FACILITIES */}
-              <View style={styles.modalFacilitiesBox}>
-                <Text style={styles.modalFacilitiesTitle}>SHELTER FACILITIES</Text>
-                <View style={styles.modalFacilitiesRow}>
-                  {selectedStop.facilities.map((fac, idx) => (
-                    <View key={idx} style={styles.modalFacilityChip}>
-                      <CheckCircle2 size={11} color="#059669" style={{ marginRight: 4 }} />
-                      <Text style={styles.modalFacilityText}>{fac}</Text>
-                    </View>
-                  ))}
+              {selectedStop.facilities && selectedStop.facilities.length > 0 ? (
+                <View style={styles.modalFacilitiesBox}>
+                  <Text style={styles.modalFacilitiesTitle}>SHELTER FACILITIES</Text>
+                  <View style={styles.modalFacilitiesRow}>
+                    {selectedStop.facilities.map((fac, idx) => (
+                      <View key={idx} style={styles.modalFacilityChip}>
+                        <CheckCircle2 size={11} color={LIVE_GREEN} style={{ marginRight: 4 }} />
+                        <Text style={styles.modalFacilityText}>{fac}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
+              ) : null}
 
               {/* NEARBY SHELTERS & WALKING DISTANCES */}
               <View style={styles.modalNearbyBox}>
@@ -520,7 +484,7 @@ export default function AllStopsScreen() {
                       onPress={() => setSelectedStop(ns.stop)}
                       activeOpacity={0.7}
                     >
-                      <MapPin size={11} color="#18258F" />
+                      <MapPin size={11} color={PRIMARY} />
                       <Text style={styles.modalNearbyName}>{ns.stop.shortName}</Text>
                       <Text style={styles.modalNearbyDist}>
                         ({ns.routeTimeMins ? `${ns.routeTimeMins}m on route` : `${ns.distanceFormatted} · ~${ns.walkingMins}m`})
@@ -540,15 +504,15 @@ export default function AllStopsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FC',
+    backgroundColor: BG_COLOR,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    backgroundColor: CARD_BG,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(24, 37, 143, 0.06)',
+    borderBottomColor: BORDER_COLOR,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -557,281 +521,255 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FONT.bold,
-    fontSize: 26, // Page title: 26 px / 700
-    lineHeight: 32, // Line-height around 32 px
+    fontSize: 24,
     fontWeight: '700',
-    color: '#18258F',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.4,
   },
-  totalBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+  countBadge: {
+    backgroundColor: '#F2F4F7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
-  totalBadgeText: {
-    fontFamily: FONT.bold,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#18258F',
+  countBadgeText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#344054',
     fontVariant: ['tabular-nums'],
   },
   subtitle: {
-    fontFamily: FONT.medium,
-    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
-    lineHeight: 19, // Line-height around 18–20 px
-    fontWeight: '500',
-    color: '#6B7280',
-    marginTop: 2,
-    marginBottom: 10,
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: TEXT_SECONDARY,
+    marginTop: 3,
+    marginBottom: 14,
   },
   searchBar: {
     height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.12)',
+    borderColor: BORDER_COLOR,
     borderRadius: 12,
     paddingHorizontal: 12,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   searchBarFocused: {
-    borderColor: '#18258F',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: PRIMARY,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontFamily: FONT.medium,
-    fontSize: 14.5, // Primary body: 14–15 px / 500
-    color: '#10131A',
+    fontSize: 14,
+    color: TEXT_PRIMARY,
     fontWeight: '500',
-  },
-  filterScroll: {
-    marginHorizontal: -16,
-    marginBottom: 2,
   },
   filterRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 6,
-  },
-  filterChip: {
-    height: 30,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-    backgroundColor: '#F1F3FA',
-    borderWidth: 1,
-    borderColor: '#DDE2F0',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    marginTop: 2,
   },
-  filterChipActive: {
-    backgroundColor: '#E9ECFF',
-    borderColor: '#18258F',
+  filterTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
   },
-  filterText: {
+  filterTabActive: {
+    backgroundColor: PRIMARY,
+  },
+  filterTabText: {
     fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
   },
-  filterTextActive: {
-    color: '#18258F',
-    fontWeight: '700',
+  filterTabTextActive: {
+    fontFamily: FONT.semiBold,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
-  /* STATION CARDS */
+  /* STATION DIRECTORY ITEMS */
   listContent: {
-    padding: 16,
-    paddingBottom: 110,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 90,
     gap: 12,
   },
-  stopCard: {
-    backgroundColor: '#FFFFFF',
+  stationCard: {
+    backgroundColor: CARD_BG,
     borderRadius: 16,
-    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 1,
+    borderColor: BORDER_COLOR,
+    padding: 16,
   },
-  stopTopRow: {
+  stationTopRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
   },
-  stopNameBlock: {
-    flex: 1,
-    marginRight: 10,
-  },
-  stopNameText: {
+  stationNameText: {
     fontFamily: FONT.bold,
-    fontSize: 15.5, // Route / Station name: 15–16 px / 700
-    lineHeight: 22,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#10131A',
-    letterSpacing: -0.1,
+    color: TEXT_PRIMARY,
+    flex: 1,
+    marginRight: 8,
   },
-  hindiNameText: {
+  stationCodeBadge: {
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#344054',
+    backgroundColor: '#F2F4F7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    letterSpacing: 0.5,
+  },
+  stationHindiText: {
     fontFamily: FONT.regular,
     fontSize: 12,
     fontWeight: '400',
-    color: '#6B7280',
-    marginTop: 1,
+    color: TEXT_SECONDARY,
+    marginTop: 2,
   },
-  badgeCode: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    paddingHorizontal: 7.5,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  badgeCodeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#18258F',
-    letterSpacing: 0.4,
-  },
-  landmarkRow: {
+  stationLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginTop: 6,
   },
-  landmarkText: {
-    fontSize: 12.5,
-    color: '#4B5563',
+  locationSymbol: {
+    fontSize: 12,
+    color: TEXT_MUTED,
+    marginRight: 5,
+  },
+  stationLocationText: {
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    fontWeight: '400',
+    color: TEXT_SECONDARY,
     flex: 1,
   },
-  nextBusStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#DCFCE7',
-    gap: 6,
+
+  /* NEXT BUS CLEAN TYPOGRAPHY (NO LOUD GREEN CONTAINER) */
+  nextBusSection: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F4F7',
   },
-  nextBusPulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#16A34A',
-  },
-  nextBusLabel: {
-    fontSize: 11.5,
-    color: '#166534',
-    fontWeight: '600',
-  },
-  nextBusRoute: {
-    fontSize: 11.5,
-    color: '#14532D',
-    fontWeight: '700',
-  },
-  nextBusTime: {
-    fontSize: 11.5,
-    color: '#4B5563',
+  nextBusPreLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
     fontWeight: '500',
+    color: TEXT_SECONDARY,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
-  nextBusDiffBadge: {
-    marginLeft: 'auto',
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
-  },
-  nextBusDiffText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#15803D',
-  },
-  cardFooterRow: {
+  nextBusDataRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
   },
-  routesPillsContainer: {
+  nextBusRouteTime: {
+    fontFamily: FONT.bold,
+    fontSize: 14,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+  },
+  nextBusEtaWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  routesLabel: {
-    fontSize: 11,
-    color: '#6B7280',
+  nextBusEtaText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13,
     fontWeight: '600',
-    marginRight: 2,
+    color: TEXT_PRIMARY,
+    fontVariant: ['tabular-nums'],
   },
-  routeMiniPill: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 5,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  routeMiniPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#374151',
-  },
-  routesMoreText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginLeft: 2,
-  },
-  viewDetailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  viewDetailsText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#18258F',
+  liveGreenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: LIVE_GREEN,
   },
 
-  /* MODAL STYLES */
+  /* ROUTE NUMBERS & CTA FOOTER */
+  stationFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F4F7',
+  },
+  routesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  routeNumberText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#344054',
+    backgroundColor: '#F8F9FC',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  routesMoreText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: TEXT_SECONDARY,
+  },
+  liveBoardLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  liveBoardText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13,
+    fontWeight: '600',
+    color: PRIMARY,
+  },
+
+  /* MODAL */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(16, 24, 40, 0.45)',
     justifyContent: 'flex-end',
   },
   modalBackdropTap: {
     flex: 1,
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: CARD_BG,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 18,
-    paddingBottom: 32,
+    paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 28,
     maxHeight: '85%',
   },
   modalDragHandle: {
     width: 36,
     height: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#D0D5DD',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 12,
@@ -839,7 +777,8 @@ const styles = StyleSheet.create({
   modalHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 14,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitleRow: {
     flexDirection: 'row',
@@ -847,48 +786,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modalTitleText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#10131A',
-    letterSpacing: -0.3,
-  },
-  modalCodeBadge: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  modalCodeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#18258F',
-  },
-  modalHindiText: {
-    fontSize: 13.5,
-    fontWeight: '500',
-    color: '#6B7280',
-    marginTop: 2,
-  },
-  modalLandmarkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  modalLandmarkText: {
-    fontSize: 12.5,
-    color: '#4B5563',
-    flex: 1,
+    fontFamily: FONT.bold,
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
   },
   modalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
+    padding: 6,
   },
   modalActionButtonsRow: {
     flexDirection: 'row',
@@ -896,63 +800,54 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   actionBtnPrimary: {
-    flex: 1.3,
-    height: 42,
-    backgroundColor: '#18258F',
-    borderRadius: 12,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: PRIMARY,
+    height: 40,
+    borderRadius: 10,
   },
   actionBtnPrimaryText: {
-    color: '#FFFFFF',
+    fontFamily: FONT.semiBold,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   actionBtnSecondary: {
-    flex: 1.1,
-    height: 42,
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+    backgroundColor: '#F2F4F7',
+    height: 40,
+    borderRadius: 10,
   },
   actionBtnSecondaryText: {
-    color: '#18258F',
+    fontFamily: FONT.semiBold,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: PRIMARY,
   },
   actionBtnNav: {
-    height: 42,
-    paddingHorizontal: 14,
-    backgroundColor: '#ECFDF5',
-    borderRadius: 12,
+    width: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
+    backgroundColor: '#ECFDF5',
+    height: 40,
+    borderRadius: 10,
   },
   actionBtnNavText: {
-    color: '#047857',
+    fontFamily: FONT.semiBold,
     fontSize: 12.5,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: '#059669',
   },
   departuresSection: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
+    paddingTop: 14,
   },
   departuresHeaderRow: {
     flexDirection: 'row',
@@ -960,112 +855,83 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   departuresHeaderTitle: {
-    fontSize: 13,
+    fontFamily: FONT.bold,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#18258F',
-    flex: 1,
-  },
-  liveSyncBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
-  },
-  liveSyncText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#047857',
-    letterSpacing: 0.3,
+    color: TEXT_PRIMARY,
   },
   departuresScroll: {
-    maxHeight: 180,
+    maxHeight: 220,
   },
   departureItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 7,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F2F4F7',
   },
   depRouteCol: {
-    width: 95,
+    width: 60,
   },
-  depRoutePill: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  depRoutePillText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#18258F',
-  },
-  depRoutePillFeeder: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
-  },
-  depRoutePillFeederText: {
-    color: '#047857',
+  depRouteNumber: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: PRIMARY,
   },
   depDestCol: {
     flex: 1,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
   },
   depDestText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: TEXT_PRIMARY,
   },
   depTimeText: {
-    fontSize: 11,
-    color: '#6B7280',
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    fontWeight: '400',
+    color: TEXT_SECONDARY,
     marginTop: 1,
   },
   depEtaCol: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  etaBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  etaBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#18258F',
-  },
-  etaBadgeUrgent: {
-    backgroundColor: '#FEF2F2',
-  },
-  etaBadgeUrgentText: {
-    color: '#DC2626',
+  depEtaText: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    fontVariant: ['tabular-nums'],
   },
   noDeparturesBox: {
-    paddingVertical: 14,
+    paddingVertical: 20,
     alignItems: 'center',
   },
   noDeparturesText: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    color: TEXT_SECONDARY,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
   modalFacilitiesBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 10,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
   },
   modalFacilitiesTitle: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#9CA3AF',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.6,
+    marginBottom: 8,
   },
   modalFacilitiesRow: {
     flexDirection: 'row',
@@ -1075,47 +941,45 @@ const styles = StyleSheet.create({
   modalFacilityChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FC',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   modalFacilityText: {
-    fontSize: 11,
-    color: '#374151',
-    fontWeight: '500',
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#344054',
   },
   modalNearbyBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 8,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
   },
   modalNearbyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
   modalNearbyChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F1F5F9',
+    gap: 4,
+    backgroundColor: '#F8F9FC',
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#EAECF0',
   },
   modalNearbyName: {
+    fontFamily: FONT.bold,
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: PRIMARY,
   },
   modalNearbyDist: {
-    fontSize: 10.5,
-    color: '#64748B',
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
   },
 });
