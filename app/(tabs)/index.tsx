@@ -960,26 +960,40 @@ export default function LiveBusScreen() {
 
         {/* PAGE HEADING */}
         <View style={styles.pageHeaderTitleRow}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
             <Text style={styles.pageMainHeading}>
               {planningMode === 'next'
                 ? 'Bus Track'
                 : "I'm Onboard · Live"}
             </Text>
-            <Text style={styles.pageSubHeading}>
+            <Text style={styles.pageSubHeading} numberOfLines={1}>
               {planningMode === 'next'
                 ? 'Tatpar BRTS · Nava Raipur Express'
-                : 'Real-time in-bus stop tracking & drop-off alerts'}
+                : journey
+                  ? `${journey.fromStop.shortName || journey.fromStop.name} → ${journey.toStop.shortName || journey.toStop.name}`
+                  : 'Real-time in-bus stop tracking'}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={() => router.push('/about' as any)}
-            style={styles.infoIconButton}
-            activeOpacity={0.7}
-            accessibilityLabel="About and support"
-          >
-            <Info size={20} color="#18258F" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {planningMode === 'onboard' && journey ? (
+              <TouchableOpacity
+                onPress={() => openPicker('to')}
+                style={styles.headerSwitchBusBtn}
+                activeOpacity={0.7}
+                accessibilityLabel="Switch bus route"
+              >
+                <Text style={styles.headerSwitchBusText}>Switch Bus ✎</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity
+              onPress={() => router.push('/about' as any)}
+              style={styles.infoIconButton}
+              activeOpacity={0.7}
+              accessibilityLabel="About and support"
+            >
+              <Info size={20} color="#18258F" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* NOTIFICATION CONFIRMATION BANNER */}
@@ -1553,108 +1567,45 @@ export default function LiveBusScreen() {
                   const otherDeps = allUpcomingDeps
                     .filter(dep => dep.tripId !== journey.trip.id)
                     .slice(0, 3);
-                  if (otherDeps.length === 0 && !departuresExpanded) return null;
+                  if (otherDeps.length === 0) return null;
 
                   return (
-                    <View style={[styles.cleanNextDeparturesCard, departuresExpanded && styles.cleanNextDeparturesCardExpanded]}>
+                    <View style={styles.cleanNextDeparturesCard}>
                       <View style={styles.cleanNextDeparturesHeaderRow}>
-                        <Text style={styles.cleanNextDeparturesTitle}>
-                          {departuresExpanded ? `All departures (${allUpcomingDeps.length})` : 'Next departures'}
-                        </Text>
-                        {departuresExpanded ? (
-                          <TouchableOpacity
-                            onPress={() => setDeparturesExpanded(false)}
-                            activeOpacity={0.7}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={styles.cleanDeparturesCloseBtn}
-                            accessibilityLabel="Close all departures"
-                          >
-                            <X size={15} color="#475569" strokeWidth={2.4} />
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            onPress={() => setDeparturesExpanded(true)}
-                            activeOpacity={0.7}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Text style={styles.cleanViewFullTimetableLink}>View all departures →</Text>
-                          </TouchableOpacity>
-                        )}
+                        <Text style={styles.cleanNextDeparturesTitle}>Next departures</Text>
+                        <TouchableOpacity
+                          onPress={() => setDeparturesExpanded(true)}
+                          activeOpacity={0.7}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Text style={styles.cleanViewFullTimetableLink}>View all departures →</Text>
+                        </TouchableOpacity>
                       </View>
 
-                      {departuresExpanded ? (
-                        <View style={styles.cleanDeparturesExpandedContent}>
-                          <View style={styles.cleanDeparturesGrid}>
-                            {allUpcomingDeps.map((dep) => {
-                              const isSelected = journey.trip.id === dep.tripId;
-                              return (
-                                <TouchableOpacity
-                                  key={`${dep.tripId}_${dep.departureTime}`}
-                                  onPress={() => {
-                                    setSelectedTripId(dep.tripId);
-                                    triggerCardBounce();
-                                  }}
-                                  activeOpacity={0.75}
-                                  style={[
-                                    styles.cleanDepPill,
-                                    isSelected && styles.cleanDepPillSelected,
-                                  ]}
-                                >
-                                  {dep.route ? (
-                                    <Text
-                                      style={[
-                                        styles.cleanDepPillRoute,
-                                        isSelected && styles.cleanDepPillRouteSelected,
-                                      ]}
-                                    >
-                                      {dep.route}
-                                    </Text>
-                                  ) : null}
-                                  <Text
-                                    style={[
-                                      styles.cleanDepPillTime,
-                                      isSelected && styles.cleanDepPillTimeSelected,
-                                    ]}
-                                  >
-                                    {dep.departureTime}
-                                  </Text>
-                                  {isSelected && (
-                                    <View style={styles.cleanDepSelectedDot} />
-                                  )}
-                                </TouchableOpacity>
-                              );
-                            })}
-                          </View>
-                          <Text style={styles.cleanDeparturesHintText}>
-                            Tap any departure time to select and track that bus
-                          </Text>
-                        </View>
-                      ) : (
-                        <View style={styles.cleanNextDeparturesTimesRow}>
-                          {otherDeps.map((dep, idx) => (
-                            <React.Fragment key={`${dep.tripId}_${dep.departureTime}`}>
-                              {idx > 0 && <Text style={styles.cleanNextDepDot}>·</Text>}
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setSelectedTripId(dep.tripId);
-                                  triggerCardBounce();
-                                }}
-                                activeOpacity={0.7}
-                                style={styles.cleanNextDepBtn}
+                      <View style={styles.cleanNextDeparturesTimesRow}>
+                        {otherDeps.map((dep, idx) => (
+                          <React.Fragment key={`${dep.tripId}_${dep.departureTime}`}>
+                            {idx > 0 && <Text style={styles.cleanNextDepDot}>·</Text>}
+                            <TouchableOpacity
+                              onPress={() => {
+                                setSelectedTripId(dep.tripId);
+                                triggerCardBounce();
+                              }}
+                              activeOpacity={0.7}
+                              style={styles.cleanNextDepBtn}
+                            >
+                              <Text
+                                style={[
+                                  styles.cleanNextDepTimeText,
+                                  journey.trip.id === dep.tripId && styles.cleanNextDepTimeTextSelected,
+                                ]}
                               >
-                                <Text
-                                  style={[
-                                    styles.cleanNextDepTimeText,
-                                    journey.trip.id === dep.tripId && styles.cleanNextDepTimeTextSelected,
-                                  ]}
-                                >
-                                  {dep.departureTime}
-                                </Text>
-                              </TouchableOpacity>
-                            </React.Fragment>
-                          ))}
-                        </View>
-                      )}
+                                {dep.departureTime}
+                              </Text>
+                            </TouchableOpacity>
+                          </React.Fragment>
+                        ))}
+                      </View>
                     </View>
                   );
                 })()}
@@ -1695,15 +1646,19 @@ export default function LiveBusScreen() {
                 >
                   <View style={styles.compactReminderIconBox}>
                     {activeReminders.length > 0 ? (
-                      <BellRing size={15} color="#EA580C" strokeWidth={2.2} />
+                      <BellRing size={17} color="#F04438" strokeWidth={2.2} />
                     ) : (
-                      <Bell size={15} color="#EA580C" strokeWidth={2.2} />
+                      <Bell size={17} color="#F04438" strokeWidth={2.2} />
                     )}
                   </View>
                   <View style={styles.compactReminderTextBox}>
-                    <Text style={styles.compactReminderTitle}>Departure reminder</Text>
-                    <Text style={styles.compactReminderSubtitle}>
-                      {activeReminders.length > 0 ? 'Alert active for this ride' : 'Get notified 30 min before departure'}
+                    <Text style={styles.compactReminderTitle}>
+                      {activeReminders.length > 0 ? 'Reminder set' : 'Departure reminder'}
+                    </Text>
+                    <Text style={styles.compactReminderSubtitle} numberOfLines={1}>
+                      {activeReminders.length > 0
+                        ? `You'll be notified 30 min before · ${journey.fromTime}`
+                        : 'Get notified before your bus leaves'}
                     </Text>
                   </View>
                   <View
@@ -1718,7 +1673,7 @@ export default function LiveBusScreen() {
                         activeReminders.length > 0 && styles.compactReminderBtnTextActive,
                       ]}
                     >
-                      {activeReminders.length > 0 ? 'Active' : 'Set reminder'}
+                      {activeReminders.length > 0 ? 'Enabled ✓' : 'Set reminder'}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -2011,26 +1966,6 @@ export default function LiveBusScreen() {
           /* ========================================================================= */
           journey ? (
             <View style={styles.onboardContainer}>
-              {/* COMPACT ROUTE CONTEXT / SWITCHER BAR */}
-              <View style={styles.onboardRouteStrip}>
-                <View style={styles.onboardRouteInfo}>
-                  <View style={styles.liveGreenDotPulse} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.onboardRouteSubLabel}>I'm Onboard · Live</Text>
-                    <Text style={styles.onboardRouteText} numberOfLines={1}>
-                      {journey.fromStop.shortName} → {journey.toStop.shortName}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.onboardChangeRouteBtn}
-                  onPress={() => openPicker('to')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.onboardChangeRouteText}>Switch Bus ✎</Text>
-                </TouchableOpacity>
-              </View>
-
               {/* 1. REFINED LIVE ONBOARD HERO CARD (COMPACT, FOCUSED) */}
               <Animated.View style={[styles.onboardHeroCard, { transform: [{ scale: cardScaleAnim }] }]}>
                 {/* Top Row: Live badge + light bus illustration */}
@@ -2110,7 +2045,51 @@ export default function LiveBusScreen() {
                 </View>
               </Animated.View>
 
-              {/* 2. DROP-OFF REMINDER CARD */}
+              {/* 2. REMAINING TIME & FARE DUAL CARDS */}
+              <View style={styles.metricsGridRow}>
+                {/* CARD 1: ESTIMATED REMAINING TIME */}
+                <View style={[styles.metricCard, styles.metricCardRemaining]}>
+                  <View style={styles.metricCardHeader}>
+                    <View style={styles.metricLabelGroup}>
+                      <Clock size={13} color="#18258F" strokeWidth={2.4} />
+                      <Text style={styles.metricCardLabel}>EST. TIME</Text>
+                    </View>
+                    <View style={[styles.metricBadgeRemaining, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
+                      <Text style={[styles.metricBadgeTextRemaining, { color: '#065F46' }]}>LIVE</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.metricCardValue}>
+                    {isBeforeDeparture
+                      ? journey.durationMins
+                      : isJourneyCompleted
+                        ? 0
+                        : Math.max(1, journey.arrivalMins - currentTimeMins)}{' '}
+                    <Text style={styles.metricUnitText}>min</Text>
+                  </Text>
+                  <Text style={styles.metricCardSub} numberOfLines={1}>
+                    to {journey.toStop.shortName || journey.toStop.name}
+                  </Text>
+                </View>
+
+                {/* CARD 2: OFFICIAL FARE */}
+                <View style={[styles.metricCard, styles.metricCardFare]}>
+                  <View style={styles.metricCardHeader}>
+                    <View style={styles.metricLabelGroup}>
+                      <ShieldCheck size={13.5} color="#18258F" strokeWidth={2.4} />
+                      <Text style={styles.metricCardLabel}>FARE</Text>
+                    </View>
+                    <View style={styles.metricBadgeFare}>
+                      <Text style={styles.metricBadgeTextFare}>AC RIDE</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.metricCardValue}>₹{journey.fare}</Text>
+                  <Text style={styles.metricCardSub} numberOfLines={1}>
+                    {journey.trip.serviceDay === 'weekend' ? 'Weekend Express' : (journey.trip.serviceName || 'AC Express')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* 3. DROP-OFF REMINDER CARD */}
               <TouchableOpacity
                 style={styles.compactReminderCard}
                 onPress={handleScheduleNotifications}
@@ -2118,16 +2097,18 @@ export default function LiveBusScreen() {
               >
                 <View style={styles.compactReminderIconBox}>
                   {activeReminders.length > 0 ? (
-                    <BellRing size={16} color="#F26B52" strokeWidth={2.4} />
+                    <BellRing size={17} color="#F04438" strokeWidth={2.2} />
                   ) : (
-                    <Bell size={16} color="#F26B52" strokeWidth={2.4} />
+                    <Bell size={17} color="#F04438" strokeWidth={2.2} />
                   )}
                 </View>
                 <View style={styles.compactReminderTextBox}>
-                  <Text style={styles.compactReminderTitle}>Drop-off reminder</Text>
+                  <Text style={styles.compactReminderTitle}>
+                    {activeReminders.length > 0 ? 'Reminder set' : 'Drop-off reminder'}
+                  </Text>
                   <Text style={styles.compactReminderSubtitle} numberOfLines={1}>
                     {activeReminders.length > 0
-                      ? `Alert active: 1 stop before ${journey.toStop.shortName || journey.toStop.name}`
+                      ? `Alert set: 1 stop before ${journey.toStop.shortName || journey.toStop.name}`
                       : `Alert me 1 stop before ${journey.toStop.shortName || journey.toStop.name}`}
                   </Text>
                 </View>
@@ -2143,7 +2124,7 @@ export default function LiveBusScreen() {
                       activeReminders.length > 0 && styles.compactReminderBtnTextActive,
                     ]}
                   >
-                    {activeReminders.length > 0 ? 'Active' : 'Set reminder'}
+                    {activeReminders.length > 0 ? 'Enabled ✓' : 'Set reminder'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -2845,6 +2826,134 @@ export default function LiveBusScreen() {
           )}
         </View>
       </Modal>
+
+      {/* --- CHOOSE A DEPARTURE BOTTOM SHEET MODAL --- */}
+      <Modal
+        visible={departuresExpanded && !!journey}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setDeparturesExpanded(false)}
+      >
+        <View style={styles.departuresModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setDeparturesExpanded(false)}
+          />
+
+          {journey && (
+            <View
+              style={[
+                styles.departuresModalContainer,
+                { paddingBottom: Math.max(insets.bottom, 20) + 8 },
+              ]}
+            >
+              {/* TOP DRAG HANDLE */}
+              <View style={styles.departuresModalDragHandle} />
+
+              {/* MODAL HEADER */}
+              <View style={styles.departuresModalHeaderRow}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={styles.departuresModalTitle}>Choose a departure</Text>
+                  <Text style={styles.departuresModalRouteSubtitle} numberOfLines={1}>
+                    {journey.fromStop.shortName || journey.fromStop.name} → {journey.toStop.shortName || journey.toStop.name}
+                  </Text>
+                  <Text style={styles.departuresModalCountSubtitle}>
+                    {(journey.upcomingDepartures || []).length}{' '}
+                    {(journey.upcomingDepartures || []).length === 1 ? 'bus' : 'buses'} available
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setDeparturesExpanded(false)}
+                  style={styles.departuresModalCloseBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Close departures sheet"
+                >
+                  <X size={18} color="#475569" strokeWidth={2.2} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.departuresModalDivider} />
+
+              {/* SINGLE COLUMN DEPARTURES LIST */}
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.departuresModalScroll}
+                contentContainerStyle={styles.departuresModalListContent}
+              >
+                {(journey.upcomingDepartures || []).map((dep, index) => {
+                  const isSelected = journey.trip.id === dep.tripId;
+                  const isFirstUpcoming = index === 0;
+
+                  return (
+                    <TouchableOpacity
+                      key={`${dep.tripId}_${dep.departureTime}`}
+                      style={[
+                        styles.departureRowItem,
+                        isSelected && styles.departureRowItemSelected,
+                      ]}
+                      onPress={() => {
+                        setSelectedTripId(dep.tripId);
+                        setDeparturesExpanded(false);
+                        triggerCardBounce();
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      {/* Left: Route number + Service */}
+                      <View style={styles.departureRowLeft}>
+                        <View style={styles.departureRowRouteWrap}>
+                          <Text
+                            style={[
+                              styles.departureRowRouteText,
+                              isSelected && styles.departureRowRouteTextSelected,
+                            ]}
+                          >
+                            {dep.route || journey.trip.routeNumber || 'BRT'}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            styles.departureRowServiceText,
+                            isSelected && styles.departureRowServiceTextSelected,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {journey.trip.serviceName || 'AC Express'}
+                        </Text>
+                      </View>
+
+                      {/* Right: Departure time + Selection badge / hollow dot */}
+                      <View style={styles.departureRowRight}>
+                        <Text
+                          style={[
+                            styles.departureRowTimeText,
+                            isSelected && styles.departureRowTimeTextSelected,
+                          ]}
+                        >
+                          {dep.departureTime}
+                        </Text>
+
+                        {isSelected ? (
+                          <View style={styles.departureSelectedBadge}>
+                            <View style={styles.departureSelectedDot} />
+                            <Text style={styles.departureSelectedBadgeText}>
+                              {isFirstUpcoming ? 'NEXT' : 'Selected'}
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={styles.departureHollowDot} />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -2951,7 +3060,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF0F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
+  },
+  headerSwitchBusBtn: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE2F0',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  headerSwitchBusText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#18258F',
   },
   pageMainHeading: {
     fontFamily: FONT.bold,
@@ -3580,79 +3707,165 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#94A3B8',
   },
-  cleanNextDeparturesCardExpanded: {
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+  /* CHOOSE A DEPARTURE BOTTOM SHEET MODAL */
+  departuresModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(16, 24, 40, 0.35)',
+    justifyContent: 'flex-end',
   },
-  cleanDeparturesCloseBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#F1F5F9',
+  departuresModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    maxHeight: '80%',
+  },
+  departuresModalDragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#EAECF0',
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  departuresModalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  departuresModalTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#101828',
+    letterSpacing: -0.2,
+  },
+  departuresModalRouteSubtitle: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#344054',
+    marginTop: 3,
+  },
+  departuresModalCountSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
+    fontWeight: '400',
+    color: '#667085',
+    marginTop: 2,
+  },
+  departuresModalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F2F4F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cleanDeparturesExpandedContent: {
-    marginTop: 8,
-  },
-  cleanDeparturesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  departuresModalDivider: {
+    height: 1,
+    backgroundColor: '#EAECF0',
+    marginTop: 14,
     marginBottom: 4,
   },
-  cleanDepPill: {
+  departuresModalScroll: {
+    maxHeight: 420,
+  },
+  departuresModalListContent: {
+    paddingVertical: 4,
+  },
+  departureRowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 6,
+    justifyContent: 'space-between',
+    minHeight: 54,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EAECF0',
+    borderRadius: 12,
   },
-  cleanDepPillSelected: {
-    backgroundColor: '#18258F',
-    borderColor: '#18258F',
+  departureRowItemSelected: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1.5,
+    borderColor: '#2438B8',
+    borderBottomColor: '#2438B8',
+    marginVertical: 4,
   },
-  cleanDepPillRoute: {
-    fontFamily: FONT.semiBold,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
+  departureRowLeft: {
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
-  cleanDepPillRouteSelected: {
-    color: '#93C5FD',
+  departureRowRouteWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  cleanDepPillTime: {
+  departureRowRouteText: {
     fontFamily: FONT.bold,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#101828',
+  },
+  departureRowRouteTextSelected: {
+    color: '#2438B8',
+  },
+  departureRowServiceText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#667085',
+    marginTop: 2,
+  },
+  departureRowServiceTextSelected: {
+    color: '#4338CA',
+  },
+  departureRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  departureRowTimeText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: '#344054',
     fontVariant: ['tabular-nums'],
   },
-  cleanDepPillTimeSelected: {
-    color: '#FFFFFF',
+  departureRowTimeTextSelected: {
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: '#2438B8',
+    fontSize: 15,
   },
-  cleanDepSelectedDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#34D399',
+  departureSelectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0E7FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 5,
   },
-  cleanDeparturesHintText: {
-    fontFamily: FONT.regular,
+  departureSelectedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#2438B8',
+  },
+  departureSelectedBadgeText: {
+    fontFamily: FONT.bold,
     fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 6,
+    fontWeight: '700',
+    color: '#2438B8',
+  },
+  departureHollowDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
   },
 
   /* ROUTE STATUS COMPONENT (REPLACES TRAVEL TIME & FARE CARDS) */
@@ -3724,65 +3937,67 @@ const styles = StyleSheet.create({
     color: '#18258F',
   },
 
-  /* COMPACT DEPARTURE REMINDER */
+  /* COMPACT DEPARTURE & DROP-OFF REMINDER */
   compactReminderCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 14,
-    borderWidth: 1.2,
-    borderColor: 'rgba(23, 38, 143, 0.08)',
+    borderWidth: 1,
+    borderColor: '#EAECF0',
   },
   compactReminderIconBox: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFF1EE',
+    backgroundColor: '#FFF4ED',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   compactReminderTextBox: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 10,
   },
   compactReminderTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontFamily: FONT.semiBold,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#101828',
   },
   compactReminderSubtitle: {
     fontFamily: FONT.regular,
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1,
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#667085',
+    marginTop: 2,
   },
   compactReminderBtn: {
-    backgroundColor: '#FFF1EE',
-    paddingHorizontal: 12,
-    height: 30,
-    borderRadius: 8,
+    backgroundColor: '#2438B8',
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FDBA74',
   },
   compactReminderBtnActive: {
-    backgroundColor: '#059669',
-    borderColor: '#059669',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
   },
   compactReminderBtnText: {
     fontFamily: FONT.semiBold,
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: '600',
-    color: '#EA580C',
+    color: '#FFFFFF',
   },
   compactReminderBtnTextActive: {
-    color: '#FFFFFF',
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: '#2438B8',
   },
 
   /* VIEW TIMETABLE FOOTER CTA */
@@ -4126,23 +4341,23 @@ const styles = StyleSheet.create({
   /* METRICS DUAL-CARD GRID (REMAINING & FARE) */
   metricsGridRow: {
     flexDirection: 'row',
-    gap: 16, // User spec: 16–20 px gap between cards
-    marginBottom: 24, // User spec: Stats to Reminder = 24 px!
+    gap: 12,
+    marginBottom: 14,
     width: '100%',
   },
   metricCard: {
     flex: 1,
-    height: 114, // User spec: Target: 110–120 px
-    backgroundColor: '#FFFFFF', // Elevated white surface
+    height: 104,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderWidth: 1.2,
-    borderColor: 'rgba(23, 38, 143, 0.08)',
-    shadowColor: '#17268F',
-    shadowOffset: { width: 0, height: 3 },
+    borderColor: 'rgba(24, 37, 143, 0.08)',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 2,
     justifyContent: 'space-between',
   },
@@ -4678,7 +4893,7 @@ const styles = StyleSheet.create({
   /* ========================================================================= */
   onboardContainer: {
     paddingHorizontal: 16,
-    marginTop: 0,
+    marginTop: 4,
   },
   onboardRouteStrip: {
     flexDirection: 'row',
