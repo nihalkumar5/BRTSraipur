@@ -55,6 +55,7 @@ import {
   getActiveReminders,
 } from '../../src/services/notifications';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
+import { FONT, typography } from '../../src/theme/typography';
 
 function EditorialBusIllustration({
   width = 155,
@@ -2438,17 +2439,20 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   pageMainHeading: {
-    fontSize: 26,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 26, // Page title: 26 px / 700
+    lineHeight: 32, // Line-height around 32 px
+    fontWeight: '700',
     color: '#18258F',
     letterSpacing: -0.4,
     marginBottom: 2,
   },
   pageSubHeading: {
-    fontSize: 13,
+    fontFamily: FONT.medium,
+    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
+    lineHeight: 19, // Line-height around 18–20 px
     fontWeight: '500',
     color: '#6B7280',
-    lineHeight: 18,
   },
 
   /* HEADER & INPUT CARD */
@@ -2482,6 +2486,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputLabel: {
+    fontFamily: FONT.bold,
     fontSize: 10,
     color: '#6B7280',
     fontWeight: '700',
@@ -2490,12 +2495,16 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   stationText: {
-    fontSize: 16.5,
+    fontFamily: FONT.bold,
+    fontSize: 15.5, // Station name: 15–16 px / 700
+    lineHeight: 22,
     fontWeight: '700',
     color: '#18258F',
     letterSpacing: -0.2,
   },
   placeholderText: {
+    fontFamily: FONT.medium,
+    fontSize: 14.5,
     color: '#9CA3AF',
     fontWeight: '500',
   },
@@ -2613,13 +2622,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   sectionHeader: {
-    fontSize: 16,
+    fontFamily: FONT.bold,
+    fontSize: 18, // Section heading: 18 px / 700
+    lineHeight: 24, // Line-height around 24 px
     fontWeight: '700',
     color: '#17205F',
     letterSpacing: -0.2,
   },
   sectionHeaderHint: {
-    fontSize: 12,
+    fontFamily: FONT.medium,
+    fontSize: 12.5, // Metadata: 12–13 px / 500
+    lineHeight: 18,
     fontWeight: '500',
     color: '#6B7280',
   },
@@ -2656,10 +2669,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   popularStationName: {
-    fontSize: 14.5,
+    fontFamily: FONT.bold,
+    fontSize: 15.5, // Route / Station name: 15–16 px / 700
+    lineHeight: 22,
     fontWeight: '700',
     color: '#18258F',
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   popularRouteMetaRow: {
     flexDirection: 'row',
@@ -2667,9 +2682,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   popularRouteMetaDuration: {
-    fontSize: 11.5,
-    fontWeight: '600',
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    fontWeight: '500',
     color: '#475569',
+    fontVariant: ['tabular-nums'],
   },
   popularRouteMetaDot: {
     fontSize: 11,
@@ -2677,7 +2694,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   popularRouteMetaTag: {
-    fontSize: 11.5,
+    fontFamily: FONT.medium,
+    fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
   },
@@ -2695,9 +2713,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   popularFareText: {
-    fontSize: 12,
+    fontFamily: FONT.bold,
+    fontSize: 14.5, // Fare: 14–15 px / 700
     fontWeight: '700',
     color: '#1E293B',
+    fontVariant: ['tabular-nums'],
   },
   emptyStateSection: {
     alignItems: 'center',

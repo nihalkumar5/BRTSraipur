@@ -28,9 +28,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           styles.tabBarContainer,
           Platform.OS === 'web'
             ? ({
-                backdropFilter: 'blur(24px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(28px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+                boxShadow: '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
               } as any)
             : {},
         ]}
@@ -68,7 +68,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               : 'Fares';
 
           const renderIcon = () => {
-            const iconColor = isFocused ? '#FFFFFF' : '#E4E4E7';
+            const iconColor = isFocused ? '#FFFFFF' : '#556080';
             const strokeWidth = isFocused ? 2.3 : 1.9;
             const size = 18;
 
@@ -109,7 +109,16 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
-              style={styles.inactiveTabCircle}
+              style={[
+                styles.inactiveTabCircle,
+                Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
+                    } as any)
+                  : {},
+              ]}
               activeOpacity={0.75}
               accessibilityRole="button"
               accessibilityState={{ selected: false }}
@@ -151,16 +160,16 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F0F12', // Deep pitch dark capsule
+    backgroundColor: 'rgba(255, 255, 255, 0.82)', // Premium Frosted Glass Capsule
     borderRadius: 36,
     padding: 6,
     gap: 6,
     borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.12)', // Subtle metallic glass rim
-    elevation: 14,
-    shadowColor: '#000000',
+    borderColor: 'rgba(255, 255, 255, 0.95)', // Clean glass rim
+    elevation: 12,
+    shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.38,
+    shadowOpacity: 0.12,
     shadowRadius: 20,
   },
   activeTabPill: {
@@ -174,11 +183,11 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.35,
     shadowRadius: 10,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 4px 14px rgba(24, 37, 143, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
+          boxShadow: '0 4px 14px rgba(24, 37, 143, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
         } as any)
       : {}),
   },
@@ -187,8 +196,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeTabText: {
-    fontSize: 13.5,
-    fontWeight: '700',
+    fontFamily: Platform.select({
+      web: "'Plus Jakarta Sans', sans-serif",
+      default: 'PlusJakartaSans_600SemiBold',
+    }),
+    fontSize: 12,
+    fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: 0.3,
   },
@@ -196,11 +209,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#222226', // Charcoal dark circular button
+    backgroundColor: 'rgba(243, 245, 251, 0.85)', // Light glass button
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(24, 37, 143, 0.06)',
   },
 });
 

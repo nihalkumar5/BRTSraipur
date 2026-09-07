@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Bus, ArrowRight, ArrowLeftRight } from 'lucide-react-native';
 import { schedules } from '../../src/services/tracker';
 import { Trip } from '../../src/types';
+import { FONT } from '../../src/theme/typography';
 
 export default function TimetableScreen() {
   const [dayType, setDayType] = useState<'weekday' | 'weekend'>('weekday');
@@ -302,13 +303,17 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(24, 37, 143, 0.08)',
   },
   title: {
-    fontSize: 29,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 26, // Page title: 26 px / 700
+    lineHeight: 32, // Line-height around 32 px
+    fontWeight: '700',
     color: '#18258F',
-    letterSpacing: -0.6,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 13,
+    fontFamily: FONT.medium,
+    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
+    lineHeight: 19, // Line-height around 18–20 px
     fontWeight: '500',
     color: '#6B7280',
     marginTop: 2,
@@ -407,10 +412,12 @@ const styles = StyleSheet.create({
   },
   directionBarText: {
     flex: 1,
-    fontSize: 14,
+    fontFamily: FONT.bold,
+    fontSize: 15.5, // Route name: 15–16 px / 700
+    lineHeight: 22,
     fontWeight: '700',
     color: '#18258F',
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   swapIconPill: {
     width: 30,
@@ -518,9 +525,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   durationText: {
-    fontSize: 12,
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
     color: '#6B7280',
-    fontWeight: '600',
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   tripMainRow: {
     flexDirection: 'row',
@@ -532,14 +541,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   timeBold: {
-    fontSize: 19,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 18,
+    fontWeight: '700',
     color: '#18258F',
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
     marginBottom: 2,
+    fontVariant: ['tabular-nums'],
   },
   stopLabel: {
-    fontSize: 12,
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
     color: '#6B7280',
     fontWeight: '500',
   },

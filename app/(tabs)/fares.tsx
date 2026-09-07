@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowUpDown, ShieldCheck, Search, X } from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
+import { FONT } from '../../src/theme/typography';
 
 export default function FaresScreen() {
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
@@ -377,13 +378,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 26, // Page title: 26 px / 700
+    lineHeight: 32, // Line-height around 32 px
+    fontWeight: '700',
     color: '#18258F',
     letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 12.5,
+    fontFamily: FONT.medium,
+    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
+    lineHeight: 19, // Line-height around 18–20 px
     fontWeight: '500',
     color: '#6B7280',
     marginTop: 2,
@@ -476,19 +481,23 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   farePriceHero: {
-    fontSize: 34,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 32, // Large heading: 30–32 px / 700
+    fontWeight: '700',
     color: '#18258F',
     letterSpacing: -0.5,
+    fontVariant: ['tabular-nums'],
   },
   fareRouteText: {
-    fontSize: 13,
+    fontFamily: FONT.bold,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#18258F',
     marginTop: 2,
   },
   fareTypeSub: {
-    fontSize: 11.5,
+    fontFamily: FONT.medium,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6B7280',
     marginTop: 2,
@@ -499,6 +508,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   sectionHeader: {
+    fontFamily: FONT.bold,
     fontSize: 13,
     fontWeight: '700',
     color: '#18258F',
@@ -527,14 +537,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   slabRoute: {
-    fontSize: 13,
+    fontFamily: FONT.medium,
+    fontSize: 13.5,
     color: '#10131A',
     fontWeight: '500',
   },
   slabPrice: {
-    fontSize: 13.5,
+    fontFamily: FONT.bold,
+    fontSize: 15, // Fare: 14–15 px / 700
     fontWeight: '700',
     color: '#18258F',
+    fontVariant: ['tabular-nums'],
   },
   slabDivider: {
     height: 1,

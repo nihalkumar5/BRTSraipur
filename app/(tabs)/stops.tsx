@@ -36,6 +36,7 @@ import {
   StationDeparture,
 } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
+import { FONT } from '../../src/theme/typography';
 
 export default function AllStopsScreen() {
   const router = useRouter();
@@ -505,10 +506,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 26, // Page title: 26 px / 700
+    lineHeight: 32, // Line-height around 32 px
+    fontWeight: '700',
     color: '#18258F',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   totalBadge: {
     backgroundColor: '#EEF2FF',
@@ -519,12 +522,16 @@ const styles = StyleSheet.create({
     borderColor: '#C7D2FE',
   },
   totalBadgeText: {
+    fontFamily: FONT.bold,
     fontSize: 11,
     fontWeight: '700',
     color: '#18258F',
+    fontVariant: ['tabular-nums'],
   },
   subtitle: {
-    fontSize: 12.5,
+    fontFamily: FONT.medium,
+    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
+    lineHeight: 19, // Line-height around 18–20 px
     fontWeight: '500',
     color: '#6B7280',
     marginTop: 2,
@@ -553,7 +560,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 13.5,
+    fontFamily: FONT.medium,
+    fontSize: 14.5, // Primary body: 14–15 px / 500
     color: '#10131A',
     fontWeight: '500',
   },
@@ -581,7 +589,8 @@ const styles = StyleSheet.create({
     borderColor: '#18258F',
   },
   filterText: {
-    fontSize: 11.5,
+    fontFamily: FONT.medium,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6B7280',
   },
@@ -619,14 +628,17 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   stopNameText: {
-    fontSize: 16,
+    fontFamily: FONT.bold,
+    fontSize: 15.5, // Route / Station name: 15–16 px / 700
+    lineHeight: 22,
     fontWeight: '700',
     color: '#10131A',
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   hindiNameText: {
+    fontFamily: FONT.regular,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '400',
     color: '#6B7280',
     marginTop: 1,
   },

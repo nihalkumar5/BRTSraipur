@@ -4,12 +4,28 @@ import { StatusBar } from 'expo-status-bar';
 import { View, Platform, StyleSheet, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import {
+  useFonts,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import BusLoadingScreen from '../src/components/BusLoadingScreen';
 
 export default function RootLayout() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
+
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
 
   const onAndroidBackPress = useCallback(() => {
     if (canGoBack && webViewRef.current) {
@@ -39,9 +55,11 @@ export default function RootLayout() {
             <style
               dangerouslySetInnerHTML={{
                 __html: `
-                  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&display=swap');
+                  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap');
+                  
                   * {
                     box-sizing: border-box !important;
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
                   }
                   html, body {
                     width: 100% !important;
@@ -49,7 +67,10 @@ export default function RootLayout() {
                     margin: 0 !important;
                     padding: 0 !important;
                     background-color: #EAE6DF !important;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
+                    -webkit-font-smoothing: antialiased !important;
+                    -moz-osx-font-smoothing: grayscale !important;
+                    text-rendering: optimizeLegibility !important;
                   }
                   #root {
                     width: 100% !important;
@@ -58,6 +79,14 @@ export default function RootLayout() {
                     flex: 1 !important;
                     justify-content: center !important;
                     background-color: #EAE6DF !important;
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
+                  }
+                  div, span, p, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, [class*="css-text-"], [class*="r-fontFamily-"] {
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
+                  }
+                  .tabular-nums, [data-tabular="true"] {
+                    font-variant-numeric: tabular-nums !important;
+                    font-feature-settings: "tnum" 1 !important;
                   }
                   input, textarea, select {
                     outline: none !important;
@@ -100,9 +129,20 @@ export default function RootLayout() {
               injectedJavaScriptBeforeContentLoaded={`
                 (function() {
                   try {
+                    const fontLink = document.createElement('link');
+                    fontLink.rel = 'stylesheet';
+                    fontLink.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap';
+                    (document.head || document.documentElement).appendChild(fontLink);
+
                     const style = document.createElement('style');
                     style.id = 'tatpar-custom-styles';
                     style.innerHTML = \`
+                      * {
+                        font-family: 'Plus Jakarta Sans', sans-serif !important;
+                      }
+                      div, span, p, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, [class*="css-text-"], [class*="r-fontFamily-"] {
+                        font-family: 'Plus Jakarta Sans', sans-serif !important;
+                      }
                       [style*="z-index: 9999"], [style*="zIndex: 9999"], [style*="z-index:9999"] {
                         display: none !important;
                         opacity: 0 !important;
@@ -110,22 +150,15 @@ export default function RootLayout() {
                         pointer-events: none !important;
                       }
                       /* Compact frosted glass footer pill dock */
-                      div[style*="border-bottom-left-radius: 32px"],
-                      div[style*="borderBottomLeftRadius: 32px"],
-                      div[style*="border-radius: 32px"],
-                      div[style*="borderRadius: 32px"],
-                      div[style*="border-radius: 29px"],
-                      div[style*="borderRadius: 29px"] {
-                        width: 256px !important;
-                        max-width: 256px !important;
-                        left: 50% !important;
-                        right: auto !important;
-                        margin-left: -128px !important;
-                        background-color: rgba(255, 255, 255, 0.76) !important;
-                        -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-                        backdrop-filter: blur(24px) saturate(190%) !important;
-                        border: 1.2px solid rgba(255, 255, 255, 0.85) !important;
-                        box-shadow: 0 8px 30px rgba(24, 37, 143, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+                      div[style*="border-bottom-left-radius: 36px"],
+                      div[style*="borderBottomLeftRadius: 36px"],
+                      div[style*="border-radius: 36px"],
+                      div[style*="borderRadius: 36px"] {
+                        background-color: rgba(255, 255, 255, 0.82) !important;
+                        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+                        backdrop-filter: blur(28px) saturate(200%) !important;
+                        border: 1.2px solid rgba(255, 255, 255, 0.95) !important;
+                        box-shadow: 0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
                       }
                     \`;
                     const target = document.head || document.documentElement || document.body;
@@ -165,17 +198,12 @@ export default function RootLayout() {
 
                         // 2. Compact frosted glass styling for bottom nav bar
                         const s = window.getComputedStyle(el);
-                        if (s.position === 'absolute' && (s.borderRadius === '32px' || s.borderRadius === '29px')) {
-                          el.style.setProperty('width', '256px', 'important');
-                          el.style.setProperty('max-width', '256px', 'important');
-                          el.style.setProperty('left', '50%', 'important');
-                          el.style.setProperty('right', 'auto', 'important');
-                          el.style.setProperty('margin-left', '-128px', 'important');
-                          el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.76)', 'important');
-                          el.style.setProperty('-webkit-backdrop-filter', 'blur(24px) saturate(190%)', 'important');
-                          el.style.setProperty('backdrop-filter', 'blur(24px) saturate(190%)', 'important');
-                          el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.85)', 'important');
-                          el.style.setProperty('box-shadow', '0 8px 30px rgba(24, 37, 143, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.7)', 'important');
+                        if (s.position === 'absolute' && (s.borderRadius === '36px' || s.borderRadius === '32px' || s.borderRadius === '29px')) {
+                          el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.82)', 'important');
+                          el.style.setProperty('-webkit-backdrop-filter', 'blur(28px) saturate(200%)', 'important');
+                          el.style.setProperty('backdrop-filter', 'blur(28px) saturate(200%)', 'important');
+                          el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.95)', 'important');
+                          el.style.setProperty('box-shadow', '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)', 'important');
                         }
                       }
                     } catch (e) {}

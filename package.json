@@ -10,6 +10,7 @@
     "build:web": "expo export -p web"
   },
   "dependencies": {
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/vector-icons": "^14.0.2",
     "expo": "~52.0.37",
     "expo-asset": "~11.0.5",
