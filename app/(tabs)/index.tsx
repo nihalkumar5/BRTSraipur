@@ -30,6 +30,7 @@ import {
   Clock,
   MapPin,
   CheckCircle2,
+  Check,
   Bell,
   BellRing,
   Calendar,
@@ -1881,13 +1882,16 @@ export default function LiveBusScreen() {
           /* ========================================================================= */
           journey ? (
             <View style={styles.onboardContainer}>
-              {/* COMPACT ROUTE SWITCHER BAR */}
+              {/* COMPACT ROUTE CONTEXT / SWITCHER BAR */}
               <View style={styles.onboardRouteStrip}>
                 <View style={styles.onboardRouteInfo}>
                   <View style={styles.liveGreenDotPulse} />
-                  <Text style={styles.onboardRouteText} numberOfLines={1}>
-                    {journey.fromStop.shortName} → {journey.toStop.shortName}
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.onboardRouteSubLabel}>I'm Onboard · Live</Text>
+                    <Text style={styles.onboardRouteText} numberOfLines={1}>
+                      {journey.fromStop.shortName} → {journey.toStop.shortName}
+                    </Text>
+                  </View>
                 </View>
                 <TouchableOpacity
                   style={styles.onboardChangeRouteBtn}
@@ -1898,252 +1902,133 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* LIVE ONBOARD DASHBOARD HERO */}
+              {/* 1. LIVE ONBOARD HERO CARD (FOCUSED ON NEXT STOP) */}
               <Animated.View style={[styles.onboardHeroCard, { transform: [{ scale: cardScaleAnim }] }]}>
+                {/* Top Row: Live badge + subtle bus illustration */}
                 <View style={styles.onboardHeroTopRow}>
                   <View style={styles.onboardLiveBadge}>
                     <View style={styles.liveGreenDot} />
                     <Text style={styles.onboardLiveBadgeText}>LIVE ONBOARD</Text>
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
-                    <EditorialBusIllustration width={112} height={46} />
+                    <EditorialBusIllustration width={92} height={38} />
                   </View>
                 </View>
 
-                {/* CURRENT TIME */}
-                <Text style={styles.onboardHeroTime}>{journey.fromTime}</Text>
+                {/* Next Stop Label */}
+                <Text style={styles.onboardHeroNextStopLabel}>NEXT STOP</Text>
 
-                {/* ROUTE LINE: BMC ─────────→ CBD */}
-                <View style={styles.onboardRouteCodeRow}>
-                  <Text style={styles.onboardRouteCode}>{journey.fromStop.code}</Text>
-                  <View style={styles.onboardRouteArrowWrapper}>
-                    <Svg width={72} height={14} viewBox="0 0 72 14" fill="none">
-                      <Line x1="2" y1="7" x2="64" y2="7" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" opacity={0.65} />
-                      <Path d="M 58 3 L 64 7 L 58 11" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </Svg>
-                  </View>
-                  <Text style={styles.onboardRouteCode}>{journey.toStop.code}</Text>
-                </View>
-                <Text style={styles.onboardHeroStationNames} numberOfLines={1}>
-                  {journey.fromStop.shortName} → {journey.toStop.shortName}
+                {/* Station Name */}
+                <Text style={styles.onboardHeroNextStopTitle} numberOfLines={1}>
+                  {journey.nextStopName || 'Sector 29'}
                 </Text>
 
-                {/* BOTTOM METADATA ROW */}
-                <View style={styles.onboardHeroBottomRow}>
-                  <View>
-                    <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
-                    <Text style={styles.heroMetaSubtitle}>AC Express</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.heroMetaTitle}>
-                      {Math.max(1, Math.round(journey.durationMins * (1 - journey.progressPercent / 100)))} min
-                    </Text>
-                    <Text style={styles.heroMetaDeparts}>IN TRANSIT</Text>
-                  </View>
-                </View>
-
-                {/* EMBEDDED JOURNEY PROGRESS BAR */}
-                <View style={styles.onboardProgressSection}>
-                  <View style={styles.onboardProgressHeader}>
-                    <Text style={styles.onboardProgressTitle}>{journey.progressPercent}% journey</Text>
-                    <Text style={styles.onboardProgressSub}>{journey.remainingStopsCount} stops left</Text>
-                  </View>
-                  <View style={styles.progressBarWrapper}>
-                    <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255, 255, 255, 0.18)' }]}>
-                      <View style={[styles.progressBarFill, { backgroundColor: '#10B981', width: `${journey.progressPercent}%` }]} />
-                    </View>
-                    <View
-                      style={[
-                        styles.progressBarBusBadge,
-                        { left: `${Math.min(94, Math.max(2, journey.progressPercent))}%` },
-                      ]}
-                    >
-                      <Bus size={14} color="#FFFFFF" />
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-
-              {/* 🟢 NEXT STOP OPERATIONAL STATUS CARD (72-88px) */}
-              <View style={styles.onboardNextStopCard}>
-                {/* TOP ROW: LIVE STATUS */}
-                <View style={styles.nextStopTopRow}>
-                  <View style={styles.nextStopLiveHeader}>
-                    <View style={styles.liveGreenDot} />
-                    <Text style={styles.nextStopPreLabel}>NEXT STOP</Text>
-                  </View>
-                  <View style={styles.nextStopStatusBadge}>
-                    <View style={styles.liveGreenDotSmall} />
-                    <Text style={styles.nextStopStatusText}>
+                {/* Arrival Status */}
+                <View style={styles.onboardHeroEtaRow}>
+                  <View style={styles.onboardHeroEtaBadge}>
+                    <Text style={styles.onboardHeroEtaText}>
                       {!journey.nextStopETA ||
                       journey.nextStopETA.toLowerCase().includes('now') ||
                       journey.nextStopETA === '0m' ||
                       journey.nextStopETA === '1m'
-                        ? 'ARRIVING NOW'
-                        : `ARRIVING IN ${journey.nextStopETA.replace('m', ' MIN').toUpperCase()}`}
+                        ? '● Arriving now'
+                        : `Arriving in ~${journey.nextStopETA.replace('m', ' min')}`}
                     </Text>
                   </View>
                 </View>
 
-                {/* MAIN ROW: STATION NAME, SUBTITLE & SCHEDULED TIME */}
-                <View style={styles.nextStopMainBody}>
-                  <View style={styles.nextStopLeftCol}>
-                    <Text style={styles.nextStopTitle}>{journey.nextStopName || 'Sector 29'}</Text>
-                    <Text style={styles.nextStopHindiSubtitle} numberOfLines={1}>
-                      {nextStopObj?.hindiName ? `${nextStopObj.hindiName} · ` : ''}Nava Raipur BRTS Express Shelter
-                    </Text>
-                  </View>
-
-                  <View style={styles.nextStopRightCol}>
-                    <Text style={styles.nextStopTimeValue}>{nextStopItem?.time || journey.fromTime}</Text>
-                    <Text style={styles.nextStopTimeLabel}>SCHEDULED</Text>
-                  </View>
+                {/* Route & Bus Details */}
+                <View style={styles.onboardHeroRouteMeta}>
+                  <Text style={styles.onboardHeroRouteStations} numberOfLines={1}>
+                    {journey.fromStop.shortName} → {journey.toStop.shortName}
+                  </Text>
+                  <Text style={styles.onboardHeroServiceBadge}>
+                    {journey.routeBadge} · {journey.trip.serviceDay === 'weekend' ? 'Weekend Express' : 'AC Express'}
+                  </Text>
                 </View>
-              </View>
 
-              {/* UPCOMING DEPARTURES STRIP */}
-              {journey.upcomingDepartures && journey.upcomingDepartures.length > 1 ? (
-                <View style={styles.upcomingContainer}>
-                  <Text style={styles.upcomingHeaderTitle}>Upcoming departures</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.depScrollContent}
-                  >
-                    {journey.upcomingDepartures.map(dep => {
-                      const isSelected = journey.trip.id === dep.tripId;
-                      const isDeparted = !!dep.isDeparted;
-                      const isCurrent = (dep.isInTransit || dep.diffMins === 0) && !isDeparted;
-                      const diffLabel = isDeparted
-                        ? (dep.isLastToday ? 'LAST TODAY' : 'DEPARTED')
-                        : dep.isNextDay
-                        ? 'TOMORROW'
-                        : isCurrent
-                        ? 'NOW'
-                        : dep.diffMins < 60
-                        ? `${dep.diffMins} MIN`
-                        : `${Math.floor(dep.diffMins / 60)}H ${dep.diffMins % 60}M`;
-
+                {/* Stops Remaining Dots Indicator: ●●●●○ 5 stops remaining */}
+                <View style={styles.onboardHeroStopsRow}>
+                  <View style={styles.onboardHeroDotsWrapper}>
+                    {[0, 1, 2, 3, 4].map((dotIdx) => {
+                      const remainingCount = journey.remainingStopsCount ?? Math.max(1, journey.intermediateStops.filter(s => !s.passed).length);
+                      const isFilled = dotIdx < Math.min(5, Math.max(1, remainingCount - 1));
                       return (
-                        <TouchableOpacity
-                          key={`${dep.tripId}_${dep.departureTime}_${dep.isNextDay ? 'next' : 'today'}_${dep.isDeparted ? 'dep' : 'up'}`}
+                        <View
+                          key={dotIdx}
                           style={[
-                            styles.depCard,
-                            isDeparted && styles.depCardDeparted,
-                            isSelected && styles.depCardSelected,
+                            styles.onboardHeroDot,
+                            isFilled ? styles.onboardHeroDotFilled : styles.onboardHeroDotEmpty,
                           ]}
-                          onPress={() => {
-                            setSelectedTripId(dep.tripId);
-                            triggerCardBounce();
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <View style={styles.depCardHeader}>
-                            {isCurrent ? (
-                              <View
-                                style={[
-                                  styles.depLiveDot,
-                                  isSelected && { backgroundColor: '#18258F' },
-                                ]}
-                              />
-                            ) : null}
-                            <Text
-                              style={[
-                                styles.depTimeText,
-                                isDeparted && styles.depTimeTextDeparted,
-                                isSelected ? styles.depTimeTextSelected : styles.depTimeTextFuture,
-                              ]}
-                            >
-                              {dep.departureTime}
-                            </Text>
-                          </View>
-                          <Text
-                            style={[
-                              styles.depStatusText,
-                              isDeparted && styles.depStatusTextDeparted,
-                              isSelected ? styles.depStatusTextSelected : styles.depStatusTextFuture,
-                            ]}
-                          >
-                            {diffLabel}
-                          </Text>
-                        </TouchableOpacity>
+                        />
                       );
                     })}
-                  </ScrollView>
-                </View>
-              ) : null}
-
-              {/* REMAINING & FARE DUAL PREMIUM CARDS */}
-              <View style={styles.metricsGridRow}>
-                {/* CARD 1: REMAINING TIME IN TRANSIT */}
-                <View style={[styles.metricCard, styles.metricCardRemaining]}>
-                  <View style={styles.metricCardHeader}>
-                    <View style={styles.metricLabelGroup}>
-                      <Clock size={13} color="#17268F" strokeWidth={2.4} />
-                      <Text style={styles.metricCardLabel}>REMAINING</Text>
-                    </View>
-                    <View style={[styles.metricBadgeRemaining, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                      <Text style={[styles.metricBadgeTextRemaining, { color: '#065F46' }]}>LIVE</Text>
-                    </View>
                   </View>
-                  <Text style={styles.metricCardValue}>
-                    {Math.max(1, Math.round(journey.durationMins * (1 - journey.progressPercent / 100)))}{' '}
-                    <Text style={styles.metricUnitText}>min</Text>
+                  <Text style={styles.onboardHeroStopsText}>
+                    {journey.remainingStopsCount ?? Math.max(1, journey.intermediateStops.filter(s => !s.passed).length)} stops remaining
                   </Text>
-                  <Text style={styles.metricCardSub} numberOfLines={1}>
-                    to {journey.toStop.shortName}
-                  </Text>
+                </View>
+              </Animated.View>
+
+              {/* 2. NEXT STOP OPERATIONAL STATUS CARD (Clean, no scheduled departure time) */}
+              <View style={styles.onboardNextStopCardClean}>
+                <View style={styles.nextStopCleanTopRow}>
+                  <View style={styles.nextStopCleanHeader}>
+                    <View style={styles.liveGreenDot} />
+                    <Text style={styles.nextStopCleanPreLabel}>NEXT STOP</Text>
+                  </View>
+                  <View style={styles.nextStopCleanEtaBadge}>
+                    <Text style={styles.nextStopCleanEtaText}>
+                      {!journey.nextStopETA ||
+                      journey.nextStopETA.toLowerCase().includes('now') ||
+                      journey.nextStopETA === '0m' ||
+                      journey.nextStopETA === '1m'
+                        ? '● Arriving now'
+                        : `Arriving in ~${journey.nextStopETA.replace('m', ' min')}`}
+                    </Text>
+                  </View>
                 </View>
 
-                {/* CARD 2: OFFICIAL FARE */}
-                <View style={[styles.metricCard, styles.metricCardFare]}>
-                  <View style={styles.metricCardHeader}>
-                    <View style={styles.metricLabelGroup}>
-                      <ShieldCheck size={13.5} color="#17268F" strokeWidth={2.4} />
-                      <Text style={styles.metricCardLabel}>FARE</Text>
-                    </View>
-                    <View style={styles.metricBadgeFare}>
-                      <Text style={styles.metricBadgeTextFare}>AC RIDE</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.metricCardValue}>₹{journey.fare}</Text>
-                  <Text style={styles.metricCardSub} numberOfLines={1}>
-                    {journey.trip.serviceDay === 'weekend' ? 'Weekend Express' : 'AC Express'}
-                  </Text>
-                </View>
+                <Text style={styles.nextStopCleanTitle}>
+                  {journey.nextStopName || 'Sector 29'}
+                </Text>
+
+                <Text style={styles.nextStopCleanShelterSub} numberOfLines={1}>
+                  {nextStopObj?.hindiName ? `${nextStopObj.hindiName} · ` : ''}Nava Raipur BRTS Shelter
+                </Text>
               </View>
 
-              {/* DROP-OFF REMINDER ACTION CARD */}
+              {/* 3. DROP-OFF REMINDER CARD */}
               <TouchableOpacity
-                style={styles.notificationActionCard}
+                style={styles.compactReminderCard}
                 onPress={handleScheduleNotifications}
                 activeOpacity={0.8}
               >
-                <View style={styles.notificationIconBox}>
+                <View style={styles.compactReminderIconBox}>
                   {activeReminders.length > 0 ? (
-                    <BellRing size={16} color="#F26B52" strokeWidth={2.2} />
+                    <BellRing size={16} color="#F26B52" strokeWidth={2.4} />
                   ) : (
-                    <Bell size={16} color="#F26B52" strokeWidth={2.2} />
+                    <Bell size={16} color="#F26B52" strokeWidth={2.4} />
                   )}
                 </View>
-                <View style={styles.notificationTextBox}>
-                  <Text style={styles.notificationTitle}>Drop-off reminder</Text>
-                  <Text style={styles.notificationSubtitle} numberOfLines={1}>
+                <View style={styles.compactReminderTextBox}>
+                  <Text style={styles.compactReminderTitle}>Drop-off reminder</Text>
+                  <Text style={styles.compactReminderSubtitle} numberOfLines={1}>
                     {activeReminders.length > 0
                       ? `Alert active: 1 stop before ${journey.toStop.shortName}`
-                      : `Alert me 1 stop before ${journey.toStop.shortName}`}
+                      : `Get notified 1 stop before ${journey.toStop.shortName}`}
                   </Text>
                 </View>
                 <View
                   style={[
-                    styles.notificationSetBtn,
-                    activeReminders.length > 0 && styles.notificationSetBtnActive,
+                    styles.compactReminderBtn,
+                    activeReminders.length > 0 && styles.compactReminderBtnActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.notificationSetBtnText,
-                      activeReminders.length > 0 && styles.notificationSetBtnTextActive,
+                      styles.compactReminderBtnText,
+                      activeReminders.length > 0 && styles.compactReminderBtnTextActive,
                     ]}
                   >
                     {activeReminders.length > 0 ? 'Active' : 'Set reminder'}
@@ -2151,127 +2036,89 @@ export default function LiveBusScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* FULL LIVE ONBOARD ROUTE TIMELINE */}
-              <View style={styles.stopsTimelineContainer}>
-                <View style={styles.timelineHeaderRow}>
-                  <View style={[styles.scheduledRoutePill, { backgroundColor: '#E9ECFF' }]}>
-                    <Text style={[styles.scheduledRoutePillText, { color: '#18258F' }]}>LIVE GPS CORRIDOR</Text>
-                  </View>
-                  <Text style={styles.timelineTitle}>Live Onboard Route Progress</Text>
+              {/* 4. LIGHTWEIGHT CONTEXTUAL ROUTE PROGRESS */}
+              <View style={styles.onboardLightRouteContainer}>
+                <View style={styles.onboardLightRouteHeader}>
+                  <Text style={styles.onboardLightRouteTitle}>ROUTE PROGRESS</Text>
+                  <Text style={styles.onboardLightRouteSub}>
+                    {journey.fromStop.shortName} → {journey.toStop.shortName}
+                  </Text>
                 </View>
 
-                {/* TIMELINE TOP SUMMARY STRIP */}
-                <View style={styles.timelineSummaryBar}>
-                  <View style={styles.timelineSummaryItem}>
-                    <Text style={styles.timelineSummaryValue}>{journey.fromTime}</Text>
-                    <Text style={styles.timelineSummarySub} numberOfLines={1}>{journey.fromStop.shortName}</Text>
-                  </View>
-                  <View style={styles.timelineSummaryMid}>
-                    <Text style={styles.timelineSummaryDuration}>{journey.durationMins} min</Text>
-                    <ArrowRight size={13} color="#18258F" style={{ marginTop: 2 }} />
-                  </View>
-                  <View style={[styles.timelineSummaryItem, { alignItems: 'flex-end' }]}>
-                    <Text style={styles.timelineSummaryValue}>{journey.toTime}</Text>
-                    <Text style={styles.timelineSummarySub} numberOfLines={1}>{journey.toStop.shortName}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.timelineListContainer}>
+                <View style={styles.lightTimelineWrapper}>
                   {journey.intermediateStops.map((stopItem, index) => {
-                    const isFirst = index === 0;
                     const isLast = index === journey.intermediateStops.length - 1;
                     const isPassed = stopItem.passed;
-                    const isCurrent = stopItem.isCurrentNext;
+                    const isCurrentNext = stopItem.isCurrentNext;
 
                     return (
                       <View
-                        key={index}
+                        key={`${stopItem.name}_${index}`}
                         style={[
-                          styles.timelineRow,
-                          isCurrent && styles.timelineRowCurrent,
+                          styles.lightTimelineRow,
+                          isCurrentNext && styles.lightTimelineRowNext,
                         ]}
                       >
-                        <View style={styles.timelineDotCol}>
+                        {/* Timeline Dot & Line */}
+                        <View style={styles.lightTimelineLineCol}>
                           {!isLast && (
                             <View
                               style={[
-                                styles.timelineVerticalLine,
-                                isPassed && styles.timelineVerticalLinePassed,
+                                styles.lightTimelineLine,
+                                isPassed && styles.lightTimelineLinePassed,
                               ]}
                             />
                           )}
-
-                          {isCurrent ? (
-                            <View style={styles.timelineCurrentMarkerBox}>
-                              <Bus size={11} color="#FFFFFF" strokeWidth={2.4} />
+                          {isPassed ? (
+                            <View style={styles.lightDotPassed}>
+                              <Check size={10} color="#64748B" strokeWidth={2.8} />
                             </View>
-                          ) : isPassed ? (
-                            <View style={styles.timelineDotPassed}>
-                              <CheckCircle2 size={15} color="#10B981" />
-                            </View>
-                          ) : isFirst ? (
-                            <View style={[styles.timelineDot, styles.timelineDotOrigin]}>
-                              <View style={styles.timelineDotInnerWhite} />
+                          ) : isCurrentNext ? (
+                            <View style={styles.lightDotNext}>
+                              <View style={styles.lightDotNextInner} />
                             </View>
                           ) : isLast ? (
-                            <View style={[styles.timelineDot, styles.timelineDotDest]}>
-                              <View style={styles.timelineDotInnerWhite} />
+                            <View style={styles.lightDotDest}>
+                              <View style={styles.lightDotDestInner} />
                             </View>
                           ) : (
-                            <View style={[styles.timelineDot, styles.timelineDotIntermediate]} />
+                            <View style={styles.lightDotFuture} />
                           )}
                         </View>
 
-                        <View style={[styles.timelineInfoRow, isLast && { paddingBottom: 4 }]}>
-                          <View style={{ flex: 1, marginRight: 12 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                              <Text
-                                style={[
-                                  styles.timelineStationName,
-                                  (isFirst || isLast || isCurrent) ? styles.timelineStationBold : styles.timelineStationMuted,
-                                  isPassed && styles.timelineStationPassed,
-                                  isCurrent && { color: '#18258F', fontWeight: '800' },
-                                ]}
-                                numberOfLines={1}
-                              >
-                                {stopItem.name}
-                              </Text>
+                        {/* Station Name & Status */}
+                        <View style={styles.lightTimelineContentCol}>
+                          <Text
+                            style={[
+                              styles.lightTimelineStation,
+                              isPassed && styles.lightTimelineStationPassed,
+                              isCurrentNext && styles.lightTimelineStationNext,
+                              isLast && styles.lightTimelineStationDest,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {stopItem.name}
+                          </Text>
 
-                              {isFirst ? (
-                                <View style={styles.originTagBadge}>
-                                  <Text style={styles.originTagBadgeText}>Boarding</Text>
-                                </View>
-                              ) : isLast ? (
-                                <View style={styles.destTagBadge}>
-                                  <Text style={styles.destTagBadgeText}>Drop-off</Text>
-                                </View>
-                              ) : null}
-                            </View>
-
-                            {isFirst ? (
-                              <Text style={styles.timelineShelterSub}>Platform 1 · Gate opens 2m prior</Text>
+                          <View style={styles.lightTimelineStatusCol}>
+                            {isPassed ? (
+                              <Text style={styles.lightPassedCheckmark}>✓</Text>
+                            ) : isCurrentNext ? (
+                              <View style={styles.lightNextTag}>
+                                <Text style={styles.lightNextTagText}>
+                                  {!journey.nextStopETA ||
+                                  journey.nextStopETA.toLowerCase().includes('now') ||
+                                  journey.nextStopETA === '0m' ||
+                                  journey.nextStopETA === '1m'
+                                    ? 'Arriving now'
+                                    : `~${journey.nextStopETA.replace('m', ' min')}`}
+                                </Text>
+                              </View>
                             ) : isLast ? (
-                              <Text style={styles.timelineShelterSub}>Final interchange terminal</Text>
-                            ) : isCurrent ? (
-                              <Text style={[styles.timelineShelterSub, { color: '#059669', fontWeight: '600' }]}>
-                                Approaching designated BRTS platform
-                              </Text>
+                              <Text style={styles.lightDestTimeText}>{journey.toTime}</Text>
                             ) : (
-                              <Text style={styles.timelineShelterSub}>Nava Raipur BRTS Shelter</Text>
+                              <Text style={styles.lightFutureTimeText}>{stopItem.time}</Text>
                             )}
-                          </View>
-
-                          <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                            <Text
-                              style={[
-                                styles.timelineTimeText,
-                                (isFirst || isLast || isCurrent) ? styles.timelineTimeBold : styles.timelineTimeMuted,
-                                isPassed && styles.timelineTimePassed,
-                                isCurrent && { color: '#18258F', fontWeight: '800' },
-                              ]}
-                            >
-                              {stopItem.time}
-                            </Text>
                           </View>
                         </View>
                       </View>
@@ -2279,11 +2126,28 @@ export default function LiveBusScreen() {
                   })}
                 </View>
 
-                <View style={styles.timelineFooterNotice}>
-                  <Info size={13} color="#18258F" style={{ marginTop: 2, marginRight: 6, opacity: 0.7 }} />
-                  <Text style={styles.timelineFooterNoticeText}>
-                    In-bus tracker estimates are synchronized with Nava Raipur BRTS corridor RFID sensors.
-                  </Text>
+                {/* Route Actions Footer */}
+                <View style={styles.onboardLightRouteFooter}>
+                  <TouchableOpacity
+                    style={styles.onboardViewFullRouteBtn}
+                    onPress={() => setAllPopularModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.onboardViewFullRouteText}>View full route →</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.howTrackingWorksBtn}
+                    onPress={() =>
+                      Alert.alert(
+                        'How Tracking Works',
+                        'In-bus tracker estimates are calculated using vehicle movement and Nava Raipur BRTS corridor RFID sensors.'
+                      )
+                    }
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.howTrackingWorksText}>ⓘ How tracking works</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -4424,188 +4288,356 @@ const styles = StyleSheet.create({
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 24,
-    right: 20,
+    top: 18,
+    right: 16,
     zIndex: 1,
-    opacity: 0.95,
+    opacity: 0.32,
   },
-  onboardHeroTime: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.8,
-    marginTop: 16, // Badge ➔ time: 16 px!
+  onboardHeroNextStopLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.72)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: 18,
   },
-  onboardRouteCodeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10, // Time ➔ route: 8–12 px (10 px)!
-  },
-  onboardRouteCode: {
-    fontSize: 20,
+  onboardHeroNextStopTitle: {
+    fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
+    marginTop: 3,
   },
-  onboardRouteArrowWrapper: {
-    marginHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  onboardHeroStationNames: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#C7D2FE',
-    marginTop: 4, // Route ➔ subtitle: 4 px!
-  },
-  onboardHeroBottomRow: {
+  onboardHeroEtaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 24, // Subtitle ➔ bus information: 24 px!
+    marginTop: 8,
   },
-  onboardProgressSection: {
-    marginTop: 16, // Bus information ➔ divider: 16 px!
-    paddingTop: 12, // Divider ➔ progress information: 12 px!
+  onboardHeroEtaBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  onboardHeroEtaText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#A7F3D0',
+    letterSpacing: 0.3,
+  },
+  onboardHeroRouteMeta: {
+    marginTop: 18,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.14)',
   },
-  onboardProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  onboardProgressTitle: {
-    fontSize: 11,
+  onboardHeroRouteStations: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
-  onboardProgressSub: {
-    fontSize: 11,
-    color: '#C7D2FE',
+  onboardHeroServiceBadge: {
+    fontSize: 12.5,
     fontWeight: '500',
+    color: '#C7D2FE',
+    marginTop: 2,
   },
-  progressBarWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
-    marginTop: 10, // Progress text ➔ bar: 10–12 px (10 px)!
-    paddingVertical: 4,
+  onboardHeroStopsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    gap: 10,
   },
-  onboardNextStopCard: {
+  onboardHeroDotsWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  onboardHeroDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  onboardHeroDotFilled: {
+    backgroundColor: '#10B981',
+  },
+  onboardHeroDotEmpty: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+  },
+  onboardHeroStopsText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E0E7FF',
+  },
+  onboardNextStopCardClean: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingHorizontal: 16, // 16 px horizontal padding!
-    paddingVertical: 14, // Height ~78–82 px (Target: 72–88 px)!
+    padding: 16,
     borderWidth: 1.5,
     borderColor: '#10B981',
-    marginBottom: 24, // NEXT STOP ➔ UPCOMING DEPARTURES = 24 px!
+    marginBottom: 14,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
-  nextStopTopRow: {
+  nextStopCleanTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },
-  nextStopLiveHeader: {
+  nextStopCleanHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  nextStopPreLabel: {
-    fontSize: 10.5,
+  nextStopCleanPreLabel: {
+    fontSize: 11,
     fontWeight: '800',
     color: '#18258F',
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
-  nextStopStatusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  nextStopCleanEtaBadge: {
     backgroundColor: '#ECFDF5',
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.35)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
     borderRadius: 6,
   },
-  nextStopStatusText: {
-    fontSize: 10,
+  nextStopCleanEtaText: {
+    fontSize: 11,
     fontWeight: '800',
     color: '#065F46',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
-  nextStopMainBody: {
+  nextStopCleanTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  nextStopCleanShelterSub: {
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 3,
+  },
+  onboardLightRouteContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(24, 37, 143, 0.08)',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  onboardLightRouteHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  nextStopLeftCol: {
-    flex: 1,
-    marginRight: 12,
-  },
-  nextStopTitle: {
-    fontSize: 18,
+  onboardLightRouteTitle: {
+    fontSize: 11,
     fontWeight: '800',
-    color: '#18258F',
-    letterSpacing: -0.3,
-  },
-  nextStopHindiSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
     color: '#64748B',
-    marginTop: 2,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  nextStopRightCol: {
+  onboardLightRouteSub: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+  lightTimelineWrapper: {
+    paddingLeft: 4,
+  },
+  lightTimelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 38,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  lightTimelineRowNext: {
+    backgroundColor: '#EEF2FF',
+  },
+  lightTimelineLineCol: {
+    width: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    height: '100%',
+  },
+  lightTimelineLine: {
+    position: 'absolute',
+    top: 16,
+    bottom: -22,
+    width: 2,
+    backgroundColor: '#E2E8F0',
+    zIndex: 1,
+  },
+  lightTimelineLinePassed: {
+    backgroundColor: '#94A3B8',
+  },
+  lightDotPassed: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  lightDotNext: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#18258F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  lightDotNextInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  lightDotDest: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#18258F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  lightDotDestInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#18258F',
+  },
+  lightDotFuture: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#CBD5E1',
+    zIndex: 2,
+  },
+  lightTimelineContentCol: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  lightTimelineStation: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#334155',
+    flex: 1,
+    marginRight: 8,
+  },
+  lightTimelineStationPassed: {
+    color: '#94A3B8',
+  },
+  lightTimelineStationNext: {
+    color: '#18258F',
+    fontWeight: '800',
+    fontSize: 14.5,
+  },
+  lightTimelineStationDest: {
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  lightTimelineStatusCol: {
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
-  nextStopTimeValue: {
-    fontSize: 16,
+  lightPassedCheckmark: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  lightNextTag: {
+    backgroundColor: '#18258F',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  lightNextTagText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  lightDestTimeText: {
+    fontSize: 13,
     fontWeight: '800',
     color: '#18258F',
-    letterSpacing: -0.3,
   },
-  nextStopTimeLabel: {
-    fontSize: 9,
-    fontWeight: '700',
+  lightFutureTimeText: {
+    fontSize: 12,
+    fontWeight: '500',
     color: '#94A3B8',
-    letterSpacing: 0.6,
-    marginTop: 1,
   },
-  nextStopFooterDivider: {
-    height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.07)',
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  nextStopFooterRow: {
+  onboardLightRouteFooter: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
   },
-  nextStopFollowingBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  onboardViewFullRouteBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
-  nextStopFollowingLabel: {
-    fontSize: 11.5,
-    color: '#64748B',
-  },
-  nextStopFollowingName: {
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  nextStopRemainingStops: {
-    fontSize: 11.5,
+  onboardViewFullRouteText: {
+    fontSize: 13,
     fontWeight: '700',
     color: '#18258F',
+  },
+  howTrackingWorksBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  howTrackingWorksText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  onboardRouteSubLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#059669',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 1,
   },
 
 
