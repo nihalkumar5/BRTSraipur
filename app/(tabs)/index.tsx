@@ -802,15 +802,17 @@ export default function LiveBusScreen() {
                   </View>
 
                   <View style={styles.heroBottomRow}>
-                    <View>
+                    <View style={{ flex: 1, marginRight: 8 }}>
                       <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
-                      <Text style={styles.heroMetaSubtitle}>
-                        {journey.isTransfer ? `Transfer at ${journey.transferHub}` : 'AC Express'}
+                      <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
+                        {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'}
                       </Text>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
+                    <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
                       <Text style={styles.heroMetaTitle}>{journey.durationMins} min</Text>
-                      <Text style={styles.heroMetaDeparts}>{journey.countdownText.toUpperCase()}</Text>
+                      <Text style={styles.heroMetaDeparts} numberOfLines={1}>
+                        {journey.countdownText.toUpperCase()}
+                      </Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -838,11 +840,11 @@ export default function LiveBusScreen() {
                     >
                       {journey.upcomingDepartures.map(dep => {
                         const isSelected = journey.trip.id === dep.tripId;
-                        const isCurrent = dep.diffMins === 0;
-                        const diffLabel = isCurrent
-                          ? 'NOW'
-                          : dep.isNextDay
+                        const isCurrent = !dep.isNextDay && dep.diffMins === 0;
+                        const diffLabel = dep.isNextDay
                           ? 'TOMORROW'
+                          : dep.diffMins === 0
+                          ? 'NOW'
                           : dep.diffMins < 60
                           ? `${dep.diffMins} MIN`
                           : `${Math.floor(dep.diffMins / 60)}H ${dep.diffMins % 60}M`;
@@ -993,9 +995,23 @@ export default function LiveBusScreen() {
                   </View>
 
                   <View style={styles.timelineListContainer}>
+                    {/* LEG 1 HEADER IF TRANSFER */}
+                    {journey.isTransfer && (
+                      <View style={styles.legHeaderRow}>
+                        <View style={styles.legHeaderBadge}>
+                          <Text style={styles.legHeaderBadgeText}>LEG 1</Text>
+                        </View>
+                        <Text style={styles.legHeaderText}>
+                          {journey.trip.route} · Board at {journey.fromTime}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* LEG 1 STOPS */}
                     {journey.intermediateStops.map((stopItem, index) => {
                       const isFirst = index === 0;
                       const isLast = index === journey.intermediateStops.length - 1;
+                      const isTransferStop = isLast && journey.isTransfer;
 
                       return (
                         <View key={index} style={styles.timelineRow}>
@@ -1003,6 +1019,10 @@ export default function LiveBusScreen() {
                             {!isLast && <View style={styles.timelineVerticalLine} />}
                             {isFirst ? (
                               <View style={[styles.timelineDot, styles.timelineDotOrigin]}>
+                                <View style={styles.timelineDotInnerWhite} />
+                              </View>
+                            ) : isTransferStop ? (
+                              <View style={[styles.timelineDot, styles.timelineDotTransfer]}>
                                 <View style={styles.timelineDotInnerWhite} />
                               </View>
                             ) : isLast ? (
@@ -1030,6 +1050,10 @@ export default function LiveBusScreen() {
                                   <View style={styles.originTagBadge}>
                                     <Text style={styles.originTagBadgeText}>Boarding</Text>
                                   </View>
+                                ) : isTransferStop ? (
+                                  <View style={styles.transferTagBadge}>
+                                    <Text style={styles.transferTagBadgeText}>Transfer Hub</Text>
+                                  </View>
                                 ) : isLast ? (
                                   <View style={styles.destTagBadge}>
                                     <Text style={styles.destTagBadgeText}>Drop-off</Text>
@@ -1038,6 +1062,8 @@ export default function LiveBusScreen() {
                               </View>
                               {isFirst ? (
                                 <Text style={styles.timelineShelterSub}>Platform 1 · Gate opens 2m prior</Text>
+                              ) : isTransferStop ? (
+                                <Text style={styles.timelineShelterSub}>Alight here · Switch to connecting bus</Text>
                               ) : isLast ? (
                                 <Text style={styles.timelineShelterSub}>Final interchange terminal</Text>
                               ) : index === 1 ? (
@@ -1045,6 +1071,106 @@ export default function LiveBusScreen() {
                               ) : (
                                 <Text style={styles.timelineShelterSub}>Designated bus shelter</Text>
                               )}
+                            </View>
+
+                            <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                              <Text
+                                style={[
+                                  styles.timelineTimeText,
+                                  (isFirst || isLast) ? styles.timelineTimeBold : styles.timelineTimeMuted,
+                                ]}
+                              >
+                                {stopItem.time}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      );
+                    })}
+
+                    {/* INTERCHANGE BLOCK IF TRANSFER */}
+                    {journey.isTransfer && (
+                      <View style={styles.timelineInterchangeBox}>
+                        <View style={styles.timelineInterchangeIconWrap}>
+                          <ArrowUpDown size={16} color="#18258F" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.timelineInterchangeTitle}>
+                            Change Buses at {journey.transferHub}
+                          </Text>
+                          <Text style={styles.timelineInterchangeSub}>
+                            Wait {journey.transferWaitMins}m · Board {journey.connectingTrip?.route || 'Connecting Bus'}
+                          </Text>
+                        </View>
+                        <View style={styles.timelineInterchangeDepBadge}>
+                          <Text style={styles.timelineInterchangeDepText}>{journey.connectingFromTime}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* LEG 2 HEADER IF TRANSFER */}
+                    {journey.isTransfer && journey.secondLegStops && (
+                      <View style={[styles.legHeaderRow, { marginTop: 10 }]}>
+                        <View style={[styles.legHeaderBadge, { backgroundColor: '#059669' }]}>
+                          <Text style={styles.legHeaderBadgeText}>LEG 2</Text>
+                        </View>
+                        <Text style={styles.legHeaderText}>
+                          {journey.connectingTrip?.route || 'Connecting Bus'} · Departs at {journey.connectingFromTime}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* LEG 2 STOPS */}
+                    {journey.isTransfer && journey.secondLegStops && journey.secondLegStops.map((stopItem, index) => {
+                      const isFirst = index === 0;
+                      const isLast = index === journey.secondLegStops!.length - 1;
+
+                      return (
+                        <View key={`leg2-${index}`} style={styles.timelineRow}>
+                          <View style={styles.timelineDotCol}>
+                            {!isLast && <View style={[styles.timelineVerticalLine, { backgroundColor: '#A7F3D0' }]} />}
+                            {isFirst ? (
+                              <View style={[styles.timelineDot, styles.timelineDotBoarding2]}>
+                                <View style={styles.timelineDotInnerWhite} />
+                              </View>
+                            ) : isLast ? (
+                              <View style={[styles.timelineDot, styles.timelineDotDest]}>
+                                <View style={styles.timelineDotInnerWhite} />
+                              </View>
+                            ) : (
+                              <View style={[styles.timelineDot, styles.timelineDotIntermediate, { borderColor: '#10B981' }]} />
+                            )}
+                          </View>
+
+                          <View style={[styles.timelineInfoRow, isLast && { paddingBottom: 4 }]}>
+                            <View style={{ flex: 1, marginRight: 12 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <Text
+                                  style={[
+                                    styles.timelineStationName,
+                                    (isFirst || isLast) ? styles.timelineStationBold : styles.timelineStationMuted,
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {stopItem.name}
+                                </Text>
+                                {isFirst ? (
+                                  <View style={[styles.originTagBadge, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1 }]}>
+                                    <Text style={[styles.originTagBadgeText, { color: '#047857' }]}>Board Leg 2</Text>
+                                  </View>
+                                ) : isLast ? (
+                                  <View style={styles.destTagBadge}>
+                                    <Text style={styles.destTagBadgeText}>Drop-off</Text>
+                                  </View>
+                                ) : null}
+                              </View>
+                              <Text style={styles.timelineShelterSub}>
+                                {isFirst
+                                  ? `Board ${journey.connectingTrip?.route || 'Bus 2'} to ${journey.toStop.shortName}`
+                                  : isLast
+                                  ? `Final arrival at destination`
+                                  : 'Designated bus shelter'}
+                              </Text>
                             </View>
 
                             <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -2510,6 +2636,109 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#F26B52',
+  },
+  legHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  legHeaderBadge: {
+    backgroundColor: '#18258F',
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  legHeaderBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.4,
+  },
+  legHeaderText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  timelineDotTransfer: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#18258F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 3,
+    borderWidth: 2,
+    borderColor: '#93C5FD',
+  },
+  timelineDotBoarding2: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#059669',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 3,
+  },
+  transferTagBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  transferTagBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#18258F',
+  },
+  timelineInterchangeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
+    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    gap: 10,
+  },
+  timelineInterchangeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineInterchangeTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  timelineInterchangeSub: {
+    fontSize: 11.5,
+    color: '#475569',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  timelineInterchangeDepBadge: {
+    backgroundColor: '#18258F',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  timelineInterchangeDepText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   timelineTimeText: {
     fontSize: 13,

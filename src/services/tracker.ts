@@ -214,7 +214,38 @@ function calculateTransferJourney(
     });
 
   const diffMins = isNextDay ? chosen.depMins1 + 1440 - nowMins : Math.max(0, chosen.depMins1 - nowMins);
-  const timeStr = diffMins > 60 ? `${Math.floor(diffMins / 60)}h ${diffMins % 60}m` : `${diffMins}m`;
+  const timeStr = diffMins >= 60 ? `${Math.floor(diffMins / 60)}h ${diffMins % 60}m` : `${diffMins}m`;
+
+  let transferDepartures: UpcomingDeparture[] = [];
+  if (upcomingTransfers.length > 0) {
+    transferDepartures = upcomingTransfers.slice(0, 8).map(o => {
+      const diff = o.depMins1 - nowMins;
+      return {
+        tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
+        route: `${o.leg1Trip.routeNumber} ➔ ${o.leg2Trip.routeNumber}`,
+        departureTime: o.leg1Trip.stops[o.f1Idx].time,
+        arrivalTime: o.leg2Trip.stops[o.t2Idx].time,
+        departureMins: o.depMins1,
+        diffMins: Math.max(0, diff),
+        isNextDay: false,
+        isInTransit: false,
+      };
+    });
+  } else {
+    transferDepartures = transferOptions.slice(0, 8).map(o => {
+      const diff = o.depMins1 + 1440 - nowMins;
+      return {
+        tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
+        route: `${o.leg1Trip.routeNumber} ➔ ${o.leg2Trip.routeNumber}`,
+        departureTime: o.leg1Trip.stops[o.f1Idx].time,
+        arrivalTime: o.leg2Trip.stops[o.t2Idx].time,
+        departureMins: o.depMins1,
+        diffMins: diff,
+        isNextDay: true,
+        isInTransit: false,
+      };
+    });
+  }
 
   return {
     trip: chosen.leg1Trip,
@@ -228,24 +259,21 @@ function calculateTransferJourney(
     fare: totalFare,
     classFareText: `₹${totalFare} · 1 Transfer via ${chosen.hub}`,
     routeBadge: `${chosen.leg1Trip.routeNumber} ➔ ${chosen.leg2Trip.routeNumber}`,
-    countdownText: `Transfer at ${chosen.hub} (${chosen.waitMins}m wait)`,
-    timeRemainingText: isNextDay ? `Tomorrow ${fromTime}` : `in ${timeStr}`,
+    countdownText: isNextDay
+      ? `Tomorrow at ${fromTime}`
+      : diffMins === 0
+      ? 'Departing now'
+      : `Departing in ${timeStr}`,
+    timeRemainingText: isNextDay ? `Tomorrow ${fromTime}` : diffMins === 0 ? 'Now' : `in ${timeStr}`,
     progressPercent: 0,
     isUpcoming: true,
     isInTransit: false,
-    currentStatusText: `Change at ${chosen.hub} · ${chosen.waitMins} min transfer sync`,
+    currentStatusText: isNextDay
+      ? `Today's service ended · Next bus tomorrow ${fromTime}`
+      : `Change at ${chosen.hub} · ${chosen.waitMins} min transfer wait`,
     intermediateStopsCount: intermediateStops.length + secondLegStops.length - 1,
     intermediateStops,
-    upcomingDepartures: transferOptions.slice(0, 5).map(o => ({
-      tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
-      route: `${o.leg1Trip.routeNumber} ➔ ${o.leg2Trip.routeNumber}`,
-      departureTime: o.leg1Trip.stops[o.f1Idx].time,
-      arrivalTime: o.leg2Trip.stops[o.t2Idx].time,
-      departureMins: o.depMins1,
-      diffMins: Math.max(0, o.depMins1 - nowMins),
-      isNextDay: o.depMins1 < nowMins,
-      isInTransit: false,
-    })),
+    upcomingDepartures: transferDepartures,
     isTransfer: true,
     transferHub: chosen.hub,
     transferWaitMins: chosen.waitMins,
