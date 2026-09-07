@@ -1252,7 +1252,7 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
 
                 {/* NEARBY DIRECT ROUTE PRO-TIP / FASTER ALTERNATIVE */}
-                {journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
+                {!journey.serviceEndedToday && journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
                   <View style={styles.nearbyAlternativeCard}>
                     <View style={styles.nearbyAltHeaderRow}>
                       <View style={styles.nearbyAltIconWrap}>
