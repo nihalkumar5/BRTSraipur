@@ -2,7 +2,7 @@ import rawStops from '../data/stops.json';
 import rawSchedules from '../data/schedules.json';
 import rawFares from '../data/fares.json';
 import rawPopularRoutes from '../data/popular_routes.json';
-import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo, NearbyStation, NearbyDirectAlternative } from '../types';
+import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo, NearbyStation, NearbyDirectAlternative, OptimalProximityHop } from '../types';
 
 export const stops: Stop[] = rawStops as Stop[];
 export const schedules: Trip[] = rawSchedules as Trip[];
@@ -12,12 +12,28 @@ export const popularRoutes: PopularRoute[] = rawPopularRoutes as PopularRoute[];
 export function getStopByName(nameQuery: string): Stop | undefined {
   if (!nameQuery) return undefined;
   const q = nameQuery.trim().toLowerCase();
-  return stops.find(
+  // 1. Exact match priority (shortName, code, or full name)
+  const exact = stops.find(
     s =>
-      s.name.toLowerCase() === q ||
       s.shortName.toLowerCase() === q ||
       s.code.toLowerCase() === q ||
-      s.name.toLowerCase().includes(q)
+      s.name.toLowerCase() === q
+  );
+  if (exact) return exact;
+
+  // 2. Starts-with match
+  const starts = stops.find(
+    s =>
+      s.shortName.toLowerCase().startsWith(q) ||
+      s.name.toLowerCase().startsWith(q)
+  );
+  if (starts) return starts;
+
+  // 3. Fallback to includes
+  return stops.find(
+    s =>
+      s.name.toLowerCase().includes(q) ||
+      s.shortName.toLowerCase().includes(q)
   );
 }
 
@@ -221,6 +237,153 @@ export function findNearbyDirectAlternatives(
   return alternatives.slice(0, 4);
 }
 
+export function getOptimalProximityHop(
+  fromStop: Stop,
+  toStop: Stop,
+  serviceDay: 'weekday' | 'weekend' = isWeekendDay() ? 'weekend' : 'weekday',
+  nowMins: number = getCurrentMinutesOfDay(),
+  transferDurationMins: number = 60
+): OptimalProximityHop | null {
+  if (!fromStop || !toStop || !fromStop.coordinates || !toStop.coordinates) return null;
+
+  const directDist = getDistanceKm(
+    fromStop.coordinates.latitude,
+    fromStop.coordinates.longitude,
+    toStop.coordinates.latitude,
+    toStop.coordinates.longitude
+  );
+
+  // If stations are more than 3.5 km apart, this is not a short-hop neighbour situation
+  if (directDist > 3.5) return null;
+
+  const directWalkingMins = Math.max(1, Math.round((directDist / 4.5) * 60));
+
+  let bestHop: {
+    trip: Trip;
+    fIdx: number;
+    tIdx: number;
+    dropStop: Stop;
+    busRideMins: number;
+    walkDist: number;
+    walkMins: number;
+    totalCommuteMins: number;
+  } | null = null;
+
+  // Search trips for a direct bus to a nearby station within 900m of toStop
+  for (const trip of schedules) {
+    if (trip.serviceDay !== serviceDay) continue;
+    let fIdx = -1;
+    trip.stops.forEach((s, idx) => {
+      const sName = s.stop.toLowerCase();
+      if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName === fromStop.shortName.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()))) {
+        fIdx = idx;
+      }
+    });
+    if (fIdx === -1) continue;
+
+    for (let tIdx = fIdx + 1; tIdx < trip.stops.length; tIdx++) {
+      const dropStopName = trip.stops[tIdx].stop;
+      const dropStop = getStopByName(dropStopName);
+      if (!dropStop || !dropStop.coordinates) continue;
+
+      const walkDist = getDistanceKm(
+        dropStop.coordinates.latitude,
+        dropStop.coordinates.longitude,
+        toStop.coordinates.latitude,
+        toStop.coordinates.longitude
+      );
+
+      // Drops within 900m of destination
+      if (walkDist <= 0.9) {
+        const busRideMins = trip.stops[tIdx].mins >= trip.stops[fIdx].mins
+          ? trip.stops[tIdx].mins - trip.stops[fIdx].mins
+          : trip.stops[tIdx].mins + 1440 - trip.stops[fIdx].mins;
+        const walkMins = Math.max(1, Math.round((walkDist / 4.5) * 60));
+        const totalCommuteMins = busRideMins + walkMins;
+
+        if (!bestHop || totalCommuteMins < bestHop.totalCommuteMins) {
+          bestHop = {
+            trip,
+            fIdx,
+            tIdx,
+            dropStop,
+            busRideMins,
+            walkDist,
+            walkMins,
+            totalCommuteMins,
+          };
+        }
+      }
+    }
+  }
+
+  // If a best route was found, pick the next upcoming departure for it
+  if (bestHop) {
+    const upcomingSame = schedules.filter(t => 
+      t.serviceDay === serviceDay &&
+      t.routeNumber === bestHop!.trip.routeNumber &&
+      t.stops.some(s => s.stop.toLowerCase().includes(fromStop.shortName.toLowerCase()) && s.mins >= nowMins - 1)
+    );
+    if (upcomingSame.length > 0) {
+      upcomingSame.sort((a, b) => {
+        const aStop = a.stops.find(s => s.stop.toLowerCase().includes(fromStop.shortName.toLowerCase()))!;
+        const bStop = b.stops.find(s => s.stop.toLowerCase().includes(fromStop.shortName.toLowerCase()))!;
+        return aStop.mins - bStop.mins;
+      });
+      const upTrip = upcomingSame[0];
+      const fIdx = upTrip.stops.findIndex(s => s.stop.toLowerCase().includes(fromStop.shortName.toLowerCase()));
+      const tIdx = upTrip.stops.findIndex(s => s.stop.toLowerCase().includes(bestHop!.dropStop.shortName.toLowerCase()));
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        bestHop.trip = upTrip;
+        bestHop.fIdx = fIdx;
+        bestHop.tIdx = tIdx;
+      }
+    }
+  }
+
+  if (!bestHop) {
+    return {
+      isProximityRoute: true,
+      directDistanceKm: Math.round(directDist * 100) / 100,
+      directDistanceFormatted: formatDistance(directDist),
+      directWalkingMins,
+      hasShortHopBus: false,
+      circuitTransferDurationMins: transferDurationMins,
+      minutesSaved: Math.max(0, transferDurationMins - directWalkingMins),
+      explanation: `${fromStop.shortName} aur ${toStop.shortName} ke beech direct distance sirf ${formatDistance(directDist)} hai.`
+    };
+  }
+
+  const minutesSaved = Math.max(0, transferDurationMins - bestHop.totalCommuteMins);
+
+  return {
+    isProximityRoute: true,
+    directDistanceKm: Math.round(directDist * 100) / 100,
+    directDistanceFormatted: formatDistance(directDist),
+    directWalkingMins,
+    hasShortHopBus: true,
+    shortHopBus: {
+      busNumber: bestHop.trip.routeNumber,
+      routeName: bestHop.trip.route,
+      boardStation: fromStop.shortName,
+      dropStation: bestHop.dropStop.name,
+      dropStationShortName: bestHop.dropStop.shortName,
+      departureTime: bestHop.trip.stops[bestHop.fIdx].time,
+      arrivalTime: bestHop.trip.stops[bestHop.tIdx].time,
+      departureMins: bestHop.trip.stops[bestHop.fIdx].mins,
+      arrivalMins: bestHop.trip.stops[bestHop.tIdx].mins,
+      busRideMins: bestHop.busRideMins,
+      walkFromDropKm: Math.round(bestHop.walkDist * 100) / 100,
+      walkFromDropFormatted: formatDistance(bestHop.walkDist),
+      walkFromDropMins: bestHop.walkMins,
+      totalCommuteMins: bestHop.totalCommuteMins,
+      fare: getFare(fromStop.name, bestHop.dropStop.name) || 10,
+    },
+    circuitTransferDurationMins: transferDurationMins,
+    minutesSaved,
+    explanation: `${fromStop.shortName} aur ${toStop.shortName} ke beech doori sirf ${formatDistance(directDist)} hai. Circular loop bus transfer ${transferDurationMins} min leta hai, jabki Bus ${bestHop.trip.routeNumber} se ${bestHop.dropStop.shortName} (sirf ${bestHop.busRideMins}m) + ${formatDistance(bestHop.walkDist)} walk se aap sirf ${bestHop.totalCommuteMins} min me pahunch jaoge!`
+  };
+}
 
 function calculateTransferJourney(
   fromStop: Stop,
@@ -480,6 +643,7 @@ function calculateTransferJourney(
     connectingToTime: toTime,
     secondLegStops,
     nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),
+    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, chosen.totalDuration),
   };
 }
 

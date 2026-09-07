@@ -97,6 +97,35 @@ export interface ActiveJourney {
   connectingToTime?: string;
   secondLegStops?: JourneyStopInfo[];
   nearbyDirectAlternatives?: NearbyDirectAlternative[];
+  optimalProximity?: OptimalProximityHop | null;
+}
+
+export interface OptimalProximityHop {
+  isProximityRoute: boolean;
+  directDistanceKm: number;
+  directDistanceFormatted: string;
+  directWalkingMins: number;
+  hasShortHopBus: boolean;
+  shortHopBus?: {
+    busNumber: string;
+    routeName: string;
+    boardStation: string;
+    dropStation: string;
+    dropStationShortName: string;
+    departureTime: string;
+    arrivalTime: string;
+    departureMins: number;
+    arrivalMins: number;
+    busRideMins: number;
+    walkFromDropKm: number;
+    walkFromDropFormatted: string;
+    walkFromDropMins: number;
+    totalCommuteMins: number;
+    fare: number;
+  };
+  circuitTransferDurationMins: number;
+  minutesSaved: number;
+  explanation: string;
 }
 
 export interface NearbyStation {
