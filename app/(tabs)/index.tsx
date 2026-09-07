@@ -538,16 +538,29 @@ export default function LiveBusScreen() {
     return currentTimeMins < journey.departureMins;
   }, [journey, currentTimeMins]);
 
+  const isAtDeparture = useMemo(() => {
+    if (!journey) return false;
+    return currentTimeMins === journey.departureMins;
+  }, [journey, currentTimeMins]);
+
   const isJourneyCompleted = useMemo(() => {
     if (!journey) return false;
     return currentTimeMins >= journey.arrivalMins;
   }, [journey, currentTimeMins]);
 
+  const heroNextStopLabel = useMemo(() => {
+    if (!journey) return 'NEXT STOP';
+    if (isBeforeDeparture) return 'BOARDING AT';
+    if (isAtDeparture) return 'DEPARTING FROM';
+    if (isJourneyCompleted) return 'DESTINATION';
+    return 'NEXT STOP';
+  }, [journey, isBeforeDeparture, isAtDeparture, isJourneyCompleted]);
+
   // Active current stop index for Onboard
   const activeCurrentStopIdx = useMemo(() => {
     if (!journey) return -1;
     if (nextStopIdx >= 0) return nextStopIdx;
-    if (currentTimeMins < journey.departureMins) return 0;
+    if (currentTimeMins <= journey.departureMins) return 0;
     if (journey.intermediateStops.every(s => s.passed)) return journey.intermediateStops.length - 1;
     const firstUnpassed = journey.intermediateStops.findIndex(s => !s.passed);
     return firstUnpassed >= 0 ? firstUnpassed : 0;
@@ -562,37 +575,46 @@ export default function LiveBusScreen() {
 
   // Dynamic next stop name for Hero
   const heroStationName = useMemo(() => {
-    if (!journey) return 'Sector 29';
-    if (isBeforeDeparture) {
+    if (!journey) return fromStation || 'Station';
+    if (isBeforeDeparture || isAtDeparture) {
       return journey.fromStop.shortName || journey.fromStop.name;
     }
     if (isJourneyCompleted) {
       return journey.toStop.shortName || journey.toStop.name;
     }
+    const upcomingStop = journey.intermediateStops.find(s => s.mins >= currentTimeMins);
+    if (upcomingStop) {
+      return upcomingStop.name;
+    }
     if (journey.nextStopName) {
       return journey.nextStopName;
     }
-    if (activeCurrentStopIdx >= 0 && activeCurrentStopIdx < journey.intermediateStops.length) {
-      return journey.intermediateStops[activeCurrentStopIdx].name;
-    }
     return journey.toStop.shortName || journey.toStop.name;
-  }, [journey, isBeforeDeparture, isJourneyCompleted, activeCurrentStopIdx]);
+  }, [journey, isBeforeDeparture, isAtDeparture, isJourneyCompleted, currentTimeMins, fromStation]);
 
   // Dynamic ETA badge text for Hero
   const heroEtaBadgeText = useMemo(() => {
     if (!journey) return '● Arriving now';
     if (isBeforeDeparture) {
-      const diff = Math.max(0, journey.departureMins - currentTimeMins);
-      return diff <= 5 && diff > 0 ? `● Departs in ${diff} min` : `● Departs at ${journey.fromTime}`;
+      const diff = journey.departureMins - currentTimeMins;
+      if (diff <= 5 && diff > 0) return `● Departs in ${diff} min`;
+      if (diff <= 60 && diff > 0) return `● Departs in ${diff} min (${journey.fromTime})`;
+      return `● Scheduled: ${journey.fromTime}`;
+    }
+    if (isAtDeparture) {
+      return '● Departing now';
     }
     if (isJourneyCompleted) {
       return `● Arrived at ${journey.toTime}`;
     }
-    if (!journey.nextStopETA || journey.nextStopETA.toLowerCase().includes('now') || journey.nextStopETA === '0m' || journey.nextStopETA === '1m') {
-      return '● Arriving now';
+    const upcomingStop = journey.intermediateStops.find(s => s.mins >= currentTimeMins);
+    if (upcomingStop) {
+      const etaDiff = Math.max(0, upcomingStop.mins - currentTimeMins);
+      if (etaDiff <= 1) return '● Arriving now';
+      return `● Arriving in ~${etaDiff} min (${upcomingStop.time})`;
     }
-    return `● Arriving in ~${journey.nextStopETA.replace('m', ' min')}`;
-  }, [journey, isBeforeDeparture, isJourneyCompleted, currentTimeMins]);
+    return '● Arriving now';
+  }, [journey, isBeforeDeparture, isAtDeparture, isJourneyCompleted, currentTimeMins]);
 
   // Focused stops to display in compact journey map (up to 3 passed + current + next 4 upcoming)
   const displayedOnboardStops = useMemo(() => {
@@ -1987,7 +2009,7 @@ export default function LiveBusScreen() {
 
                 {/* Next Stop Label */}
                 <Text style={styles.onboardHeroNextStopLabel}>
-                  {isBeforeDeparture ? 'DEPARTING FROM' : isJourneyCompleted ? 'DESTINATION' : 'NEXT STOP'}
+                  {heroNextStopLabel}
                 </Text>
 
                 {/* Station Name */}
