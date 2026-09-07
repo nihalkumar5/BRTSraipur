@@ -56,6 +56,7 @@ import {
   ScheduledReminder,
   getActiveReminders,
 } from '../../src/services/notifications';
+import { getCurrentUserLocation } from '../../src/services/location';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 
 function EditorialBusIllustration({
@@ -461,34 +462,28 @@ export default function LiveBusScreen() {
     }).start();
   };
 
-  const handleUseCurrentLocation = useCallback(() => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      setLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          setLocating(false);
-          const { latitude, longitude } = pos.coords;
-          const nearest = getNearestStopFromCoordinates(latitude, longitude);
-          if (nearest) {
-            setFromStation(nearest.stop.name);
-            setSelectedTripId(null);
-            triggerCardBounce();
-            Alert.alert(
-              '📍 Nearest Shelter Located',
-              `Auto-selected ${nearest.stop.shortName} (${nearest.distanceFormatted} away, ~${nearest.walkingMins}m walk) as your boarding station.`
-            );
-          } else {
-            Alert.alert('No Nearby Station', 'No BRTS shelters found within 25 km of your location.');
-          }
-        },
-        err => {
-          setLocating(false);
-          Alert.alert('Location Access', 'Please allow location permission to auto-detect your nearest bus shelter.');
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
-    } else {
-      Alert.alert('Location Unavailable', 'Geolocation is not supported on this device.');
+  const handleUseCurrentLocation = useCallback(async () => {
+    setLocating(true);
+    try {
+      const coords = await getCurrentUserLocation();
+      if (coords) {
+        const nearest = getNearestStopFromCoordinates(coords.latitude, coords.longitude);
+        if (nearest) {
+          setFromStation(nearest.stop.name);
+          setSelectedTripId(null);
+          triggerCardBounce();
+          Alert.alert(
+            '📍 Nearest Shelter Located',
+            `Auto-selected ${nearest.stop.shortName} (${nearest.distanceFormatted} away, ~${nearest.walkingMins}m walk) as your boarding station.`
+          );
+        } else {
+          Alert.alert('No Nearby Station', 'No BRTS shelters found within 25 km of your location.');
+        }
+      }
+    } catch (err) {
+      console.warn('Error detecting current location:', err);
+    } finally {
+      setLocating(false);
     }
   }, []);
 

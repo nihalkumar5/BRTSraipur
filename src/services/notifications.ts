@@ -26,6 +26,23 @@ export interface ScheduledReminder {
 let activeReminders: ScheduledReminder[] = [];
 
 export async function requestNotificationPermissions(): Promise<boolean> {
+  if (Platform.OS === 'android') {
+    try {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Bus Departure Alerts',
+        description: 'Notifications for upcoming bus departures and schedule alerts',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#2563EB',
+        sound: 'default',
+        enableLights: true,
+        enableVibrate: true,
+      });
+    } catch (e) {
+      console.warn('Error setting Android notification channel:', e);
+    }
+  }
+
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       const perm = await Notification.requestPermission();
@@ -38,12 +55,18 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      });
       finalStatus = status;
     }
     return finalStatus === 'granted';
   } catch (e) {
-    console.warn('Error requesting permissions:', e);
+    console.warn('Error requesting notification permissions:', e);
     return false;
   }
 }
