@@ -12,15 +12,33 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Bus, ArrowRight, ArrowLeftRight } from 'lucide-react-native';
-import { schedules } from '../../src/services/tracker';
+import {
+  Calendar,
+  Bus,
+  ArrowRight,
+  ArrowLeftRight,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react-native';
+import { schedules, getCurrentMinutesOfDay } from '../../src/services/tracker';
 import { Trip } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
+
+// DESIGN SYSTEM TOKENS (UNIFIED WITH BUS TICKETS & STATIONS)
+const PRIMARY = '#2438B8';
+const PRIMARY_LIGHT = 'rgba(36, 56, 184, 0.08)';
+const BG_COLOR = '#F7F8FA';
+const CARD_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#101828';
+const TEXT_SECONDARY = '#667085';
+const TEXT_MUTED = '#98A2B3';
+const BORDER_COLOR = '#EAECF0';
+const BORDER_SUBTLE = '#E4E7EC';
 
 export default function TimetableScreen() {
   const [dayType, setDayType] = useState<'weekday' | 'weekend'>('weekday');
   const [direction, setDirection] = useState<'up' | 'down'>('up');
-  const [serviceFilter, setServiceFilter] = useState<'all' | 'trunk' | 'feeder'>('all');
   const [selectedRoute, setSelectedRoute] = useState<string>('all');
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
 
@@ -84,51 +102,129 @@ export default function TimetableScreen() {
     setDirection(prev => (prev === 'up' ? 'down' : 'up'));
   };
 
+  // Extract all available routes in the selected day & direction
   const availableRoutes = useMemo(() => {
     const list = schedules
-      .filter(s => {
-        if (s.serviceDay !== dayType) return false;
-        if (s.direction !== direction) return false;
-        if (serviceFilter !== 'all' && (s.routeType || 'trunk') !== serviceFilter) return false;
-        return true;
-      })
+      .filter(s => s.serviceDay === dayType && s.direction === direction)
       .map(s => s.route);
     return ['all', ...Array.from(new Set(list))];
-  }, [dayType, direction, serviceFilter]);
+  }, [dayType, direction]);
 
+  // Filtered trips sorted by departure minutes
   const filteredTrips = useMemo(() => {
-    return schedules.filter(s => {
+    const trips = schedules.filter(s => {
       if (s.serviceDay !== dayType) return false;
       if (s.direction !== direction) return false;
-      if (serviceFilter !== 'all' && (s.routeType || 'trunk') !== serviceFilter) return false;
       if (selectedRoute !== 'all' && s.route !== selectedRoute) return false;
       return true;
     });
-  }, [dayType, direction, serviceFilter, selectedRoute]);
+    return trips.sort((a, b) => a.departureMins - b.departureMins);
+  }, [dayType, direction, selectedRoute]);
+
+  // Compute Next Departure based on current real time
+  const nowMins = getCurrentMinutesOfDay();
+  const isActualWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
+  const isViewingCurrentDay =
+    (isActualWeekend && dayType === 'weekend') || (!isActualWeekend && dayType === 'weekday');
+
+  const { nextTrip, upcomingDiff, regularTrips } = useMemo(() => {
+    if (!isViewingCurrentDay || filteredTrips.length === 0) {
+      return { nextTrip: null, upcomingDiff: null, regularTrips: filteredTrips };
+    }
+
+    const nextIndex = filteredTrips.findIndex(t => t.departureMins >= nowMins);
+    if (nextIndex !== -1) {
+      const next = filteredTrips[nextIndex];
+      const diff = next.departureMins - nowMins;
+      const rest = filteredTrips.filter((_, idx) => idx !== nextIndex);
+      return { nextTrip: next, upcomingDiff: diff, regularTrips: rest };
+    }
+
+    // Past all trips today
+    return { nextTrip: null, upcomingDiff: null, regularTrips: filteredTrips };
+  }, [filteredTrips, isViewingCurrentDay, nowMins]);
 
   const toggleExpand = (id: string) => {
     setExpandedTripId(prev => (prev === id ? null : id));
   };
 
-  const currentRouteName =
-    direction === 'up' ? 'HNLU → Railway Station' : 'Railway Stn → HNLU / Loop';
+  const originStation = direction === 'up' ? 'HNLU' : 'Railway Station';
+  const destStation = direction === 'up' ? 'Railway Station' : 'HNLU / Loop';
+
+  // Render expanded stops timeline for a trip
+  const renderStopsTimeline = (item: Trip) => (
+    <View style={styles.expandedDetails}>
+      <View style={styles.expandedHeaderDivider} />
+      <Text style={styles.expandedTitle}>ROUTE TIMELINE ({item.stops.length} STOPS)</Text>
+
+      <View style={styles.timelineContainer}>
+        {item.stops.map((st, sIdx) => {
+          const isFirst = sIdx === 0;
+          const isLast = sIdx === item.stops.length - 1;
+
+          return (
+            <View key={sIdx} style={styles.timelineItemRow}>
+              <View style={styles.spineCol}>
+                {!isLast && <View style={styles.spineLine} />}
+                <View
+                  style={[
+                    styles.spineDot,
+                    isFirst && styles.spineDotOrigin,
+                    isLast && styles.spineDotDest,
+                  ]}
+                />
+              </View>
+
+              <View style={styles.stopInfoCol}>
+                <Text
+                  style={[
+                    styles.stopNameText,
+                    (isFirst || isLast) && styles.stopNameBold,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {st.stop}
+                </Text>
+                <Text
+                  style={[
+                    styles.stopTimeText,
+                    (isFirst || isLast) && styles.stopTimeBold,
+                  ]}
+                >
+                  {st.time}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* HEADER & TOP CONTROLS */}
+      {/* 1. CLEAN HEADER & ESSENTIAL TOP CONTROLS */}
       <View style={styles.header}>
         <Text style={styles.title}>Timetable</Text>
         <Text style={styles.subtitle}>Tatpar BRTS · Nava Raipur</Text>
 
-        {/* 1. WEEKDAY / WEEKEND QUIET SEGMENTED CONTROL */}
+        {/* QUIET SEGMENTED CONTROL: WEEKDAYS / WEEKENDS */}
         <View style={styles.tabToggleRow}>
           <TouchableOpacity
             style={[styles.tabToggleBtn, dayType === 'weekday' && styles.tabToggleBtnActive]}
             onPress={() => setDayType('weekday')}
             activeOpacity={0.7}
           >
-            <Calendar size={13} color={dayType === 'weekday' ? '#18258F' : '#6B7280'} />
-            <Text style={[styles.tabToggleText, dayType === 'weekday' && styles.tabToggleTextActive]}>
+            <Calendar
+              size={14}
+              color={dayType === 'weekday' ? PRIMARY : TEXT_SECONDARY}
+            />
+            <Text
+              style={[
+                styles.tabToggleText,
+                dayType === 'weekday' && styles.tabToggleTextActive,
+              ]}
+            >
               Weekdays
             </Text>
           </TouchableOpacity>
@@ -137,190 +233,259 @@ export default function TimetableScreen() {
             onPress={() => setDayType('weekend')}
             activeOpacity={0.7}
           >
-            <Calendar size={13} color={dayType === 'weekend' ? '#18258F' : '#6B7280'} />
-            <Text style={[styles.tabToggleText, dayType === 'weekend' && styles.tabToggleTextActive]}>
+            <Calendar
+              size={14}
+              color={dayType === 'weekend' ? PRIMARY : TEXT_SECONDARY}
+            />
+            <Text
+              style={[
+                styles.tabToggleText,
+                dayType === 'weekend' && styles.tabToggleTextActive,
+              ]}
+            >
               Weekends
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* 2. NETWORK FILTER: ALL / TRUNK / FEEDER */}
-        <View style={styles.networkToggleRow}>
-          <TouchableOpacity
-            style={[styles.networkToggleBtn, serviceFilter === 'all' && styles.networkToggleBtnActive]}
-            onPress={() => { setServiceFilter('all'); setSelectedRoute('all'); }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.networkToggleText, serviceFilter === 'all' && styles.networkToggleTextActive]}>
-              All Services
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.networkToggleBtn, serviceFilter === 'trunk' && styles.networkToggleBtnActive]}
-            onPress={() => { setServiceFilter('trunk'); setSelectedRoute('all'); }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.networkToggleText, serviceFilter === 'trunk' && styles.networkToggleTextActive]}>
-              Trunk Express
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.networkToggleBtn, serviceFilter === 'feeder' && styles.networkToggleBtnActive]}
-            onPress={() => { setServiceFilter('feeder'); setSelectedRoute('all'); }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.networkToggleText, serviceFilter === 'feeder' && styles.networkToggleTextActive]}>
-              Feeder & Last-Mile
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 3. PRIMARY DIRECTION SELECTOR */}
+        {/* HERO ROUTE SELECTOR COMPONENT */}
         <TouchableOpacity
-          style={styles.primaryDirectionBar}
+          style={styles.heroRouteSelector}
           onPress={toggleDirection}
-          activeOpacity={0.8}
+          activeOpacity={0.88}
         >
-          <Text style={styles.directionBarText} numberOfLines={1}>
-            {currentRouteName}
-          </Text>
-          <View style={styles.swapIconPill}>
+          <View style={styles.heroRouteInfoCol}>
+            <View style={styles.heroRoutePointsRow}>
+              <View style={styles.originIndicatorDot} />
+              <Text style={styles.heroRouteStationName} numberOfLines={1}>
+                {originStation}
+              </Text>
+              <ArrowRight size={14} color={TEXT_MUTED} style={{ marginHorizontal: 6 }} />
+              <View style={styles.destIndicatorDot} />
+              <Text style={styles.heroRouteStationName} numberOfLines={1}>
+                {destStation}
+              </Text>
+            </View>
+            <Text style={styles.heroRouteCorridorSub}>Nava Raipur BRTS Corridor</Text>
+          </View>
+          <View style={styles.heroRouteSwapBtn}>
             <Animated.View style={{ transform: [{ rotate: spinInterpolate }] }}>
-              <ArrowLeftRight size={13} color="#18258F" />
+              <ArrowLeftRight size={15} color={PRIMARY} strokeWidth={2.2} />
             </Animated.View>
           </View>
         </TouchableOpacity>
 
-        {/* 3. ROUTE FILTER CHIPS */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.routeFilterScroll}
-          contentContainerStyle={styles.routeFilterContent}
-        >
-          {availableRoutes.map(r => (
-            <TouchableOpacity
-              key={r}
-              style={[styles.routePill, selectedRoute === r && styles.routePillActive]}
-              onPress={() => setSelectedRoute(r)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.routePillText, selectedRoute === r && styles.routePillTextActive]}>
-                {r === 'all' ? 'All Routes' : r}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* ROUTE FILTER CHIPS */}
+        <View style={styles.routesFilterContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.routesFilterContent}
+          >
+            {availableRoutes.map(r => {
+              const isSelected = selectedRoute === r;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.routeChip, isSelected && styles.routeChipActive]}
+                  onPress={() => setSelectedRoute(r)}
+                  activeOpacity={0.75}
+                >
+                  <Text
+                    style={[
+                      styles.routeChipText,
+                      isSelected && styles.routeChipTextActive,
+                    ]}
+                  >
+                    {r === 'all' ? 'All' : r}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </View>
 
-      {/* TIMETABLE LIST */}
+      {/* 2. TIMETABLE CONTENT */}
       <FlatList
-        data={filteredTrips}
+        data={regularTrips}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
+        ListHeaderComponent={
+          <>
+            {/* HERO NEXT DEPARTURE CARD (WHEN AVAILABLE) */}
+            {nextTrip && (
+              <View style={styles.nextDepContainer}>
+                <TouchableOpacity
+                  style={styles.nextDepCard}
+                  onPress={() => toggleExpand(nextTrip.id)}
+                  activeOpacity={0.9}
+                >
+                  {/* TOP ROW: NEXT DEPARTURE BADGE + COUNTDOWN */}
+                  <View style={styles.nextDepTopRow}>
+                    <View style={styles.nextDepBadge}>
+                      <View style={styles.liveGreenDot} />
+                      <Text style={styles.nextDepBadgeText}>NEXT DEPARTURE</Text>
+                    </View>
+                    <View style={styles.nextDepCountdownWrap}>
+                      <Clock size={11} color={PRIMARY} strokeWidth={2} />
+                      <Text style={styles.nextDepCountdownText}>
+                        {upcomingDiff === 0
+                          ? 'Departs NOW'
+                          : upcomingDiff !== null && upcomingDiff < 60
+                          ? `Departs in ${upcomingDiff} min`
+                          : `Departs in ${Math.floor((upcomingDiff || 0) / 60)}h ${(upcomingDiff || 0) % 60}m`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* MAIN TIME & CORRIDOR ROW */}
+                  <View style={styles.nextDepTimesRow}>
+                    <View style={styles.nextDepStopCol}>
+                      <Text style={styles.nextDepTimeHero}>{nextTrip.departureTime}</Text>
+                      <Text style={styles.nextDepStopLabel} numberOfLines={1}>
+                        {nextTrip.origin}
+                      </Text>
+                    </View>
+
+                    <View style={styles.nextDepArrowCol}>
+                      <ArrowRight size={16} color={PRIMARY} strokeWidth={2.4} />
+                      <Text style={styles.nextDepStopsLabel}>
+                        {nextTrip.stops.length} stops
+                      </Text>
+                    </View>
+
+                    <View style={[styles.nextDepStopCol, { alignItems: 'flex-end' }]}>
+                      <Text style={styles.nextDepTimeHero}>{nextTrip.arrivalTime}</Text>
+                      <Text style={styles.nextDepStopLabel} numberOfLines={1}>
+                        {nextTrip.destination}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* BOTTOM META ROW */}
+                  <View style={styles.nextDepBottomRow}>
+                    <View style={styles.nextDepMetaLeft}>
+                      <Bus size={12} color={PRIMARY} strokeWidth={2.2} />
+                      <Text style={styles.nextDepRouteText}>{nextTrip.route}</Text>
+                      <Text style={styles.nextDepDotSep}>·</Text>
+                      <Text style={styles.nextDepMetaText}>
+                        {nextTrip.stops.length} stops
+                      </Text>
+                      <Text style={styles.nextDepDotSep}>·</Text>
+                      <Text style={styles.nextDepMetaText}>
+                        {nextTrip.arrivalMins >= nextTrip.departureMins
+                          ? nextTrip.arrivalMins - nextTrip.departureMins
+                          : nextTrip.arrivalMins + 1440 - nextTrip.departureMins}{' '}
+                        min
+                      </Text>
+                    </View>
+
+                    <View style={styles.viewStopsToggle}>
+                      <Text style={styles.viewStopsToggleText}>
+                        {expandedTripId === nextTrip.id ? 'Hide stops' : 'View stops'}
+                      </Text>
+                      {expandedTripId === nextTrip.id ? (
+                        <ChevronUp size={13} color={PRIMARY} />
+                      ) : (
+                        <ChevronDown size={13} color={PRIMARY} />
+                      )}
+                    </View>
+                  </View>
+
+                  {/* EXPANDED STOPS TIMELINE */}
+                  {expandedTripId === nextTrip.id && renderStopsTimeline(nextTrip)}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* SECTION HEADER FOR SUBSEQUENT DEPARTURES */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeaderTitle}>
+                {nextTrip ? 'SUBSEQUENT DEPARTURES' : 'ALL DEPARTURES'} ({regularTrips.length})
+              </Text>
+            </View>
+          </>
+        }
+        renderItem={({ item, index }) => {
           const isExpanded = expandedTripId === item.id;
+          const isLastItem = index === regularTrips.length - 1;
           const duration =
             item.arrivalMins >= item.departureMins
               ? item.arrivalMins - item.departureMins
               : item.arrivalMins + 1440 - item.departureMins;
 
           return (
-            <TouchableOpacity
-              style={styles.tripCard}
-              onPress={() => toggleExpand(item.id)}
-              activeOpacity={0.8}
-            >
-              {/* TOP BADGE & DURATION ROW */}
-              <View style={styles.tripTopRow}>
-                <View style={[styles.badge, item.routeType === 'feeder' && styles.feederBadge]}>
-                  <Bus size={12} color={item.routeType === 'feeder' ? '#059669' : '#18258F'} style={{ marginRight: 4 }} />
-                  <Text style={[styles.badgeText, item.routeType === 'feeder' && styles.feederBadgeText]}>{item.route}</Text>
-                </View>
-                {item.routeType === 'feeder' ? (
-                  <View style={styles.feederTag}>
-                    <Text style={styles.feederTagText}>Last-Mile Feeder</Text>
+            <View style={styles.unifiedTableContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.departureRow,
+                  isExpanded && styles.departureRowExpanded,
+                  !isLastItem && styles.departureRowBorder,
+                ]}
+                onPress={() => toggleExpand(item.id)}
+                activeOpacity={0.7}
+              >
+                {/* TIME & STATIONS */}
+                <View style={styles.rowMainTimes}>
+                  <View style={styles.rowTimeCol}>
+                    <Text style={styles.rowTimeBold}>{item.departureTime}</Text>
+                    <Text style={styles.rowStationName} numberOfLines={1}>
+                      {item.origin}
+                    </Text>
                   </View>
-                ) : null}
-                <Text style={styles.durationText}>{duration} min</Text>
-              </View>
 
-              {/* MAIN HERO TIME & STATIONS ROW */}
-              <View style={styles.tripMainRow}>
-                {/* DEPARTURE */}
-                <View style={styles.stopCol}>
-                  <Text style={styles.timeBold}>{item.departureTime}</Text>
-                  <Text style={styles.stopLabel} numberOfLines={1}>{item.origin}</Text>
-                </View>
+                  <View style={styles.rowArrowCol}>
+                    <ArrowRight size={13} color={TEXT_MUTED} strokeWidth={2} />
+                  </View>
 
-                {/* CENTER ARROW & STOPS COUNT */}
-                <View style={styles.arrowCol}>
-                  <ArrowRight size={15} color="#18258F" />
-                  <Text style={styles.stopsCount}>{item.stops.length} stops</Text>
-                </View>
-
-                {/* ARRIVAL */}
-                <View style={[styles.stopCol, { alignItems: 'flex-end' }]}>
-                  <Text style={styles.timeBold}>{item.arrivalTime}</Text>
-                  <Text style={styles.stopLabel} numberOfLines={1}>{item.destination}</Text>
-                </View>
-              </View>
-
-              {/* EXPANDED STOP DETAILS — EDITORIAL TIMELINE */}
-              {isExpanded ? (
-                <View style={styles.expandedDetails}>
-                  <View style={styles.expandedHeaderDivider} />
-                  <Text style={styles.expandedTitle}>ROUTE TIMELINE</Text>
-
-                  <View style={styles.timelineContainer}>
-                    {item.stops.map((st, sIdx) => {
-                      const isFirst = sIdx === 0;
-                      const isLast = sIdx === item.stops.length - 1;
-
-                      return (
-                        <View key={sIdx} style={styles.timelineItemRow}>
-                          {/* SPINE COLUMN */}
-                          <View style={styles.spineCol}>
-                            {!isLast && <View style={styles.spineLine} />}
-                            <View
-                              style={[
-                                styles.spineDot,
-                                isFirst && styles.spineDotOrigin,
-                                isLast && styles.spineDotDest,
-                              ]}
-                            />
-                          </View>
-
-                          {/* STOP NAME & TIME */}
-                          <View style={styles.stopInfoCol}>
-                            <Text
-                              style={[
-                                styles.stopNameText,
-                                (isFirst || isLast) && styles.stopNameBold,
-                              ]}
-                              numberOfLines={1}
-                            >
-                              {st.stop}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.stopTimeText,
-                                (isFirst || isLast) && styles.stopTimeBold,
-                              ]}
-                            >
-                              {st.time}
-                            </Text>
-                          </View>
-                        </View>
-                      );
-                    })}
+                  <View style={[styles.rowTimeCol, { alignItems: 'flex-end' }]}>
+                    <Text style={styles.rowTimeBold}>{item.arrivalTime}</Text>
+                    <Text style={styles.rowStationName} numberOfLines={1}>
+                      {item.destination}
+                    </Text>
                   </View>
                 </View>
-              ) : null}
-            </TouchableOpacity>
+
+                {/* ROUTE + STOPS + DURATION SUBTEXT */}
+                <View style={styles.rowMetaBar}>
+                  <View style={styles.rowMetaLeft}>
+                    <Bus size={11} color={PRIMARY} strokeWidth={2} style={{ marginRight: 4 }} />
+                    <Text style={styles.rowRouteText}>{item.route}</Text>
+                    <Text style={styles.rowDotSep}>·</Text>
+                    <Text style={styles.rowMetaSecondary}>{item.stops.length} stops</Text>
+                    <Text style={styles.rowDotSep}>·</Text>
+                    <Text style={styles.rowMetaSecondary}>{duration} min</Text>
+                  </View>
+
+                  <View style={styles.rowMetaRight}>
+                    <Text style={styles.rowExpandHint}>
+                      {isExpanded ? 'Hide' : 'Stops'}
+                    </Text>
+                    {isExpanded ? (
+                      <ChevronUp size={12} color={TEXT_MUTED} />
+                    ) : (
+                      <ChevronDown size={12} color={TEXT_MUTED} />
+                    )}
+                  </View>
+                </View>
+
+                {/* EXPANDED STOPS TIMELINE */}
+                {isExpanded && renderStopsTimeline(item)}
+              </TouchableOpacity>
+            </View>
           );
         }}
+        ListEmptyComponent={
+          <View style={styles.emptyStateContainer}>
+            <Bus size={32} color={TEXT_MUTED} />
+            <Text style={styles.emptyStateTitle}>No scheduled departures</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Try switching between Weekday / Weekend or select another route filter.
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -329,30 +494,30 @@ export default function TimetableScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FC',
+    backgroundColor: BG_COLOR,
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: CARD_BG,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(24, 37, 143, 0.08)',
+    borderBottomColor: BORDER_COLOR,
   },
   title: {
     fontFamily: FONT.bold,
-    fontSize: 26, // Page title: 26 px / 700
-    lineHeight: 32, // Line-height around 32 px
+    fontSize: 26,
+    lineHeight: 32,
     fontWeight: '700',
-    color: '#0F172A',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.4,
   },
   subtitle: {
     fontFamily: FONT.medium,
-    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
-    lineHeight: 19, // Line-height around 18–20 px
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '500',
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
     marginTop: 2,
     marginBottom: 12,
   },
@@ -361,12 +526,12 @@ const styles = StyleSheet.create({
   tabToggleRow: {
     height: 38,
     flexDirection: 'row',
-    backgroundColor: '#F1F3FA',
+    backgroundColor: '#F2F4F7',
     borderRadius: 12,
     padding: 3,
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#DDE2F0',
+    borderColor: BORDER_SUBTLE,
   },
   tabToggleBtn: {
     flex: 1,
@@ -377,317 +542,494 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabToggleBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#18258F',
+    backgroundColor: CARD_BG,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
   },
   tabToggleText: {
+    fontFamily: FONT.medium,
     fontSize: 12.5,
     fontWeight: '500',
-    color: '#6B7280',
-    letterSpacing: 0.2,
+    color: TEXT_SECONDARY,
   },
   tabToggleTextActive: {
-    color: '#18258F',
-    fontWeight: '700',
-  },
-  networkToggleRow: {
-    height: 34,
-    flexDirection: 'row',
-    backgroundColor: '#F1F3FA',
-    borderRadius: 10,
-    padding: 2.5,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#DDE2F0',
-  },
-  networkToggleBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  networkToggleBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  networkToggleText: {
-    fontSize: 11.5,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  networkToggleTextActive: {
-    color: '#18258F',
+    fontFamily: FONT.bold,
+    color: TEXT_PRIMARY,
     fontWeight: '700',
   },
 
-  /* 2. PRIMARY ROUTE SELECTOR — SINGLE CLEAN CONTROL */
-  primaryDirectionBar: {
-    height: 48,
+  /* 2. HERO ROUTE SELECTOR */
+  heroRouteSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingLeft: 16,
-    paddingRight: 10,
-    marginBottom: 10,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.10)',
-    shadowColor: '#18258F',
+    borderColor: BORDER_COLOR,
+    shadowColor: '#101828',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
   },
-  directionBarText: {
+  heroRouteInfoCol: {
     flex: 1,
+    minWidth: 0,
+    marginRight: 10,
+  },
+  heroRoutePointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  originIndicatorDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#12B76A',
+    marginRight: 6,
+  },
+  destIndicatorDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: PRIMARY,
+    marginRight: 6,
+  },
+  heroRouteStationName: {
     fontFamily: FONT.bold,
-    fontSize: 15.5, // Route name: 15–16 px / 700
-    lineHeight: 22,
+    fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.1,
   },
-  swapIconPill: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F1F3FA',
-    borderWidth: 1,
-    borderColor: '#DDE2F0',
+  heroRouteCorridorSub: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
+  },
+  heroRouteSwapBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F2F4F7',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: BORDER_SUBTLE,
   },
 
   /* 3. ROUTE FILTER CHIPS */
-  routeFilterScroll: {
-    marginHorizontal: -16,
+  routesFilterContainer: {
+    marginBottom: 4,
   },
-  routeFilterContent: {
-    paddingHorizontal: 16,
-    gap: 6,
-  },
-  routePill: {
-    height: 30,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  routePillActive: {
-    backgroundColor: '#E9ECFF',
-    borderColor: '#18258F',
-  },
-  routePillText: {
-    fontSize: 11.5,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  routePillTextActive: {
-    color: '#18258F',
-    fontWeight: '700',
-  },
-
-  /* TIMETABLE LIST & CARDS */
-  listContent: {
-    padding: 16,
-    paddingBottom: 110,
-    gap: 12,
-  },
-  tripCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  tripTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F3FA',
-    borderWidth: 1,
-    borderColor: '#DDE2F0',
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
-    borderRadius: 7,
-  },
-  badgeText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#18258F',
-    letterSpacing: 0.3,
-  },
-  feederBadge: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
-  },
-  feederBadgeText: {
-    color: '#047857',
-  },
-  feederTag: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
+  routesFilterContent: {
     paddingVertical: 2,
-    borderRadius: 6,
+    gap: 8,
+  },
+  routeChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 6.5,
+    borderRadius: 18,
+    backgroundColor: CARD_BG,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: BORDER_SUBTLE,
   },
-  feederTagText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#047857',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+  routeChipActive: {
+    backgroundColor: PRIMARY_LIGHT,
+    borderColor: PRIMARY,
   },
-  durationText: {
+  routeChipText: {
     fontFamily: FONT.medium,
     fontSize: 12.5,
-    color: '#6B7280',
     fontWeight: '500',
+    color: TEXT_SECONDARY,
+  },
+  routeChipTextActive: {
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: PRIMARY,
+  },
+
+  /* LIST CONTENT */
+  listContent: {
+    padding: 16,
+    paddingBottom: 120, // Breathing space for floating bottom nav dock
+  },
+
+  /* HERO NEXT DEPARTURE CARD */
+  nextDepContainer: {
+    marginBottom: 16,
+  },
+  nextDepCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(36, 56, 184, 0.22)',
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 8px 24px rgba(36, 56, 184, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03)',
+        } as any)
+      : {}),
+  },
+  nextDepTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  nextDepBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: PRIMARY_LIGHT,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    gap: 6,
+  },
+  liveGreenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#12B76A',
+  },
+  nextDepBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: PRIMARY,
+    letterSpacing: 0.6,
+  },
+  nextDepCountdownWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F8F9FC',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: BORDER_SUBTLE,
+  },
+  nextDepCountdownText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11,
+    fontWeight: '600',
+    color: PRIMARY,
     fontVariant: ['tabular-nums'],
   },
-  tripMainRow: {
+  nextDepTimesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER_COLOR,
   },
-  stopCol: {
+  nextDepStopCol: {
     flex: 1,
     minWidth: 0,
   },
-  timeBold: {
-    fontFamily: FONT.bold,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-    marginBottom: 2,
+  nextDepTimeHero: {
+    fontFamily: FONT.extraBold,
+    fontSize: 22,
+    fontWeight: '800',
+    color: PRIMARY,
+    letterSpacing: -0.4,
     fontVariant: ['tabular-nums'],
   },
-  stopLabel: {
+  nextDepStopLabel: {
     fontFamily: FONT.medium,
     fontSize: 12.5,
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  nextDepArrowCol: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  nextDepStopsLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    color: TEXT_MUTED,
+    marginTop: 2,
+  },
+  nextDepBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+  },
+  nextDepMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nextDepRouteText: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: PRIMARY,
+    marginLeft: 4,
+  },
+  nextDepDotSep: {
+    color: TEXT_MUTED,
+    marginHorizontal: 5,
+    fontSize: 12,
+  },
+  nextDepMetaText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
     fontWeight: '500',
   },
-  arrowCol: {
-    paddingHorizontal: 12,
+  viewStopsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  viewStopsToggleText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11.5,
+    color: PRIMARY,
+    fontWeight: '600',
+  },
+
+  /* SECTION HEADER FOR SUBSEQUENT DEPARTURES */
+  sectionHeaderRow: {
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  sectionHeaderTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+
+  /* UNIFIED DEPARTURE TABLE CONTAINER */
+  unifiedTableContainer: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    overflow: 'hidden',
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  departureRow: {
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+  },
+  departureRowExpanded: {
+    backgroundColor: '#FAFAFC',
+  },
+  departureRowBorder: {
+    // Individual rows inside container
+  },
+  rowMainTimes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rowTimeCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rowTimeBold: {
+    fontFamily: FONT.bold,
+    fontSize: 17,
+    fontWeight: '700',
+    color: PRIMARY,
+    letterSpacing: -0.2,
+    fontVariant: ['tabular-nums'],
+  },
+  rowStationName: {
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: TEXT_SECONDARY,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  rowArrowCol: {
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stopsCount: {
-    fontSize: 10.5,
-    color: '#6B7280',
-    marginTop: 2,
+  rowMetaBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F4F7',
+  },
+  rowMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowRouteText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: PRIMARY,
+  },
+  rowDotSep: {
+    color: TEXT_MUTED,
+    marginHorizontal: 5,
+    fontSize: 11,
+  },
+  rowMetaSecondary: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: TEXT_SECONDARY,
     fontWeight: '500',
   },
+  rowMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  rowExpandHint: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    color: TEXT_MUTED,
+  },
 
-  /* EXPANDED EDITORIAL TIMELINE */
+  /* EXPANDED STOP DETAILS — EDITORIAL TIMELINE */
   expandedDetails: {
-    marginTop: 14,
+    marginTop: 12,
     paddingTop: 10,
   },
   expandedHeaderDivider: {
     height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.08)',
-    marginBottom: 12,
+    backgroundColor: BORDER_COLOR,
+    marginBottom: 10,
   },
   expandedTitle: {
+    fontFamily: FONT.bold,
     fontSize: 10,
     fontWeight: '700',
-    color: '#6B7280',
-    letterSpacing: 0.9,
+    color: TEXT_MUTED,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   timelineContainer: {
     paddingLeft: 4,
+    paddingRight: 4,
   },
   timelineItemRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    minHeight: 32,
+    minHeight: 30,
   },
   spineCol: {
-    width: 20,
+    width: 18,
     alignItems: 'center',
     position: 'relative',
-    alignSelf: 'stretch',
-    marginRight: 10,
   },
   spineLine: {
     position: 'absolute',
-    top: 7,
-    bottom: -7,
+    top: 10,
+    bottom: -6,
     width: 1.5,
-    backgroundColor: 'rgba(24, 37, 143, 0.12)',
+    backgroundColor: '#E4E7EC',
+    left: 8,
   },
   spineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#9CA3AF',
-    marginTop: 5,
-    zIndex: 2,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#D0D5DD',
+    marginTop: 4,
   },
   spineDotOrigin: {
-    backgroundColor: '#18258F',
-    borderColor: '#18258F',
+    backgroundColor: '#12B76A',
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    marginTop: 3,
   },
   spineDotDest: {
-    backgroundColor: '#F26B52',
-    borderColor: '#F26B52',
+    backgroundColor: PRIMARY,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    marginTop: 3,
   },
   stopInfoCol: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingLeft: 10,
     paddingBottom: 8,
   },
   stopNameText: {
-    fontSize: 13,
-    color: '#10131A',
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: '#344054',
     fontWeight: '500',
     flex: 1,
     marginRight: 8,
   },
   stopNameBold: {
-    color: '#18258F',
+    fontFamily: FONT.bold,
+    color: TEXT_PRIMARY,
     fontWeight: '700',
   },
   stopTimeText: {
-    fontSize: 12.5,
-    color: '#6B7280',
-    fontWeight: '600',
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    fontVariant: ['tabular-nums'],
   },
   stopTimeBold: {
-    color: '#18258F',
+    fontFamily: FONT.bold,
+    color: PRIMARY,
     fontWeight: '700',
   },
-});
 
+  /* EMPTY STATE */
+  emptyStateContainer: {
+    padding: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  emptyStateSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    color: TEXT_SECONDARY,
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 260,
+  },
+});
