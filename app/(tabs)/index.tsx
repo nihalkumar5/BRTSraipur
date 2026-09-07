@@ -1880,9 +1880,9 @@ export default function LiveBusScreen() {
                   <ChevronRight size={15} color="#18258F" strokeWidth={2.2} />
                 </TouchableOpacity>
 
-                {/* FEATURE / PROMOTIONAL BANNER */}
+                {/* PROMOTIONAL BANNER IMAGE */}
                 <TouchableOpacity
-                  style={styles.homeDownBannerCard}
+                  style={styles.homeDownBannerWrap}
                   activeOpacity={0.9}
                   onPress={() => setPlanningMode('onboard')}
                   accessibilityRole="button"
@@ -4072,21 +4072,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#18258F',
   },
-  homeDownBannerCard: {
+  homeDownBannerWrap: {
     width: '100%',
-    borderRadius: 18,
-    overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   homeDownBannerImage: {
     width: '100%',
-    aspectRatio: 2168 / 725,
-    borderRadius: 18,
+    aspectRatio: 2055 / 507,
   },
 
   royalBlueHeroCard: {
