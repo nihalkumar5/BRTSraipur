@@ -14,15 +14,29 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowUpDown, ShieldCheck, Search, X, ArrowLeft } from 'lucide-react-native';
+import { ArrowUpDown, Info, Search, X, ArrowLeft, ChevronRight, ChevronUp } from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
+
+// DESIGN SYSTEM TOKENS (SHARED GLOBALLY ACROSS ALL SCREENS)
+const PRIMARY = '#2438B8';
+const PRIMARY_LIGHT = 'rgba(36, 56, 184, 0.08)';
+const BG_COLOR = '#F7F8FA';
+const CARD_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#101828';
+const TEXT_SECONDARY = '#667085';
+const TEXT_MUTED = '#98A2B3';
+const BORDER_COLOR = '#E4E7EC';
+const BORDER_DIVIDER = '#EAECF0';
+const SUCCESS_DOT = '#12B76A';
+const DEST_DOT = '#F97066';
 
 export default function FaresScreen() {
   const insets = useSafeAreaInsets();
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
   const [toStop, setToStop] = useState<string>('HNLU (National Law University)');
+  const [showFullPolicy, setShowFullPolicy] = useState(false);
 
   // Modal station picker
   const [modalVisible, setModalVisible] = useState(false);
@@ -172,137 +186,160 @@ export default function FaresScreen() {
   const fromDisplay = stops.find(s => s.name === fromStop)?.shortName || fromStop.split('(')[0].trim();
   const toDisplay = stops.find(s => s.name === toStop)?.shortName || toStop.split('(')[0].trim();
 
+  // Standard official route fares
+  const fareGuideRows = [
+    { route: 'Within Nava Raipur', price: '₹5–₹10' },
+    { route: 'Telibandha → Nava Raipur', price: '₹20–₹25' },
+    { route: 'Railway Stn → Mantralaya', price: '₹30' },
+    { route: 'Railway Stn → HNLU Gate', price: '₹35' },
+    { route: 'Railway Stn → HNLU', price: '₹40' },
+    { route: 'Railway Stn → Muktangan', price: '₹40' },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 1. HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>Fares</Text>
           <Text style={styles.subtitle}>Simple, official bus fares.</Text>
         </View>
 
-        {/* 2. INTERACTIVE FARE LOOKUP (HERO CARD) */}
-        <View style={styles.calcCard}>
-          <Text style={styles.calcTitle}>CHECK YOUR FARE</Text>
-
-          {/* FROM SELECTOR */}
-          <View style={styles.selectorBlock}>
-            <Text style={styles.selectorLabel}>FROM</Text>
+        {/* 2. FARE CALCULATOR (HERO COMPONENT) */}
+        <View style={styles.calcSection}>
+          <Text style={styles.sectionHeaderLabel}>CHECK YOUR FARE</Text>
+          <View style={styles.calcCard}>
+            {/* FROM FIELD */}
             <TouchableOpacity
-              style={styles.selectorBtn}
+              style={styles.stationField}
               onPress={() => openPicker('from')}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
-              <View style={[styles.dotIndicator, { backgroundColor: '#10B981' }]} />
-              <Text style={styles.selectorBtnText} numberOfLines={1}>
-                {fromDisplay}
-              </Text>
+              <Text style={styles.fieldLabel}>FROM</Text>
+              <View style={styles.fieldInputRow}>
+                <View style={[styles.locationDot, { backgroundColor: SUCCESS_DOT }]} />
+                <Text style={styles.stationText} numberOfLines={1}>
+                  {fromDisplay}
+                </Text>
+              </View>
             </TouchableOpacity>
-          </View>
 
-          {/* DIVIDER & SWAP BUTTON */}
-          <View style={styles.swapDividerRow}>
-            <View style={styles.swapDividerLine} />
-            <TouchableOpacity onPress={swap} style={styles.swapBtn} activeOpacity={0.7}>
-              <Animated.View style={{ transform: [{ rotate: spinInterpolate }] }}>
-                <ArrowUpDown size={14} color="#18258F" />
-              </Animated.View>
-            </TouchableOpacity>
-            <View style={styles.swapDividerLine} />
-          </View>
+            {/* DIVIDER WITH COMPACT SWAP BUTTON */}
+            <View style={styles.swapDividerRow}>
+              <View style={styles.swapDividerLine} />
+              <TouchableOpacity onPress={swap} style={styles.swapBtn} activeOpacity={0.75}>
+                <Animated.View style={{ transform: [{ rotate: spinInterpolate }] }}>
+                  <ArrowUpDown size={13} color={PRIMARY} strokeWidth={2.2} />
+                </Animated.View>
+              </TouchableOpacity>
+              <View style={styles.swapDividerLine} />
+            </View>
 
-          {/* TO SELECTOR */}
-          <View style={styles.selectorBlock}>
-            <Text style={styles.selectorLabel}>TO</Text>
+            {/* TO FIELD */}
             <TouchableOpacity
-              style={styles.selectorBtn}
+              style={styles.stationField}
               onPress={() => openPicker('to')}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
-              <View style={[styles.dotIndicator, { backgroundColor: '#F26B52' }]} />
-              <Text style={styles.selectorBtnText} numberOfLines={1}>
-                {toDisplay}
-              </Text>
+              <Text style={styles.fieldLabel}>TO</Text>
+              <View style={styles.fieldInputRow}>
+                <View style={[styles.locationDot, { backgroundColor: DEST_DOT }]} />
+                <Text style={styles.stationText} numberOfLines={1}>
+                  {toDisplay}
+                </Text>
+              </View>
             </TouchableOpacity>
-          </View>
 
-          <View style={styles.cardDivider} />
+            {/* SEPARATOR TO FARE RESULT */}
+            <View style={styles.resultSeparator} />
 
-          {/* 3. PROMINENT FARE RESULT */}
-          <Animated.View style={[styles.fareResultCenter, { transform: [{ scale: fareScaleAnim }] }]}>
-            <Text style={styles.farePriceHero}>₹{fare}</Text>
-            <Text style={styles.fareRouteText} numberOfLines={1}>
-              {fromDisplay} → {toDisplay}
-            </Text>
-            <Text style={styles.fareTypeSub}>One way · Adult</Text>
-          </Animated.View>
-        </View>
-
-        {/* 4. FARE GUIDE */}
-        <View style={styles.slabsSection}>
-          <Text style={styles.sectionHeader}>Fare guide</Text>
-          <View style={styles.slabsCard}>
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Within Nava Raipur</Text>
-              <Text style={styles.slabPrice}>₹5–₹10</Text>
-            </View>
-            <View style={styles.slabDivider} />
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Telibandha → Nava Raipur</Text>
-              <Text style={styles.slabPrice}>₹20–₹25</Text>
-            </View>
-            <View style={styles.slabDivider} />
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Railway Stn → Mantralaya</Text>
-              <Text style={styles.slabPrice}>₹30</Text>
-            </View>
-            <View style={styles.slabDivider} />
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Railway Stn → HNLU Gate</Text>
-              <Text style={styles.slabPrice}>₹35</Text>
-            </View>
-            <View style={styles.slabDivider} />
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Railway Stn → HNLU</Text>
-              <Text style={styles.slabPrice}>₹40</Text>
-            </View>
-            <View style={styles.slabDivider} />
-            <View style={styles.slabRow}>
-              <Text style={styles.slabRoute}>Railway Stn → Muktangan</Text>
-              <Text style={styles.slabPrice}>₹40</Text>
-            </View>
+            {/* PROMINENT FARE RESULT (THE VISUAL ANCHOR) */}
+            <Animated.View
+              style={[
+                styles.fareResultCenter,
+                { transform: [{ scale: fareScaleAnim }] },
+              ]}
+            >
+              <Text style={styles.farePriceHero}>₹{fare}</Text>
+              <Text style={styles.fareRouteText} numberOfLines={1}>
+                {fromDisplay} → {toDisplay}
+              </Text>
+              <Text style={styles.fareTypeSub}>One way · Adult</Text>
+            </Animated.View>
           </View>
         </View>
 
-        {/* 5. OFFICIAL TICKETING POLICY (CLEAN STATIC CARD) */}
+        {/* 3. FARE GUIDE (CLEAN ROW-BASED TABLE) */}
+        <View style={styles.guideSection}>
+          <Text style={styles.sectionHeaderLabel}>FARE GUIDE</Text>
+          <View style={styles.guideCard}>
+            {fareGuideRows.map((row, index) => {
+              const isLast = index === fareGuideRows.length - 1;
+              return (
+                <View
+                  key={row.route}
+                  style={[styles.guideRow, !isLast && styles.guideRowBorder]}
+                >
+                  <Text style={styles.guideRouteText}>{row.route}</Text>
+                  <Text style={styles.guidePriceText}>{row.price}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 4. OFFICIAL POLICY (COMPACT EXPANDABLE SECTION) */}
         <View style={styles.policyCard}>
           <View style={styles.policyHeaderRow}>
-            <ShieldCheck size={16} color="#002081" style={{ marginRight: 8 }} />
+            <Info size={14} color={PRIMARY} strokeWidth={2.2} />
             <Text style={styles.policyTitle}>Official ticketing policy</Text>
           </View>
 
-          <View style={styles.policyBody}>
-            <View style={styles.policyBulletRow}>
-              <Text style={styles.policyDot}>•</Text>
-              <Text style={styles.policyBullet}>Under 5 years · Free</Text>
-            </View>
-            <View style={styles.policyBulletRow}>
-              <Text style={styles.policyDot}>•</Text>
-              <Text style={styles.policyBullet}>QR / Smart Card · Valid across all 25 shelters</Text>
-            </View>
-            <View style={styles.policyBulletRow}>
-              <Text style={styles.policyDot}>•</Text>
-              <Text style={styles.policyBullet}>Student pass · 50% concession</Text>
-            </View>
-            <View style={styles.policyBulletRow}>
-              <Text style={styles.policyDot}>•</Text>
-              <Text style={styles.policyBullet}>AC buses · Standard government fares</Text>
-            </View>
+          <View style={styles.policyHighlights}>
+            <Text style={styles.policyBullet}>• Under 5 years · Free travel</Text>
+            <Text style={styles.policyBullet}>
+              • QR / Smart Card · Valid across all 25 shelters
+            </Text>
+
+            {showFullPolicy && (
+              <View style={styles.policyExpandedSection}>
+                <Text style={styles.policyBullet}>
+                  • Student pass · 50% concession on monthly passes
+                </Text>
+                <Text style={styles.policyBullet}>
+                  • Senior citizens & divyang · Concessionary travel as per CG rules
+                </Text>
+                <Text style={styles.policyBullet}>
+                  • Luggage · Up to 15 kg personal luggage allowed free
+                </Text>
+                <Text style={styles.policyBullet}>
+                  • AC Express buses · Standard government approved distance slabs
+                </Text>
+              </View>
+            )}
           </View>
+
+          <TouchableOpacity
+            style={styles.policyToggleBtn}
+            onPress={() => setShowFullPolicy(prev => !prev)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.policyToggleText}>
+              {showFullPolicy ? 'Hide full policy' : 'View full policy'}
+            </Text>
+            {showFullPolicy ? (
+              <ChevronUp size={13} color={PRIMARY} />
+            ) : (
+              <ChevronRight size={13} color={PRIMARY} />
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* --- REDBUS-STYLE FULL-WIDTH STATION SEARCH MODAL (IMAGE 1 DESIGN) --- */}
+      {/* --- STATION SEARCH PICKER MODAL (RED-BUS STYLE) --- */}
       <Modal
         visible={modalVisible}
         animationType="none"
@@ -310,21 +347,19 @@ export default function FaresScreen() {
         onRequestClose={closePicker}
       >
         <View style={styles.modalOverlay}>
-          {/* TAP OVERLAY OUTSIDE TO CLOSE */}
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={closePicker}
           />
 
-          {/* FULL-WIDTH SEARCH CONTAINER */}
           <Animated.View
             style={[
               styles.drawerContainer,
               { transform: [{ translateY: drawerSlideAnim }] },
             ]}
           >
-            {/* TOP SEARCH BAR PILL WITH INLINE BACK ARROW (AS IN UPLOADED IMAGE 1) */}
+            {/* SEARCH HEADER */}
             <View style={[styles.searchHeaderWrapper, { paddingTop: Math.max(insets.top, 14) }]}>
               <View style={[styles.searchPillContainer, isSearchFocused && styles.searchPillFocused]}>
                 <TouchableOpacity
@@ -334,13 +369,13 @@ export default function FaresScreen() {
                   activeOpacity={0.7}
                   accessibilityLabel="Back to fare calculator"
                 >
-                  <ArrowLeft size={20} color="#10131A" strokeWidth={2.2} />
+                  <ArrowLeft size={20} color={TEXT_PRIMARY} strokeWidth={2.2} />
                 </TouchableOpacity>
 
                 <TextInput
                   style={[styles.searchInputPill, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
                   placeholder={activePicker === 'from' ? 'Search Boarding Point' : 'Search Destination Point'}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={TEXT_MUTED}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   onFocus={() => setIsSearchFocused(true)}
@@ -354,20 +389,20 @@ export default function FaresScreen() {
                     style={styles.searchClearBtn}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <X size={16} color="#6B7280" />
+                    <X size={16} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
                 ) : null}
               </View>
             </View>
 
-            {/* SECTION HEADING: Popular Stations near you (AS IN UPLOADED IMAGE 1) */}
+            {/* SECTION HEADING */}
             <View style={styles.searchSectionHeaderRow}>
               <Text style={styles.searchSectionTitle}>
                 {searchQuery ? 'Search Results' : 'Popular Stations near you'}
               </Text>
             </View>
 
-            {/* FULL-WIDTH STATIONS LIST */}
+            {/* STATIONS LIST */}
             <FlatList
               data={filteredStops}
               keyExtractor={item => item.id}
@@ -427,336 +462,313 @@ export default function FaresScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FC',
+    backgroundColor: BG_COLOR,
   },
   container: {
     padding: 16,
-    gap: 14,
-    paddingBottom: 110,
+    gap: 16,
+    paddingBottom: 120, // Clean breathing room for floating bottom nav dock
   },
   header: {
-    marginTop: 4,
-    marginBottom: 2,
     paddingHorizontal: 2,
+    marginTop: 2,
   },
   title: {
     fontFamily: FONT.bold,
-    fontSize: 26, // Page title: 26 px / 700
-    lineHeight: 32, // Line-height around 32 px
+    fontSize: 26,
+    lineHeight: 32,
     fontWeight: '700',
-    color: '#0F172A',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.4,
   },
   subtitle: {
     fontFamily: FONT.medium,
-    fontSize: 13.5, // Secondary/supporting: 13–14 px / 500
-    lineHeight: 19, // Line-height around 18–20 px
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '500',
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
     marginTop: 2,
   },
 
-  /* HERO FARE LOOKUP CARD */
+  /* SECTION LABELS */
+  sectionHeaderLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+
+  /* 2. FARE CALCULATOR HERO CARD */
+  calcSection: {},
   calcCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
+    borderColor: BORDER_COLOR,
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 1.5,
   },
-  calcTitle: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#6B7280',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 12,
+  stationField: {
+    paddingVertical: 2,
   },
-  selectorBlock: {
-    marginBottom: 4,
-  },
-  selectorLabel: {
+  fieldLabel: {
+    fontFamily: FONT.bold,
     fontSize: 10,
     fontWeight: '700',
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
-  selectorBtn: {
-    height: 44,
+  fieldInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F3FA',
-    borderWidth: 1,
-    borderColor: '#DDE2F0',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 2,
   },
-  dotIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 10,
+  locationDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    marginRight: 9,
   },
-  selectorBtnText: {
-    flex: 1,
-    fontSize: 14,
+  stationText: {
+    fontFamily: FONT.bold,
+    fontSize: 15.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
+    flex: 1,
   },
   swapDividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 8,
   },
   swapDividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.08)',
+    backgroundColor: BORDER_DIVIDER,
   },
   swapBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#F1F3FA',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F2F4F7',
     borderWidth: 1,
-    borderColor: '#DDE2F0',
+    borderColor: BORDER_COLOR,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: 10,
   },
-  cardDivider: {
+  resultSeparator: {
     height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.08)',
+    backgroundColor: BORDER_DIVIDER,
     marginTop: 14,
     marginBottom: 12,
   },
   fareResultCenter: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   farePriceHero: {
-    fontFamily: FONT.bold,
-    fontSize: 32, // Large heading: 30–32 px / 700
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    fontFamily: FONT.extraBold,
+    fontSize: 34,
+    fontWeight: '800',
+    color: PRIMARY,
+    letterSpacing: -0.6,
     fontVariant: ['tabular-nums'],
   },
   fareRouteText: {
     fontFamily: FONT.bold,
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: TEXT_PRIMARY,
     marginTop: 2,
   },
   fareTypeSub: {
     fontFamily: FONT.medium,
     fontSize: 12,
     fontWeight: '500',
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
     marginTop: 2,
   },
 
-  /* APPROVED FARE SLABS */
-  slabsSection: {
-    marginTop: 2,
-  },
-  sectionHeader: {
-    fontFamily: FONT.bold,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    paddingHorizontal: 2,
-  },
-  slabsCard: {
-    backgroundColor: '#FFFFFF',
+  /* 3. FARE GUIDE (CLEAN LIST TABLE) */
+  guideSection: {},
+  guideCard: {
+    backgroundColor: CARD_BG,
     borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 2,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: BORDER_COLOR,
+    overflow: 'hidden',
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
-    shadowRadius: 6,
+    shadowRadius: 4,
     elevation: 1,
   },
-  slabRow: {
+  guideRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
-  slabRoute: {
+  guideRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER_DIVIDER,
+  },
+  guideRouteText: {
     fontFamily: FONT.medium,
     fontSize: 13.5,
-    color: '#10131A',
+    color: TEXT_PRIMARY,
     fontWeight: '500',
+    flex: 1,
+    marginRight: 8,
   },
-  slabPrice: {
+  guidePriceText: {
     fontFamily: FONT.bold,
-    fontSize: 15, // Fare: 14–15 px / 700
+    fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: PRIMARY,
     fontVariant: ['tabular-nums'],
   },
-  slabDivider: {
-    height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.06)',
-  },
 
-  /* OFFICIAL POLICY CARD */
+  /* 4. OFFICIAL POLICY CARD */
   policyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: CARD_BG,
     borderRadius: 16,
-    padding: 16,
+    padding: 15,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: BORDER_COLOR,
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
-    shadowRadius: 6,
+    shadowRadius: 4,
     elevation: 1,
   },
   policyHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+    gap: 6,
   },
   policyTitle: {
+    fontFamily: FONT.bold,
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: 0.4,
+    color: TEXT_PRIMARY,
   },
-  policyBody: {
-    gap: 8,
-    paddingTop: 4,
-  },
-  policyBulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  policyDot: {
-    fontSize: 13,
-    color: '#18258F',
-    marginRight: 6,
-    lineHeight: 18,
+  policyHighlights: {
+    gap: 4,
+    paddingLeft: 2,
   },
   policyBullet: {
+    fontFamily: FONT.regular,
     fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
+    color: '#475569',
     lineHeight: 18,
-    flex: 1,
+  },
+  policyExpandedSection: {
+    gap: 4,
+    marginTop: 4,
+  },
+  policyToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 3,
+    alignSelf: 'flex-start',
+  },
+  policyToggleText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    color: PRIMARY,
+    fontWeight: '600',
   },
 
-  /* --- REDBUS-STYLE FULL-WIDTH SEARCH MODAL STYLES (IMAGE 1) --- */
+  /* MODAL STATION PICKER */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.40)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
   },
   drawerContainer: {
     backgroundColor: '#FFFFFF',
-    width: '100%',
-    maxWidth: 480,
-    height: '100%',
-    flex: 1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    height: '85%',
+    maxHeight: 700,
+    width: '100%',
     overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 24,
   },
   searchHeaderWrapper: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ECEEF2',
+    borderBottomColor: '#F2F4F7',
   },
   searchPillContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F3FA',
+    backgroundColor: '#F2F4F7',
     borderRadius: 24,
-    height: 48,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    height: 46,
   },
   searchPillFocused: {
-    borderColor: '#18258F',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1.5,
+    borderColor: PRIMARY,
   },
   searchBackBtn: {
     paddingRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   searchInputPill: {
     flex: 1,
     fontFamily: FONT.medium,
     fontSize: 14.5,
-    color: '#10131A',
+    color: TEXT_PRIMARY,
     fontWeight: '500',
-    paddingVertical: 0,
-    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
+    height: '100%',
   },
   searchClearBtn: {
     padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   searchSectionHeaderRow: {
     paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 10,
+    paddingTop: 12,
+    paddingBottom: 6,
     backgroundColor: '#FFFFFF',
   },
   searchSectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#10131A',
-    letterSpacing: -0.2,
+    color: TEXT_PRIMARY,
   },
   drawerListContent: {
-    paddingBottom: 60,
+    paddingBottom: 40,
   },
   drawerItemRow: {
-    paddingVertical: 15,
+    paddingVertical: 14,
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F2F4F7',
     backgroundColor: '#FFFFFF',
   },
   drawerItemRowSelected: {
-    backgroundColor: '#F0F4FF',
+    backgroundColor: PRIMARY_LIGHT,
   },
   drawerItemInfoCol: {
     width: '100%',
@@ -771,35 +783,33 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 14.5,
     fontWeight: '600',
-    color: '#10131A',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.1,
     flex: 1,
     marginRight: 8,
   },
   drawerItemNameSelected: {
     fontFamily: FONT.bold,
-    color: '#18258F',
+    color: PRIMARY,
     fontWeight: '700',
   },
   drawerItemCodeBadge: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    paddingHorizontal: 6.5,
+    backgroundColor: '#F2F4F7',
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 5,
+    borderRadius: 6,
   },
   drawerItemCodeText: {
     fontFamily: FONT.bold,
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#344054',
     letterSpacing: 0.3,
   },
   drawerItemSub: {
     fontFamily: FONT.regular,
-    fontSize: 12.5,
-    color: '#6B7280',
+    fontSize: 12,
+    color: TEXT_SECONDARY,
     fontWeight: '400',
   },
   drawerEmptyBox: {
@@ -810,7 +820,7 @@ const styles = StyleSheet.create({
   drawerEmptyText: {
     fontFamily: FONT.bold,
     fontSize: 14.5,
-    color: '#18258F',
+    color: TEXT_PRIMARY,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 6,
@@ -818,8 +828,7 @@ const styles = StyleSheet.create({
   drawerEmptySub: {
     fontFamily: FONT.medium,
     fontSize: 12.5,
-    color: '#6B7280',
+    color: TEXT_SECONDARY,
     textAlign: 'center',
   },
 });
-
