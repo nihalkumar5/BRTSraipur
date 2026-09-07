@@ -821,10 +821,10 @@ export default function LiveBusScreen() {
                 {journey.isTransfer && (
                   <View style={styles.transferAlertBanner}>
                     <View style={styles.transferAlertBadge}>
-                      <Text style={styles.transferAlertBadgeText}>TRANSFER HUB</Text>
+                      <Text style={styles.transferAlertBadgeText}>BUS CHANGE</Text>
                     </View>
                     <Text style={styles.transferAlertText}>
-                      Change buses at <Text style={{ fontWeight: '700', color: '#18258F' }}>{journey.transferHub}</Text> ({journey.transferWaitMins}m sync wait)
+                      Take <Text style={{ fontWeight: '700', color: '#18258F' }}>Bus {journey.trip.routeNumber}</Text> → Change at <Text style={{ fontWeight: '700', color: '#18258F' }}>{journey.transferHub}</Text> ({journey.transferWaitMins}m wait) → Take <Text style={{ fontWeight: '700', color: '#059669' }}>Bus {journey.connectingTrip?.routeNumber}</Text>
                     </Text>
                   </View>
                 )}
@@ -904,15 +904,19 @@ export default function LiveBusScreen() {
                         <Clock size={13} color="#17268F" strokeWidth={2.4} />
                         <Text style={styles.metricCardLabel}>TRAVEL TIME</Text>
                       </View>
-                      <View style={styles.metricBadgeRemaining}>
-                        <Text style={styles.metricBadgeTextRemaining}>DIRECT</Text>
+                      <View style={[styles.metricBadgeRemaining, journey.isTransfer && { backgroundColor: '#FEF3C7' }]}>
+                        <Text style={[styles.metricBadgeTextRemaining, journey.isTransfer && { color: '#B45309' }]}>
+                          {journey.isTransfer ? '1 TRANSFER' : 'DIRECT'}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.metricCardValue}>
                       {journey.durationMins} <Text style={styles.metricUnitText}>min</Text>
                     </Text>
                     <Text style={styles.metricCardSub} numberOfLines={1}>
-                      to {journey.toStop.shortName}
+                      {journey.isTransfer
+                        ? `incl. ${journey.transferWaitMins}m wait at ${journey.transferHub}`
+                        : `to ${journey.toStop.shortName}`}
                     </Text>
                   </View>
 
@@ -929,7 +933,11 @@ export default function LiveBusScreen() {
                     </View>
                     <Text style={styles.metricCardValue}>₹{journey.fare}</Text>
                     <Text style={styles.metricCardSub} numberOfLines={1}>
-                      {journey.trip.serviceDay === 'weekend' ? 'Weekend Express' : 'AC Express'}
+                      {journey.isTransfer
+                        ? `Total for 2 Buses (via ${journey.transferHub})`
+                        : journey.trip.serviceDay === 'weekend'
+                        ? 'Weekend Express'
+                        : 'AC Express'}
                     </Text>
                   </View>
                 </View>
@@ -970,6 +978,82 @@ export default function LiveBusScreen() {
                   </View>
                 </TouchableOpacity>
 
+                {/* DEDICATED STEP-BY-STEP BUS CHANGE GUIDE CARD */}
+                {journey.isTransfer && (
+                  <View style={styles.busChangeGuideCard}>
+                    <View style={styles.busChangeGuideHeader}>
+                      <View style={styles.busChangeIconBox}>
+                        <ArrowUpDown size={18} color="#18258F" strokeWidth={2.4} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={styles.busChangeGuideTitle}>Bus Change Guide</Text>
+                          <View style={styles.busChangeCountBadge}>
+                            <Text style={styles.busChangeCountBadgeText}>1 Transfer</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.busChangeGuideSubtitle}>
+                          Kaun si bus kab badalni hai (Switch at {journey.transferHub})
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* STEP 1: FIRST BUS */}
+                    <View style={styles.busChangeStepItem}>
+                      <View style={styles.busChangeStepNumberBadge}>
+                        <Text style={styles.busChangeStepNumberText}>1</Text>
+                      </View>
+                      <View style={styles.busChangeStepBody}>
+                        <View style={styles.busChangeStepTopRow}>
+                          <View style={styles.busChangeRoutePillLeg1}>
+                            <Bus size={11} color="#FFFFFF" />
+                            <Text style={styles.busChangeRoutePillText}>Bus {journey.trip.routeNumber}</Text>
+                          </View>
+                          <Text style={styles.busChangeStepTimeText}>{journey.fromTime} → {journey.transferArrivalTime || ''}</Text>
+                        </View>
+                        <Text style={styles.busChangeStepDesc}>
+                          Board at <Text style={styles.busChangeBoldText}>{journey.fromStop.shortName}</Text> ({journey.fromTime}) · Alight at <Text style={styles.busChangeBoldText}>{journey.transferHub}</Text> ({journey.transferArrivalTime || ''})
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* STEP 2: INTERCHANGE WAIT BANNER */}
+                    <View style={styles.busChangeInterchangeStep}>
+                      <View style={styles.busChangeInterchangeLine} />
+                      <View style={styles.busChangeInterchangeContent}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                          <Clock size={13} color="#B45309" strokeWidth={2.4} />
+                          <Text style={styles.busChangeInterchangeTitle}>
+                            Change Bus at {journey.transferHub} ({journey.transferWaitMins}m wait)
+                          </Text>
+                        </View>
+                        <Text style={styles.busChangeInterchangeSub}>
+                          Bus {journey.trip.routeNumber} se utrein ({journey.transferArrivalTime || ''}) → {journey.transferWaitMins} min shelter par wait karein → Connecting Bus {journey.connectingTrip?.routeNumber || ''} me baithein ({journey.connectingFromTime})
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* STEP 3: SECOND BUS */}
+                    <View style={styles.busChangeStepItem}>
+                      <View style={[styles.busChangeStepNumberBadge, { backgroundColor: '#059669' }]}>
+                        <Text style={styles.busChangeStepNumberText}>2</Text>
+                      </View>
+                      <View style={styles.busChangeStepBody}>
+                        <View style={styles.busChangeStepTopRow}>
+                          <View style={styles.busChangeRoutePillLeg2}>
+                            <Bus size={11} color="#FFFFFF" />
+                            <Text style={styles.busChangeRoutePillText}>Bus {journey.connectingTrip?.routeNumber || 'Connecting'}</Text>
+                          </View>
+                          <Text style={[styles.busChangeStepTimeText, { color: '#047857' }]}>{journey.connectingFromTime} → {journey.toTime}</Text>
+                        </View>
+                        <Text style={styles.busChangeStepDesc}>
+                          Board at <Text style={styles.busChangeBoldText}>{journey.transferHub}</Text> ({journey.connectingFromTime}) · Final arrival at <Text style={styles.busChangeBoldText}>{journey.toStop.shortName}</Text> ({journey.toTime})
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
                 {/* OFFICIAL TIMETABLE & STOPPAGES */}
                 <View style={styles.stopsTimelineContainer}>
                   <View style={styles.timelineHeaderRow}>
@@ -999,10 +1083,10 @@ export default function LiveBusScreen() {
                     {journey.isTransfer && (
                       <View style={styles.legHeaderRow}>
                         <View style={styles.legHeaderBadge}>
-                          <Text style={styles.legHeaderBadgeText}>LEG 1</Text>
+                          <Text style={styles.legHeaderBadgeText}>LEG 1 OF 2</Text>
                         </View>
                         <Text style={styles.legHeaderText}>
-                          {journey.trip.route} · Board at {journey.fromTime}
+                          Bus {journey.trip.routeNumber} ({journey.fromStop.shortName} → {journey.transferHub}) · Board {journey.fromTime}
                         </Text>
                       </View>
                     )}
@@ -1051,8 +1135,8 @@ export default function LiveBusScreen() {
                                     <Text style={styles.originTagBadgeText}>Boarding</Text>
                                   </View>
                                 ) : isTransferStop ? (
-                                  <View style={styles.transferTagBadge}>
-                                    <Text style={styles.transferTagBadgeText}>Transfer Hub</Text>
+                                  <View style={[styles.transferTagBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                                    <Text style={[styles.transferTagBadgeText, { color: '#B45309' }]}>Alight (Change Bus)</Text>
                                   </View>
                                 ) : isLast ? (
                                   <View style={styles.destTagBadge}>
@@ -1063,7 +1147,9 @@ export default function LiveBusScreen() {
                               {isFirst ? (
                                 <Text style={styles.timelineShelterSub}>Platform 1 · Gate opens 2m prior</Text>
                               ) : isTransferStop ? (
-                                <Text style={styles.timelineShelterSub}>Alight here · Switch to connecting bus</Text>
+                                <Text style={[styles.timelineShelterSub, { color: '#B45309', fontWeight: '600' }]}>
+                                  Arrive {journey.transferArrivalTime || stopItem.time} · De-board Bus {journey.trip.routeNumber} here
+                                </Text>
                               ) : isLast ? (
                                 <Text style={styles.timelineShelterSub}>Final interchange terminal</Text>
                               ) : index === 1 ? (
@@ -1095,11 +1181,16 @@ export default function LiveBusScreen() {
                           <ArrowUpDown size={16} color="#18258F" />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.timelineInterchangeTitle}>
-                            Change Buses at {journey.transferHub}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={styles.timelineInterchangeTitle}>
+                              Change to Bus {journey.connectingTrip?.routeNumber || 'Connecting Bus'}
+                            </Text>
+                            <View style={[styles.transferTagBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                              <Text style={[styles.transferTagBadgeText, { color: '#B45309' }]}>{journey.transferWaitMins}m wait</Text>
+                            </View>
+                          </View>
                           <Text style={styles.timelineInterchangeSub}>
-                            Wait {journey.transferWaitMins}m · Board {journey.connectingTrip?.route || 'Connecting Bus'}
+                            Alight at {journey.transferArrivalTime || ''} · Wait {journey.transferWaitMins}m at {journey.transferHub} · Bus leaves at {journey.connectingFromTime}
                           </Text>
                         </View>
                         <View style={styles.timelineInterchangeDepBadge}>
@@ -1110,12 +1201,12 @@ export default function LiveBusScreen() {
 
                     {/* LEG 2 HEADER IF TRANSFER */}
                     {journey.isTransfer && journey.secondLegStops && (
-                      <View style={[styles.legHeaderRow, { marginTop: 10 }]}>
+                      <View style={[styles.legHeaderRow, { marginTop: 12, backgroundColor: '#F0FDF4', borderColor: '#A7F3D0' }]}>
                         <View style={[styles.legHeaderBadge, { backgroundColor: '#059669' }]}>
-                          <Text style={styles.legHeaderBadgeText}>LEG 2</Text>
+                          <Text style={styles.legHeaderBadgeText}>LEG 2 OF 2</Text>
                         </View>
-                        <Text style={styles.legHeaderText}>
-                          {journey.connectingTrip?.route || 'Connecting Bus'} · Departs at {journey.connectingFromTime}
+                        <Text style={[styles.legHeaderText, { color: '#065F46' }]}>
+                          Bus {journey.connectingTrip?.routeNumber || 'Connecting Bus'} ({journey.transferHub} → {journey.toStop.shortName}) · Departs {journey.connectingFromTime}
                         </Text>
                       </View>
                     )}
@@ -1156,19 +1247,19 @@ export default function LiveBusScreen() {
                                 </Text>
                                 {isFirst ? (
                                   <View style={[styles.originTagBadge, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1 }]}>
-                                    <Text style={[styles.originTagBadgeText, { color: '#047857' }]}>Board Leg 2</Text>
+                                    <Text style={[styles.originTagBadgeText, { color: '#047857' }]}>Board Bus {journey.connectingTrip?.routeNumber || 'Leg 2'}</Text>
                                   </View>
                                 ) : isLast ? (
                                   <View style={styles.destTagBadge}>
-                                    <Text style={styles.destTagBadgeText}>Drop-off</Text>
+                                    <Text style={styles.destTagBadgeText}>Final Destination</Text>
                                   </View>
                                 ) : null}
                               </View>
                               <Text style={styles.timelineShelterSub}>
                                 {isFirst
-                                  ? `Board ${journey.connectingTrip?.route || 'Bus 2'} to ${journey.toStop.shortName}`
+                                  ? `Board Bus ${journey.connectingTrip?.routeNumber || '2'} at ${journey.connectingFromTime} towards ${journey.toStop.shortName}`
                                   : isLast
-                                  ? `Final arrival at destination`
+                                  ? `Final arrival at destination (${journey.toTime})`
                                   : 'Designated bus shelter'}
                               </Text>
                             </View>
@@ -3375,5 +3466,158 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: '#1E3A8A',
     fontWeight: '500',
+  },
+  busChangeGuideCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    marginVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  busChangeGuideHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  busChangeIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  busChangeGuideTitle: {
+    fontSize: 14.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  busChangeCountBadge: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  busChangeCountBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#18258F',
+  },
+  busChangeGuideSubtitle: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  busChangeStepItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  busChangeStepNumberBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#18258F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  busChangeStepNumberText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  busChangeStepBody: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  busChangeStepTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  busChangeRoutePillLeg1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#18258F',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  busChangeRoutePillLeg2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#059669',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  busChangeRoutePillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  busChangeStepTimeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  busChangeStepDesc: {
+    fontSize: 12,
+    color: '#334155',
+    lineHeight: 17,
+  },
+  busChangeBoldText: {
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  busChangeInterchangeStep: {
+    paddingLeft: 10,
+    marginVertical: 4,
+  },
+  busChangeInterchangeLine: {
+    width: 2,
+    height: 12,
+    backgroundColor: '#CBD5E1',
+    marginLeft: 1,
+  },
+  busChangeInterchangeContent: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginLeft: 12,
+    marginTop: -4,
+    marginBottom: 6,
+  },
+  busChangeInterchangeTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  busChangeInterchangeSub: {
+    fontSize: 11.5,
+    color: '#78350F',
+    lineHeight: 16,
   },
 });

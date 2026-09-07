@@ -68,7 +68,8 @@ function calculateTransferJourney(
   toStop: Stop,
   serviceDay: 'weekday' | 'weekend',
   nowMins: number,
-  mode: 'next' | 'onboard' = 'next'
+  mode: 'next' | 'onboard' = 'next',
+  selectedTripId?: string
 ): ActiveJourney | null {
   const hubs = ['North Block', 'CBD', 'Sector 22', 'Navagaon'];
 
@@ -168,8 +169,22 @@ function calculateTransferJourney(
   // Filter for upcoming departures
   transferOptions.sort((a, b) => a.depMins1 - b.depMins1);
   const upcomingTransfers = transferOptions.filter(t => t.depMins1 >= nowMins - 1);
-  const chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
-  const isNextDay = upcomingTransfers.length === 0;
+
+  let chosen: TransferOption;
+  let isNextDay = false;
+  if (selectedTripId) {
+    const found = transferOptions.find(o => `${o.leg1Trip.id}_${o.leg2Trip.id}` === selectedTripId);
+    if (found) {
+      chosen = found;
+      isNextDay = chosen.depMins1 < nowMins - 1;
+    } else {
+      chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
+      isNextDay = upcomingTransfers.length === 0;
+    }
+  } else {
+    chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
+    isNextDay = upcomingTransfers.length === 0;
+  }
 
   const fare1 = getFare(fromStop.name, chosen.hub);
   const fare2 = getFare(chosen.hub, toStop.name);
@@ -177,6 +192,7 @@ function calculateTransferJourney(
 
   const fromTime = chosen.leg1Trip.stops[chosen.f1Idx].time;
   const toTime = chosen.leg2Trip.stops[chosen.t2Idx].time;
+  const hubArrivalTime = chosen.leg1Trip.stops[chosen.t1Idx].time;
   const hubDepartureTime = chosen.leg2Trip.stops[chosen.f2Idx].time;
 
   // Leg 1 stops
@@ -248,7 +264,10 @@ function calculateTransferJourney(
   }
 
   return {
-    trip: chosen.leg1Trip,
+    trip: {
+      ...chosen.leg1Trip,
+      id: `${chosen.leg1Trip.id}_${chosen.leg2Trip.id}`,
+    },
     fromStop,
     toStop,
     fromTime,
@@ -277,6 +296,7 @@ function calculateTransferJourney(
     isTransfer: true,
     transferHub: chosen.hub,
     transferWaitMins: chosen.waitMins,
+    transferArrivalTime: hubArrivalTime,
     connectingTrip: chosen.leg2Trip,
     connectingFromTime: hubDepartureTime,
     connectingToTime: toTime,
@@ -370,7 +390,7 @@ export function calculateJourney(
   }
 
   if (matchingTrips.length === 0) {
-    return calculateTransferJourney(fromStop, toStop, serviceDay, nowMins, mode);
+    return calculateTransferJourney(fromStop, toStop, serviceDay, nowMins, mode, selectedTripId);
   }
 
   // Sort matching trips chronologically by departure time from the boarding station

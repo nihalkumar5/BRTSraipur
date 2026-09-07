@@ -91,6 +91,7 @@ export interface ActiveJourney {
   isTransfer?: boolean;
   transferHub?: string;
   transferWaitMins?: number;
+  transferArrivalTime?: string;
   connectingTrip?: Trip;
   connectingFromTime?: string;
   connectingToTime?: string;
