@@ -46,13 +46,14 @@ import {
   formatMinutesToTime,
   findNearbyDirectAlternatives,
   getNearbyStations,
+  getNearbyStationsWithService,
 } from '../../src/services/tracker';
 import {
   scheduleBusNotification,
   ScheduledReminder,
   getActiveReminders,
 } from '../../src/services/notifications';
-import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative } from '../../src/types';
+import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 
 function EditorialBusIllustration({
   width = 155,
@@ -400,13 +401,14 @@ export default function LiveBusScreen() {
   // If no direct or transfer route found, find nearby stations that have direct service
   const noRouteAlternatives: NearbyDirectAlternative[] = useMemo(() => {
     if (journey || !fromStation || !toStation || fromStation === toStation) return [];
-    return findNearbyDirectAlternatives(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 3.0);
+    return findNearbyDirectAlternatives(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 4.0);
   }, [journey, fromStation, toStation, planningMode, currentTimeMins]);
 
-  const nearbyOrigins = useMemo(() => {
-    if (journey || !fromStation) return [];
-    return getNearbyStations(fromStation, 3.0).slice(0, 4);
-  }, [journey, fromStation]);
+  // Nearby stations that specifically offer bus service to destination
+  const nearbyServiceStations: NearbyServiceStation[] = useMemo(() => {
+    if (journey || !fromStation || !toStation || fromStation === toStation) return [];
+    return getNearbyStationsWithService(fromStation, toStation, planningMode ? 'weekday' : undefined, 4.5);
+  }, [journey, fromStation, toStation, planningMode]);
 
   // Derived next stop details for live operational dashboard
   const nextStopObj = useMemo(() => {
@@ -1121,7 +1123,7 @@ export default function LiveBusScreen() {
                       </View>
                     </View>
 
-                    {journey.nearbyDirectAlternatives.slice(0, 2).map((alt, idx) => (
+                        {journey.nearbyDirectAlternatives.slice(0, 2).map((alt, idx) => (
                       <View key={`alt-${idx}`} style={styles.nearbyAltItemRow}>
                         <View style={{ flex: 1, marginRight: 8 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -1129,7 +1131,9 @@ export default function LiveBusScreen() {
                             <Text style={styles.nearbyAltDistText}>({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)</Text>
                           </View>
                           <Text style={styles.nearbyAltTripDesc}>
-                            Direct Bus {alt.routeNumber} ({alt.departureTime}) · Sirf {alt.durationMins}m me pahunchegi
+                            {alt.type === 'nearby_origin'
+                              ? `Direct Bus ${alt.routeNumber} to ${toStation} · ~${alt.durationMins}m ride · ₹${alt.fare}`
+                              : `Direct Bus ${alt.routeNumber} to ${alt.suggestedStop.shortName} · ~${alt.durationMins}m ride · ₹${alt.fare}`}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -1495,7 +1499,9 @@ export default function LiveBusScreen() {
                             <Text style={styles.noRouteAltDistText}>({alt.distanceFormatted} · ~{alt.walkingMins}m walk)</Text>
                           </View>
                           <Text style={styles.noRouteAltDetail}>
-                            Direct Bus {alt.routeNumber} ({alt.departureTime}) · {alt.durationMins} min ride · ₹{alt.fare}
+                            {alt.type === 'nearby_origin'
+                              ? `Direct Bus ${alt.routeNumber} to ${toStation} · ₹${alt.fare}`
+                              : `Direct Bus ${alt.routeNumber} to ${alt.suggestedStop.shortName} · ₹${alt.fare}`}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -1518,31 +1524,49 @@ export default function LiveBusScreen() {
                       </View>
                     ))}
                   </View>
-                ) : (
-                  /* IF NO DIRECT ALTERNATIVES, SHOW CLOSEST STATIONS */
+                ) : nearbyServiceStations.length > 0 ? (
+                  /* ONLY SHOW NEARBY STATIONS THAT ACTUALLY GO TO DESTINATION */
                   <View style={styles.noRouteSuggestionsBox}>
-                    <Text style={styles.noRouteSectionTitle}>Paas Ke Stations Check Karein:</Text>
+                    <View style={styles.noRouteSectionHeader}>
+                      <Navigation size={16} color="#047857" strokeWidth={2.4} />
+                      <Text style={styles.noRouteSectionTitle}>Paas Ke Station Se Bus Pakdein:</Text>
+                    </View>
                     <Text style={styles.noRouteSectionSub}>
-                      {fromStation} ke paas ke bus shelters:
+                      {fromStation} ke paas in stations se {toStation} ke liye bus milti hai:
                     </Text>
-                    <View style={styles.noRouteHubList}>
-                      {nearbyOrigins.map((ns, idx) => (
+
+                    {nearbyServiceStations.map((ns, idx) => (
+                      <View key={`nss-${idx}`} style={styles.noRouteAltCard}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={styles.noRouteAltStationName}>{ns.stop.shortName}</Text>
+                            <Text style={styles.noRouteAltDistText}>({ns.distanceFormatted} · ~{ns.walkingMins}m walk)</Text>
+                          </View>
+                          <Text style={styles.noRouteAltDetail}>
+                            {ns.routeSummary}
+                          </Text>
+                        </View>
                         <TouchableOpacity
-                          key={`no-${idx}`}
-                          style={styles.noRouteHubChip}
+                          style={styles.noRouteAltBtn}
                           onPress={() => {
-                            setFromStation(ns.stop.shortName);
+                            if (ns.actionType === 'board') {
+                              setFromStation(ns.stop.shortName);
+                            } else {
+                              setToStation(ns.stop.shortName);
+                            }
                             setSelectedTripId(null);
                             triggerCardBounce();
                           }}
+                          activeOpacity={0.8}
                         >
-                          <MapPin size={12} color="#18258F" />
-                          <Text style={styles.noRouteHubChipText}>From {ns.stop.shortName} ({ns.distanceFormatted})</Text>
+                          <Text style={styles.noRouteAltBtnText}>
+                            {ns.actionType === 'board' ? 'Board from here ➔' : 'Drop off here ➔'}
+                          </Text>
                         </TouchableOpacity>
-                      ))}
-                    </View>
+                      </View>
+                    ))}
                   </View>
-                )}
+                ) : null}
               </View>
             )}
           </>

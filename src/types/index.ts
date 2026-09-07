@@ -135,6 +135,16 @@ export interface NearbyStation {
   distanceFormatted: string;
 }
 
+export interface NearbyServiceStation {
+  stop: Stop;
+  distanceKm: number;
+  walkingMins: number;
+  distanceFormatted: string;
+  serviceType: 'direct' | 'connecting';
+  actionType: 'board' | 'deboard';
+  routeSummary: string;
+}
+
 export interface NearbyDirectAlternative {
   type: 'nearby_origin' | 'nearby_destination';
   suggestedStop: Stop;

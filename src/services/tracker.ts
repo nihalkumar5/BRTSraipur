@@ -2,16 +2,64 @@ import rawStops from '../data/stops.json';
 import rawSchedules from '../data/schedules.json';
 import rawFares from '../data/fares.json';
 import rawPopularRoutes from '../data/popular_routes.json';
-import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo, NearbyStation, NearbyDirectAlternative, OptimalProximityHop } from '../types';
+import { Stop, Trip, ActiveJourney, PopularRoute, UpcomingDeparture, JourneyStopInfo, NearbyStation, NearbyDirectAlternative, OptimalProximityHop, NearbyServiceStation } from '../types';
 
 export const stops: Stop[] = rawStops as Stop[];
 export const schedules: Trip[] = rawSchedules as Trip[];
 export const fares: Record<string, Record<string, number>> = rawFares as Record<string, Record<string, number>>;
 export const popularRoutes: PopularRoute[] = rawPopularRoutes as PopularRoute[];
 
+export function matchStop(scheduleStopName: string, targetStop: Stop): boolean {
+  if (!scheduleStopName || !targetStop) return false;
+  const s = scheduleStopName.trim().toLowerCase();
+  const targetName = targetStop.name.trim().toLowerCase();
+  const targetShort = targetStop.shortName.trim().toLowerCase();
+  const targetCode = targetStop.code.trim().toLowerCase();
+
+  // Guard: Railway Station must NEVER match CBD Railway Station
+  if ((targetShort === 'railway station' || targetName.includes('raipur railway station')) && s.includes('cbd')) {
+    return false;
+  }
+
+  // Exact matches
+  if (s === targetName || s === targetShort || s === targetCode) {
+    return true;
+  }
+
+  // Known official timetable aliases from BRTS PDF schedules
+  if ((targetShort === 'iiit' || targetCode === 'iiit') && (s === 'iit' || s === 'iiit' || s === 'iiit naya raipur')) return true;
+  if (targetShort === 'nawagaon' && (s === 'navagaon' || s === 'nawagaon')) return true;
+  if (targetShort === 'cricket stadium' && (s === 'stadium' || s === 'cricket stadium')) return true;
+  if (targetShort === 'rawatpura univ' && (s.includes('rawatpura') || s === 'rawatpura sarkar hospital')) return true;
+
+  // Substring matching
+  if (targetShort.length >= 4 && s.includes(targetShort)) return true;
+  if (targetName.length >= 5 && targetName.includes(s)) return true;
+
+  return false;
+}
+
 export function getStopByName(nameQuery: string): Stop | undefined {
   if (!nameQuery) return undefined;
   const q = nameQuery.trim().toLowerCase();
+
+  // Explicit aliases for unambiguous station resolution
+  if (q === 'railway station' || q === 'railway stn' || q === 'station' || q === 'raipur station') {
+    return stops.find(s => s.id === 'RRS' || s.shortName.toLowerCase() === 'railway station');
+  }
+  if (q === 'iiit' || q === 'iiit naya raipur' || q === 'iit') {
+    return stops.find(s => s.id === 'IIT');
+  }
+  if (q === 'navagaon' || q === 'nawagaon') {
+    return stops.find(s => s.id === 'NWG');
+  }
+  if (q === 'stadium' || q === 'cricket stadium') {
+    return stops.find(s => s.id === 'STD');
+  }
+  if (q.includes('rawatpura')) {
+    return stops.find(s => s.id === 'RSU');
+  }
+
   // 1. Exact match priority (shortName, code, or full name)
   const exact = stops.find(
     s =>
@@ -29,12 +77,11 @@ export function getStopByName(nameQuery: string): Stop | undefined {
   );
   if (starts) return starts;
 
-  // 3. Fallback to includes
-  return stops.find(
-    s =>
-      s.name.toLowerCase().includes(q) ||
-      s.shortName.toLowerCase().includes(q)
-  );
+  // 3. Fallback to includes (excluding CBD when looking for Railway Station)
+  return stops.find(s => {
+    if (q.includes('railway') && s.shortName.toLowerCase().includes('cbd')) return false;
+    return s.name.toLowerCase().includes(q) || s.shortName.toLowerCase().includes(q);
+  });
 }
 
 export function getFare(fromStopName: string, toStopName: string): number {
@@ -143,17 +190,17 @@ export function findNearbyDirectAlternatives(
   // 1. Nearby origins to fromStop that have a direct bus to toStop
   const nearbyOrigins = getNearbyStations(fromStop.name, maxRadiusKm);
   for (const nearby of nearbyOrigins) {
+    if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
     const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
       let fIdx = -1;
       let tIdx = -1;
       trip.stops.forEach((s, idx) => {
-        const sName = s.stop.toLowerCase();
-        if (fIdx === -1 && (sName === nearby.stop.name.toLowerCase() || sName.includes(nearby.stop.shortName.toLowerCase()) || nearby.stop.name.toLowerCase().includes(sName))) {
+        if (fIdx === -1 && matchStop(s.stop, nearby.stop)) {
           fIdx = idx;
         }
-        if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()) || toStop.name.toLowerCase().includes(sName))) {
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) {
           tIdx = idx;
         }
       });
@@ -189,17 +236,17 @@ export function findNearbyDirectAlternatives(
   // 2. Nearby destinations to toStop that can be reached directly from fromStop
   const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
   for (const nearby of nearbyDestinations) {
+    if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
     const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
       let fIdx = -1;
       let tIdx = -1;
       trip.stops.forEach((s, idx) => {
-        const sName = s.stop.toLowerCase();
-        if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()) || fromStop.name.toLowerCase().includes(sName))) {
+        if (fIdx === -1 && matchStop(s.stop, fromStop)) {
           fIdx = idx;
         }
-        if (tIdx === -1 && fIdx !== -1 && (sName === nearby.stop.name.toLowerCase() || sName.includes(nearby.stop.shortName.toLowerCase()) || nearby.stop.name.toLowerCase().includes(sName))) {
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, nearby.stop)) {
           tIdx = idx;
         }
       });
@@ -235,6 +282,88 @@ export function findNearbyDirectAlternatives(
   // Sort by closest distance first
   alternatives.sort((a, b) => a.distanceKm - b.distanceKm);
   return alternatives.slice(0, 4);
+}
+
+export function getNearbyStationsWithService(
+  fromName: string,
+  toName: string,
+  forceServiceDay?: 'weekday' | 'weekend',
+  maxRadiusKm: number = 4.5
+): NearbyServiceStation[] {
+  const fromStop = getStopByName(fromName);
+  const toStop = getStopByName(toName);
+  if (!fromStop || !toStop) return [];
+
+  const serviceDay = forceServiceDay || (isWeekendDay() ? 'weekend' : 'weekday');
+  const results: NearbyServiceStation[] = [];
+
+  // 1. Nearby origins to fromStop that have a direct bus to toStop
+  const nearbyOrigins = getNearbyStations(fromStop.name, maxRadiusKm);
+  for (const nearby of nearbyOrigins) {
+    if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+
+    let directRoute: string | null = null;
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1, tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        if (fIdx === -1 && matchStop(s.stop, nearby.stop)) fIdx = idx;
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) tIdx = idx;
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        directRoute = trip.routeNumber;
+        break;
+      }
+    }
+
+    if (directRoute) {
+      results.push({
+        stop: nearby.stop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+        serviceType: 'direct',
+        actionType: 'board',
+        routeSummary: `Direct Bus ${directRoute} to ${toStop.shortName}`,
+      });
+    }
+  }
+
+  // 2. Nearby destinations to toStop that can be reached directly from fromStop
+  const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
+  for (const nearby of nearbyDestinations) {
+    if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+    if (results.some(r => r.stop.id === nearby.stop.id)) continue;
+
+    let directRoute: string | null = null;
+    for (const trip of schedules) {
+      if (trip.serviceDay !== serviceDay) continue;
+      let fIdx = -1, tIdx = -1;
+      trip.stops.forEach((s, idx) => {
+        if (fIdx === -1 && matchStop(s.stop, fromStop)) fIdx = idx;
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, nearby.stop)) tIdx = idx;
+      });
+      if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
+        directRoute = trip.routeNumber;
+        break;
+      }
+    }
+
+    if (directRoute) {
+      results.push({
+        stop: nearby.stop,
+        distanceKm: nearby.distanceKm,
+        walkingMins: nearby.walkingMins,
+        distanceFormatted: nearby.distanceFormatted,
+        serviceType: 'direct',
+        actionType: 'deboard',
+        routeSummary: `Bus ${directRoute} to ${nearby.stop.shortName} (~${nearby.walkingMins}m walk to ${toStop.shortName})`,
+      });
+    }
+  }
+
+  results.sort((a, b) => a.distanceKm - b.distanceKm);
+  return results.slice(0, 4);
 }
 
 export function getOptimalProximityHop(
@@ -393,7 +522,7 @@ function calculateTransferJourney(
   mode: 'next' | 'onboard' = 'next',
   selectedTripId?: string
 ): ActiveJourney | null {
-  const hubs = ['North Block', 'CBD', 'Sector 22', 'Navagaon'];
+  const hubs = ['North Block', 'CBD', 'HNLU', 'Sector 30', 'Sector 27', 'Sector 29', 'Telibandha', 'Sector 22', 'Navagaon', 'Sector 17'];
 
   interface TransferOption {
     hub: string;
@@ -425,11 +554,10 @@ function calculateTransferJourney(
       let fIdx = -1;
       let tIdx = -1;
       trip.stops.forEach((s, idx) => {
-        const sName = s.stop.toLowerCase();
-        if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()) || fromStop.name.toLowerCase().includes(sName))) {
+        if (fIdx === -1 && matchStop(s.stop, fromStop)) {
           fIdx = idx;
         }
-        if (tIdx === -1 && fIdx !== -1 && (sName === hubStop.name.toLowerCase() || sName.includes(hubStop.shortName.toLowerCase()) || hubStop.name.toLowerCase().includes(sName))) {
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, hubStop)) {
           tIdx = idx;
         }
       });
@@ -445,11 +573,10 @@ function calculateTransferJourney(
       let fIdx = -1;
       let tIdx = -1;
       trip.stops.forEach((s, idx) => {
-        const sName = s.stop.toLowerCase();
-        if (fIdx === -1 && (sName === hubStop.name.toLowerCase() || sName.includes(hubStop.shortName.toLowerCase()) || hubStop.name.toLowerCase().includes(sName))) {
+        if (fIdx === -1 && matchStop(s.stop, hubStop)) {
           fIdx = idx;
         }
-        if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()) || toStop.name.toLowerCase().includes(sName))) {
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) {
           tIdx = idx;
         }
       });
@@ -681,11 +808,10 @@ export function calculateJourney(
     let tIdx = -1;
 
     trip.stops.forEach((s, idx) => {
-      const sName = s.stop.toLowerCase();
-      if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()) || fromStop.name.toLowerCase().includes(sName))) {
+      if (fIdx === -1 && matchStop(s.stop, fromStop)) {
         fIdx = idx;
       }
-      if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()) || toStop.name.toLowerCase().includes(sName))) {
+      if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) {
         tIdx = idx;
       }
     });
@@ -710,11 +836,10 @@ export function calculateJourney(
       let fIdx = -1;
       let tIdx = -1;
       trip.stops.forEach((s, idx) => {
-        const sName = s.stop.toLowerCase();
-        if (fIdx === -1 && (sName === fromStop.name.toLowerCase() || sName.includes(fromStop.shortName.toLowerCase()))) {
+        if (fIdx === -1 && matchStop(s.stop, fromStop)) {
           fIdx = idx;
         }
-        if (tIdx === -1 && fIdx !== -1 && (sName === toStop.name.toLowerCase() || sName.includes(toStop.shortName.toLowerCase()))) {
+        if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) {
           tIdx = idx;
         }
       });
