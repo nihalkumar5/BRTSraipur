@@ -860,7 +860,7 @@ function calculateTransferJourney(
   const timeStr = diffMins >= 60 ? `${Math.floor(diffMins / 60)}h ${diffMins % 60}m` : `${diffMins}m`;
 
   const pastTransfersToday = dedupedOptions.filter(t => t.depMins1 < nowMins - 1);
-  const serviceEndedToday = isNextDay && pastTransfersToday.length > 0;
+  const serviceEndedToday = isNextDay;
   const lastDepartedTransfer = pastTransfersToday.length > 0 ? pastTransfersToday[pastTransfersToday.length - 1] : null;
   const lastDepartedTodayTime = lastDepartedTransfer ? lastDepartedTransfer.leg1Trip.stops[lastDepartedTransfer.f1Idx].time : undefined;
 
@@ -897,7 +897,7 @@ function calculateTransferJourney(
       };
     });
   } else {
-    forwardDepartures = dedupedOptions.slice(0, 6).map(o => {
+    forwardDepartures = dedupedOptions.slice(0, 4).map(o => {
       const diff = o.depMins1 + 1440 - nowMins;
       return {
         tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
@@ -930,16 +930,16 @@ function calculateTransferJourney(
     classFareText: `₹${totalFare} · 1 Transfer via ${chosen.hub}`,
     routeBadge: `${chosen.leg1Trip.routeNumber} ➔ ${chosen.leg2Trip.routeNumber}`,
     countdownText: isNextDay
-      ? `Tomorrow at ${fromTime}`
+      ? `Resumes after 12:00 AM (Next: ${fromTime})`
       : diffMins === 0
       ? 'Departing now'
       : `Departing in ${timeStr}`,
-    timeRemainingText: isNextDay ? `Tomorrow ${fromTime}` : diffMins === 0 ? 'Now' : `in ${timeStr}`,
+    timeRemainingText: isNextDay ? `After 12 AM (${fromTime})` : diffMins === 0 ? 'Now' : `in ${timeStr}`,
     progressPercent: 0,
-    isUpcoming: true,
+    isUpcoming: !isNextDay,
     isInTransit: false,
     currentStatusText: isNextDay
-      ? `Today's service ended · Next bus tomorrow ${fromTime}`
+      ? `Service ended for today · Schedule active after 12:00 AM`
       : `Change at ${chosen.hub} · ${chosen.waitMins} min transfer wait`,
     intermediateStopsCount: intermediateStops.length + secondLegStops.length - 1,
     intermediateStops,
@@ -1153,11 +1153,9 @@ export function calculateJourney(
   } else if (isNextDay) {
     let diffMins = depMins - nowMins;
     if (diffMins < 0) diffMins += 1440;
-    const hrs = Math.floor(diffMins / 60);
-    const remM = diffMins % 60;
-    countdownText = `Tomorrow at ${fromTime}`;
-    timeRemainingText = hrs > 0 ? `in ${hrs}h ${remM}m` : `in ${remM}m`;
-    currentStatusText = 'First bus tomorrow';
+    countdownText = `Resumes after 12:00 AM (Next: ${fromTime})`;
+    timeRemainingText = `After 12 AM (${fromTime})`;
+    currentStatusText = 'Service ended for today · Schedule active after 12:00 AM';
     progressPercent = 0;
   } else {
     let diffMins = depMins - nowMins;
@@ -1185,7 +1183,7 @@ export function calculateJourney(
   const classFareText = `₹${fare} / ${isWknd ? 'Weekend Express' : 'BRTS Corridor'}`;
 
   const pastTripsToday = matchingTrips.filter(m => m.depMins < nowMins - 1);
-  const serviceEndedToday = isNextDay && pastTripsToday.length > 0;
+  const serviceEndedToday = isNextDay;
   const lastDepartedTrip = pastTripsToday.length > 0 ? pastTripsToday[pastTripsToday.length - 1] : null;
   const lastDepartedTodayTime = lastDepartedTrip ? lastDepartedTrip.trip.stops[lastDepartedTrip.fromIndex].time : undefined;
 

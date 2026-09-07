@@ -1008,21 +1008,47 @@ export default function LiveBusScreen() {
                 )}
 
                 {/* NEXT BUS SIGNATURE HERO CARD */}
-                <Animated.View style={[styles.royalBlueHeroCard, { transform: [{ scale: cardScaleAnim }] }]}>
-                  <View style={styles.heroInfoContent}>
-                    <Text style={styles.heroPreLabel}>
-                      {journey.serviceEndedToday ? "TODAY'S SERVICE ENDED · FIRST BUS TOMORROW" : 'NEXT BUS'}
-                    </Text>
-                    <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
-                    <View style={styles.heroRouteRow}>
-                      <Text style={styles.heroRouteCodes}>
-                        {journey.fromStop.code} <Text style={styles.heroArrowText}>→</Text> {journey.toStop.code}
+                <Animated.View
+                  style={[
+                    styles.royalBlueHeroCard,
+                    journey.serviceEndedToday && styles.closedHeroCard,
+                    { transform: [{ scale: cardScaleAnim }] },
+                  ]}
+                >
+                  {journey.serviceEndedToday ? (
+                    <View style={styles.closedHeroContent}>
+                      <View style={styles.closedPill}>
+                        <Clock size={11} color="#FCA5A5" strokeWidth={2.4} />
+                        <Text style={styles.closedPillText}>SERVICE CLOSED TODAY</Text>
+                      </View>
+                      <Text style={styles.closedHeroTitle}>No Buses Left Tonight</Text>
+                      <Text style={styles.closedHeroSub}>
+                        {journey.lastDepartedTodayTime ? `Last bus was at ${journey.lastDepartedTodayTime}. ` : ''}
+                        Tomorrow's schedule active after 12:00 AM (Next: {journey.fromTime}).
+                      </Text>
+                      <View style={styles.heroRouteRow}>
+                        <Text style={styles.heroRouteCodes}>
+                          {journey.fromStop.code} <Text style={styles.heroArrowText}>→</Text> {journey.toStop.code}
+                        </Text>
+                      </View>
+                      <Text style={styles.heroStationNames} numberOfLines={1}>
+                        {journey.fromStop.shortName} → {journey.toStop.shortName}
                       </Text>
                     </View>
-                    <Text style={styles.heroStationNames} numberOfLines={1}>
-                      {journey.fromStop.shortName} → {journey.toStop.shortName}
-                    </Text>
-                  </View>
+                  ) : (
+                    <View style={styles.heroInfoContent}>
+                      <Text style={styles.heroPreLabel}>NEXT BUS</Text>
+                      <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
+                      <View style={styles.heroRouteRow}>
+                        <Text style={styles.heroRouteCodes}>
+                          {journey.fromStop.code} <Text style={styles.heroArrowText}>→</Text> {journey.toStop.code}
+                        </Text>
+                      </View>
+                      <Text style={styles.heroStationNames} numberOfLines={1}>
+                        {journey.fromStop.shortName} → {journey.toStop.shortName}
+                      </Text>
+                    </View>
+                  )}
 
                   <View style={styles.heroIllustrationWrapper} pointerEvents="none">
                     <EditorialBusIllustration />
@@ -1032,13 +1058,27 @@ export default function LiveBusScreen() {
                     <View style={{ flex: 1, marginRight: 8 }}>
                       <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
                       <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
-                        {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'}
+                        {journey.serviceEndedToday
+                          ? 'Service ended for today'
+                          : journey.isTransfer
+                          ? `Via ${journey.transferHub}`
+                          : 'AC Express'}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
-                      <Text style={styles.heroMetaTitle}>{journey.durationMins} min</Text>
-                      <Text style={styles.heroMetaDeparts} numberOfLines={1}>
-                        {journey.countdownText.toUpperCase()}
+                      <Text style={styles.heroMetaTitle}>
+                        {journey.serviceEndedToday ? 'RESUMES' : `${journey.durationMins} min`}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.heroMetaDeparts,
+                          journey.serviceEndedToday && { color: '#FCA5A5' },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {journey.serviceEndedToday
+                          ? `AFTER 12:00 AM (${journey.fromTime})`
+                          : journey.countdownText.toUpperCase()}
                       </Text>
                     </View>
                   </View>
@@ -2634,6 +2674,49 @@ const styles = StyleSheet.create({
   heroInfoContent: {
     zIndex: 2,
     maxWidth: '56%',
+  },
+  closedHeroCard: {
+    backgroundColor: '#0F172A',
+    borderColor: '#334155',
+    borderWidth: 1.5,
+    shadowColor: '#000000',
+  },
+  closedHeroContent: {
+    zIndex: 2,
+    maxWidth: '72%',
+    paddingBottom: 6,
+  },
+  closedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(239, 68, 68, 0.18)',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+  },
+  closedPillText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FCA5A5',
+    letterSpacing: 0.6,
+  },
+  closedHeroTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  closedHeroSub: {
+    fontSize: 11.5,
+    color: '#94A3B8',
+    lineHeight: 16,
+    marginBottom: 10,
   },
   heroPreLabel: {
     fontSize: 10,
