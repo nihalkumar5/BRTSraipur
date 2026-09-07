@@ -20,9 +20,24 @@ import {
   Globe,
   MapPin,
   ChevronRight,
-  Heart,
   ExternalLink,
 } from 'lucide-react-native';
+import { FONT } from '../src/theme/typography';
+
+// DESIGN SYSTEM TOKENS
+const PRIMARY = '#2438B8';
+const DARK_BLUE = '#17247A';
+const LIGHT_BLUE = '#EEF1FF';
+const BG_COLOR = '#F7F8FA';
+const CARD_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#101828';
+const TEXT_SECONDARY = '#667085';
+const TEXT_MUTED = '#98A2B3';
+const BORDER_COLOR = '#E4E7EC';
+const DIVIDER_COLOR = '#EAECF0';
+const SUCCESS = '#12B76A';
+const WARNING = '#F79009';
+const EMERGENCY_RED = '#D92D20';
 
 export default function AboutScreen() {
   const router = useRouter();
@@ -31,28 +46,29 @@ export default function AboutScreen() {
     Linking.openURL(`tel:${number}`);
   };
 
-  const handleEmail = () => {
-    Linking.openURL('mailto:nihalkumar5@gmail.com?subject=Tatpar%20BRTS%20Raipur%20Feedback');
+  const handleEmail = (email: string) => {
+    Linking.openURL(`mailto:${email}?subject=Tatpar%20BRTS%20Raipur%20Support`);
   };
 
-  const handleWebsite = () => {
-    Linking.openURL('https://tatpar-brts-raipur.vercel.app');
+  const handleWebsite = (url: string) => {
+    Linking.openURL(url);
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* HEADER */}
+      {/* 1. CLEAN MOBILE NAVIGATION HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           activeOpacity={0.7}
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={20} color="#18258F" />
+          <ArrowLeft size={22} color={TEXT_PRIMARY} strokeWidth={2} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>About & Support</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
@@ -60,176 +76,288 @@ export default function AboutScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* HERO CARD */}
-        <View style={styles.heroCard}>
+        {/* 2. APP INTRO (COMPACT & RESTRAINED) */}
+        <View style={styles.introSection}>
           <View style={styles.appIconWrapper}>
-            <Bus size={32} color="#FFFFFF" />
+            <Bus size={22} color={PRIMARY} strokeWidth={2} />
           </View>
-          <Text style={styles.appNameHindi}>तत्पर BRTS रायपुर</Text>
-          <Text style={styles.appName}>Tatpar BRTS Raipur</Text>
-          <Text style={styles.versionBadge}>Version 1.0.0 (Production Release)</Text>
-          <Text style={styles.tagline}>
-            Complete digital timetable, bus stop guide, and fare planner for Raipur and Nava Raipur Atal Nagar BRTS network.
+          <View style={styles.introTextCol}>
+            <Text style={styles.appName}>Tatpar BRTS Raipur</Text>
+            <Text style={styles.appVersion}>v1.0.0 · Production Release</Text>
+            <Text style={styles.appTagline}>
+              “Your simple companion for Raipur's BRTS network.”
+            </Text>
+          </View>
+        </View>
+
+        {/* 3. SUPPORT */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>SUPPORT</Text>
+          <View style={styles.groupedCard}>
+            {/* EMAIL SUPPORT */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleEmail('nihal26302@iiitnr.edu.in')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: LIGHT_BLUE }]}>
+                <Mail size={18} color={PRIMARY} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Email Support</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  nihal26302@iiitnr.edu.in
+                </Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* CALL SUPPORT */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleCall('9565550673')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: LIGHT_BLUE }]}>
+                <Phone size={18} color={PRIMARY} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Call Support</Text>
+                <Text style={styles.menuSubtitle}>9565550673</Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 4. OFFICIAL LINKS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>OFFICIAL LINKS</Text>
+          <View style={styles.groupedCard}>
+            {/* WEB PORTAL */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleWebsite('https://tatpar-brts-raipur.vercel.app')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0F5FF' }]}>
+                <Globe size={18} color={PRIMARY} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Tatpar BRTS Web Portal</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  https://tatpar-brts-raipur.vercel.app
+                </Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* PRIVACY POLICY */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => router.push('/privacy-policy' as any)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0F5FF' }]}>
+                <ShieldCheck size={18} color={PRIMARY} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Privacy Policy</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  Data safety, permissions & privacy practices
+                </Text>
+              </View>
+              <ChevronRight size={18} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* TERMS OF SERVICE */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => router.push('/terms' as any)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0F5FF' }]}>
+                <FileText size={18} color={PRIMARY} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Terms of Service</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  Usage guidelines, disclaimers & fair use
+                </Text>
+              </View>
+              <ChevronRight size={18} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 5. NETWORK / BRTS CORRIDORS */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderWithSub}>
+            <Text style={styles.sectionHeadingNoMargin}>NETWORK</Text>
+            <Text style={styles.sectionSubHeading}>4 corridors covered</Text>
+          </View>
+          <View style={styles.groupedCard}>
+            {/* CORRIDOR 1 */}
+            <View style={styles.corridorRow}>
+              <View style={[styles.corridorDot, { backgroundColor: PRIMARY }]} />
+              <View style={styles.corridorContentCol}>
+                <Text style={styles.corridorName}>Corridor 1</Text>
+                <Text style={styles.corridorRoute}>Railway Station → Mantralaya</Text>
+                <Text style={styles.corridorDescription}>
+                  Via Telibandha, Serikhedi, Nava Raipur Entry, Capital Complex
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.corridorDivider} />
+
+            {/* CORRIDOR 2 */}
+            <View style={styles.corridorRow}>
+              <View style={[styles.corridorDot, { backgroundColor: DARK_BLUE }]} />
+              <View style={styles.corridorContentCol}>
+                <Text style={styles.corridorName}>Corridor 2</Text>
+                <Text style={styles.corridorRoute}>Railway Station → PHQ</Text>
+                <Text style={styles.corridorDescription}>
+                  Connecting central administration and security headquarters
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.corridorDivider} />
+
+            {/* CORRIDOR 3 */}
+            <View style={styles.corridorRow}>
+              <View style={[styles.corridorDot, { backgroundColor: SUCCESS }]} />
+              <View style={styles.corridorContentCol}>
+                <Text style={styles.corridorName}>Corridor 3</Text>
+                <Text style={styles.corridorRoute}>Railway Station → HNLU</Text>
+                <Text style={styles.corridorDescription}>
+                  Serving educational zone, IIIT, and Hidayatullah Law University
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.corridorDivider} />
+
+            {/* AIRPORT FEEDER */}
+            <View style={styles.corridorRow}>
+              <View style={[styles.corridorDot, { backgroundColor: WARNING }]} />
+              <View style={styles.corridorContentCol}>
+                <Text style={styles.corridorName}>Airport Feeder</Text>
+                <Text style={styles.corridorRoute}>City → Swami Vivekananda Airport</Text>
+                <Text style={styles.corridorDescription}>
+                  Scheduled connecting services for flight passengers
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* 6. EMERGENCY CONTACTS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>EMERGENCY</Text>
+          <View style={styles.groupedCard}>
+            {/* EMERGENCY 112 */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleCall('112')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#FEE4E2' }]}>
+                <Phone size={18} color={EMERGENCY_RED} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Emergency Response Support System</Text>
+                <Text style={[styles.menuSubtitle, { color: EMERGENCY_RED, fontWeight: '500' }]}>
+                  Dial 112 · Police, Fire, Medical
+                </Text>
+              </View>
+              <ExternalLink size={16} color={EMERGENCY_RED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* RMC HELPLINE */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleCall('18002331234')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#FEF0C7' }]}>
+                <Phone size={18} color={WARNING} strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Raipur Municipal Corporation (RMC)</Text>
+                <Text style={styles.menuSubtitle}>
+                  1800-233-1234 · Toll Free Civic Helpline
+                </Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 7. DEVELOPER & PROJECT ATTRIBUTION */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>PROJECT</Text>
+          <View style={[styles.groupedCard, styles.projectCard]}>
+            <Text style={styles.projectName}>Nihal Kumar</Text>
+            <Text style={styles.projectRole}>Lead Developer & Maintainer</Text>
+
+            <View style={styles.projectList}>
+              {/* EMAIL */}
+              <TouchableOpacity
+                style={styles.projectLinkRow}
+                onPress={() => handleEmail('nihal26302@iiitnr.edu.in')}
+                activeOpacity={0.7}
+              >
+                <Mail size={15} color={TEXT_SECONDARY} strokeWidth={2} style={styles.projectIcon} />
+                <Text style={styles.projectLinkText}>nihal26302@iiitnr.edu.in</Text>
+              </TouchableOpacity>
+
+              {/* PHONE */}
+              <TouchableOpacity
+                style={styles.projectLinkRow}
+                onPress={() => handleCall('9565550673')}
+                activeOpacity={0.7}
+              >
+                <Phone size={15} color={TEXT_SECONDARY} strokeWidth={2} style={styles.projectIcon} />
+                <Text style={styles.projectLinkText}>9565550673</Text>
+              </TouchableOpacity>
+
+              {/* WEBSITE */}
+              <TouchableOpacity
+                style={styles.projectLinkRow}
+                onPress={() => handleWebsite('https://tatpar-brts-raipur.vercel.app')}
+                activeOpacity={0.7}
+              >
+                <Globe size={15} color={TEXT_SECONDARY} strokeWidth={2} style={styles.projectIcon} />
+                <Text style={styles.projectLinkText}>tatpar-brts-raipur.vercel.app</Text>
+              </TouchableOpacity>
+
+              {/* LOCATION */}
+              <View style={styles.projectLinkRow}>
+                <MapPin size={15} color={TEXT_SECONDARY} strokeWidth={2} style={styles.projectIcon} />
+                <Text style={styles.projectLocationText}>Raipur, Chhattisgarh, India</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* 8. MINIMAL FOOTER */}
+        <View style={styles.footer}>
+          <Text style={styles.footerBrand}>Tatpar BRTS Raipur</Text>
+          <Text style={styles.footerTagline}>“Built for Raipur commuters.”</Text>
+          <Text style={styles.footerCopyright}>
+            © 2026 Tatpar BRTS Raipur · Open Transit Initiative
           </Text>
         </View>
-
-        {/* OFFICIAL WEBSITE & WEB PORTAL */}
-        <Text style={styles.sectionHeading}>Official Web Portal</Text>
-        <View style={styles.menuContainer}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            activeOpacity={0.7}
-            onPress={handleWebsite}
-          >
-            <View style={[styles.menuIconContainer, { backgroundColor: '#EEF2FF' }]}>
-              <Globe size={18} color="#18258F" />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Tatpar BRTS Web Portal</Text>
-              <Text style={styles.menuSubtitle}>https://tatpar-brts-raipur.vercel.app</Text>
-            </View>
-            <ExternalLink size={18} color="#18258F" />
-          </TouchableOpacity>
-        </View>
-
-        {/* COMPLIANCE & LEGAL LINKS */}
-        <Text style={styles.sectionHeading}>Legal & Compliance</Text>
-        <View style={styles.menuContainer}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            activeOpacity={0.7}
-            onPress={() => router.push('/privacy-policy' as any)}
-          >
-            <View style={styles.menuIconContainer}>
-              <ShieldCheck size={18} color="#18258F" />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Privacy Policy</Text>
-              <Text style={styles.menuSubtitle}>Data safety, permissions & privacy practices</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            activeOpacity={0.7}
-            onPress={() => router.push('/terms' as any)}
-          >
-            <View style={styles.menuIconContainer}>
-              <FileText size={18} color="#18258F" />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Terms of Service</Text>
-              <Text style={styles.menuSubtitle}>Usage guidelines, disclaimers & fair use</Text>
-            </View>
-            <ChevronRight size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* BRTS NETWORK DETAILS */}
-        <Text style={styles.sectionHeading}>BRTS Corridors Covered</Text>
-        <View style={styles.corridorCard}>
-          <View style={styles.corridorItem}>
-            <View style={[styles.corridorDot, { backgroundColor: '#18258F' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.corridorTitle}>Corridor 1 · Railway Station ⇄ Mantralaya</Text>
-              <Text style={styles.corridorDesc}>Via Telibandha, Serikhedi, Naya Raipur Entry, Capital Complex</Text>
-            </View>
-          </View>
-          <View style={styles.corridorItem}>
-            <View style={[styles.corridorDot, { backgroundColor: '#D97706' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.corridorTitle}>Corridor 2 · Railway Station ⇄ PHQ (Police HQ)</Text>
-              <Text style={styles.corridorDesc}>Connecting central administration and security headquarters</Text>
-            </View>
-          </View>
-          <View style={styles.corridorItem}>
-            <View style={[styles.corridorDot, { backgroundColor: '#15803D' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.corridorTitle}>Corridor 3 · Railway Station ⇄ HNLU</Text>
-              <Text style={styles.corridorDesc}>Serving educational zone, IIIT, and Hidayatullah Law University</Text>
-            </View>
-          </View>
-          <View style={styles.corridorItem}>
-            <View style={[styles.corridorDot, { backgroundColor: '#9333EA' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.corridorTitle}>Airport Feeder · City ⇄ Swami Vivekananda Airport</Text>
-              <Text style={styles.corridorDesc}>Scheduled connecting services for flight passengers</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* CIVIC HELPLINES */}
-        <Text style={styles.sectionHeading}>Helpline & Emergency Contacts</Text>
-        <View style={styles.menuContainer}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            activeOpacity={0.7}
-            onPress={() => handleCall('112')}
-          >
-            <View style={[styles.menuIconContainer, { backgroundColor: '#FEE2E2' }]}>
-              <Phone size={18} color="#DC2626" />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Emergency Response Support System</Text>
-              <Text style={styles.menuSubtitle}>Dial 112 (Police, Fire, Medical)</Text>
-            </View>
-            <ExternalLink size={16} color="#DC2626" />
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            activeOpacity={0.7}
-            onPress={() => handleCall('18002331234')}
-          >
-            <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
-              <Phone size={18} color="#D97706" />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Raipur Municipal Corporation (RMC)</Text>
-              <Text style={styles.menuSubtitle}>1800-233-1234 (Toll Free Civic Helpline)</Text>
-            </View>
-            <ExternalLink size={16} color="#D97706" />
-          </TouchableOpacity>
-        </View>
-
-        {/* DEVELOPER & CONTACT */}
-        <Text style={styles.sectionHeading}>Developer & Project Info</Text>
-        <View style={styles.developerCard}>
-          <Text style={styles.devName}>Nihal Kumar</Text>
-          <Text style={styles.devRole}>Lead Developer & Maintainer</Text>
-          
-          <TouchableOpacity style={styles.devRow} onPress={handleEmail} activeOpacity={0.7}>
-            <Mail size={16} color="#18258F" />
-            <Text style={styles.devLink}>nihalkumar5@gmail.com</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.devRow} onPress={handleWebsite} activeOpacity={0.7}>
-            <Globe size={16} color="#18258F" />
-            <Text style={styles.devLink}>https://tatpar-brts-raipur.vercel.app</Text>
-          </TouchableOpacity>
-
-          <View style={styles.devRow}>
-            <MapPin size={16} color="#6B7280" />
-            <Text style={styles.devText}>Raipur, Chhattisgarh, India</Text>
-          </View>
-        </View>
-
-        {/* FOOTER */}
-        <View style={styles.footer}>
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Crafted with</Text>
-            <Heart size={14} color="#DC2626" fill="#DC2626" style={{ marginHorizontal: 4 }} />
-            <Text style={styles.footerText}>for Raipur Commuters</Text>
-          </View>
-          <Text style={styles.copyrightText}>© 2026 Tatpar BRTS Raipur · Open Transit Initiative</Text>
-        </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -238,227 +366,284 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: BG_COLOR,
   },
   header: {
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: CARD_BG,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E2DC',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: DIVIDER_COLOR,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EEF0F9',
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontFamily: FONT.bold,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.2,
+  },
+  headerSpacer: {
+    width: 36,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 18,
-    maxWidth: Platform.OS === 'web' ? 760 : undefined,
+    padding: 16,
+    paddingBottom: 48,
+    maxWidth: Platform.OS === 'web' ? 680 : undefined,
     alignSelf: Platform.OS === 'web' ? 'center' : undefined,
     width: '100%',
   },
-  heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  appIconWrapper: {
-    width: 68,
-    height: 68,
-    borderRadius: 20,
-    backgroundColor: '#18258F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  appNameHindi: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#18258F',
-    marginBottom: 2,
-  },
-  appName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  versionBadge: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#15803D',
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  tagline: {
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 19,
-    paddingHorizontal: 12,
-  },
-  sectionHeading: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 10,
-    marginBottom: 10,
-    marginLeft: 4,
-  },
-  menuContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    marginBottom: 18,
-  },
-  menuItem: {
+
+  /* 2. APP INTRO */
+  introSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    marginBottom: 16,
   },
-  menuIconContainer: {
+  appIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: LIGHT_BLUE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(36, 56, 184, 0.12)',
+  },
+  introTextCol: {
+    flex: 1,
+  },
+  appName: {
+    fontFamily: FONT.bold,
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.3,
+  },
+  appVersion: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  appTagline: {
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
+    color: TEXT_SECONDARY,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+
+  /* SECTION LABELS */
+  section: {
+    marginBottom: 22,
+  },
+  sectionHeading: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  sectionHeaderWithSub: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  sectionHeadingNoMargin: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  sectionSubHeading: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: TEXT_MUTED,
+    fontWeight: '500',
+  },
+
+  /* GROUPED CARDS (UNIFIED CLEAN WHITE SURFACE) */
+  groupedCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    overflow: 'hidden',
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    minHeight: 56,
+  },
+  menuIconBox: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#EEF0F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  menuTextContainer: {
+  menuTextCol: {
     flex: 1,
+    marginRight: 8,
   },
   menuTitle: {
-    fontSize: 15,
+    fontFamily: FONT.semiBold,
+    fontSize: 14.5,
     fontWeight: '600',
-    color: '#1E293B',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
   },
   menuSubtitle: {
-    fontSize: 12,
-    color: '#64748B',
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
+    color: TEXT_SECONDARY,
     marginTop: 2,
   },
-  divider: {
+  rowDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
-    marginLeft: 62,
+    backgroundColor: DIVIDER_COLOR,
+    marginLeft: 64,
   },
-  corridorCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 18,
-    gap: 14,
-  },
-  corridorItem: {
+
+  /* NETWORK / CORRIDORS */
+  corridorRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
   corridorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     marginTop: 5,
+    marginRight: 12,
   },
-  corridorTitle: {
+  corridorContentCol: {
+    flex: 1,
+  },
+  corridorName: {
+    fontFamily: FONT.bold,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
   },
-  corridorDesc: {
+  corridorRoute: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: PRIMARY,
+    marginTop: 1,
+  },
+  corridorDescription: {
+    fontFamily: FONT.regular,
     fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
+    color: TEXT_SECONDARY,
+    lineHeight: 17,
+    marginTop: 3,
   },
-  developerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+  corridorDivider: {
+    height: 1,
+    backgroundColor: DIVIDER_COLOR,
+    marginLeft: 36,
+  },
+
+  /* PROJECT ATTRIBUTION */
+  projectCard: {
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 20,
   },
-  devName: {
+  projectName: {
+    fontFamily: FONT.bold,
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.2,
   },
-  devRole: {
+  projectRole: {
+    fontFamily: FONT.medium,
     fontSize: 13,
-    color: '#64748B',
-    marginBottom: 12,
+    fontWeight: '500',
+    color: TEXT_SECONDARY,
+    marginTop: 2,
+    marginBottom: 14,
   },
-  devRow: {
+  projectList: {
+    gap: 10,
+  },
+  projectLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
   },
-  devLink: {
+  projectIcon: {
+    marginRight: 10,
+  },
+  projectLinkText: {
+    fontFamily: FONT.medium,
     fontSize: 13,
-    fontWeight: '600',
-    color: '#18258F',
+    fontWeight: '500',
+    color: PRIMARY,
   },
-  devText: {
+  projectLocationText: {
+    fontFamily: FONT.regular,
     fontSize: 13,
-    color: '#4B5563',
+    color: TEXT_SECONDARY,
   },
+
+  /* 8. FOOTER */
   footer: {
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 12,
+    paddingVertical: 16,
   },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  footerBrand: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    letterSpacing: 0.2,
   },
-  footerText: {
-    fontSize: 13,
-    color: '#64748B',
+  footerTagline: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 2,
   },
-  copyrightText: {
+  footerCopyright: {
+    fontFamily: FONT.regular,
     fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 4,
+    color: TEXT_MUTED,
+    marginTop: 6,
   },
 });
