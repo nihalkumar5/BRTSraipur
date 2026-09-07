@@ -1008,10 +1008,13 @@ export default function LiveBusScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.proximityOptimizedTitle}>
-                        Routed to {journey.toStop.shortName} ({journey.proximityWalkFormatted || '1 stop'} to {journey.targetDestinationStop?.shortName})
+                        {journey.originalOriginStop
+                          ? `Board at ${journey.fromStop.shortName} (${journey.proximityBoardWalkFormatted || 'nearby'})`
+                          : `Routed to ${journey.toStop.shortName}`}
+                        {journey.targetDestinationStop ? ` · ${journey.proximityWalkFormatted || '1 stop'} to ${journey.targetDestinationStop.shortName}` : ''}
                       </Text>
                       <Text style={styles.proximityOptimizedSub}>
-                        {journey.circuitTransferDurationMins}m / ₹{journey.circuitTransferFare || 70} ka detour hata diya gaya hai. Direct Bus {journey.trip.routeNumber} se sirf {journey.durationMins} min me pahunchein (Sirf ₹{journey.fare})!
+                        {journey.circuitTransferDurationMins ? `${journey.circuitTransferDurationMins}m / ₹${journey.circuitTransferFare || 70} ka detour hata diya gaya hai. ` : ''}Direct Bus {journey.trip.routeNumber} se sirf {journey.durationMins} min me pahunchein (Sirf ₹{journey.fare})!
                       </Text>
                     </View>
                   </View>
@@ -1067,6 +1070,7 @@ export default function LiveBusScreen() {
                         </Text>
                       </View>
                       <Text style={styles.heroStationNames} numberOfLines={1}>
+                        {journey.originalOriginStop ? `${journey.originalOriginStop.shortName} ➔ ` : ''}
                         {journey.fromStop.shortName} → {journey.toStop.shortName}
                         {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                       </Text>
@@ -1075,7 +1079,7 @@ export default function LiveBusScreen() {
                     <View style={styles.heroInfoContent}>
                       <Text style={styles.heroPreLabel}>
                         {journey.isProximityOptimized
-                          ? `⚡ SMART DIRECT ROUTE (SAVE ${journey.minutesSaved}M)`
+                          ? `⚡ SMART DIRECT ROUTE (SAVE ${journey.minutesSaved || 15}M)`
                           : 'NEXT BUS'}
                       </Text>
                       <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
@@ -1085,6 +1089,7 @@ export default function LiveBusScreen() {
                         </Text>
                       </View>
                       <Text style={styles.heroStationNames} numberOfLines={1}>
+                        {journey.originalOriginStop ? `${journey.originalOriginStop.shortName} ➔ ` : ''}
                         {journey.fromStop.shortName} → {journey.toStop.shortName}
                         {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                       </Text>
@@ -1100,7 +1105,7 @@ export default function LiveBusScreen() {
                       <Text style={styles.heroMetaTitle}>{journey.routeBadge}</Text>
                       <Text style={styles.heroMetaSubtitle} numberOfLines={1}>
                         {journey.isProximityOptimized
-                          ? `Direct Bus · ${journey.proximityWalkFormatted || '1 stop'} to ${journey.targetDestinationStop?.shortName}`
+                          ? `Direct Bus · ₹${journey.fare}${journey.minutesSaved ? ` · Save ${journey.minutesSaved}m` : ''}`
                           : journey.serviceEndedToday
                           ? 'Service ended for today'
                           : journey.isTransfer

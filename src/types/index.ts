@@ -103,6 +103,10 @@ export interface ActiveJourney {
   serviceEndedToday?: boolean;
   lastDepartedTodayTime?: string;
   isProximityOptimized?: boolean;
+  originalOriginStop?: Stop;
+  proximityBoardStop?: Stop;
+  proximityBoardWalkFormatted?: string;
+  proximityBoardWalkMins?: number;
   targetDestinationStop?: Stop;
   proximityDropStop?: Stop;
   proximityWalkFormatted?: string;
@@ -123,6 +127,10 @@ export interface OptimalProximityHop {
     busNumber: string;
     routeName: string;
     boardStation: string;
+    boardStationShortName?: string;
+    walkToBoardKm?: number;
+    walkToBoardFormatted?: string;
+    walkToBoardMins?: number;
     dropStation: string;
     dropStationShortName: string;
     departureTime: string;
