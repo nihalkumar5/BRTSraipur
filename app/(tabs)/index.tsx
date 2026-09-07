@@ -1040,120 +1040,83 @@ export default function LiveBusScreen() {
             ) : journey ? (
               /* STATE 2: ACTIVE SEARCH RESULT */
               <View style={styles.activeSection}>
-                {/* ⚡ PROXIMITY SHORT-HOP INTELLIGENCE: OPTIMAL FASTEST COMMUTE */}
-                {journey.optimalProximity && !journey.isProximityOptimized && (
-                  <View style={styles.optimalProximityCard}>
-                    <View style={styles.optimalProximityHeader}>
-                      <View style={styles.optimalBadgeRow}>
-                        <View style={styles.optimalFastestPill}>
-                          <Zap size={13} color="#FFFFFF" strokeWidth={2.6} />
-                          <Text style={styles.optimalFastestPillText}>
-                            FASTEST ROUTE · {journey.optimalProximity.shortHopBus ? `${journey.optimalProximity.shortHopBus.totalCommuteMins} MIN` : `${journey.optimalProximity.directWalkingMins} MIN`}
-                          </Text>
+                {/* ⚡ SMART ROUTE RECOMMENDATION */}
+                {journey.optimalProximity && !journey.isProximityOptimized && (() => {
+                  const opt = journey.optimalProximity;
+                  const bus = opt.shortHopBus;
+                  const busNumber = bus?.busNumber || journey.routeBadge;
+                  const nextDeparture = bus?.departureTime || journey.fromTime;
+                  const durationMins = bus
+                    ? (bus.totalCommuteMins || bus.busRideMins)
+                    : opt.directWalkingMins;
+                  const stopsCount = bus ? (opt.directDistanceKm <= 3.5 ? '1 stop' : `${journey.intermediateStopsCount} stops`) : 'Direct connection';
+
+                  return (
+                    <View style={styles.smartRouteCard}>
+                      {/* Top Header Row */}
+                      <View style={styles.smartRouteHeaderRow}>
+                        <View style={styles.smartRouteLabelBox}>
+                          <Zap size={12} color="#18258F" strokeWidth={2.6} />
+                          <Text style={styles.smartRoutePreLabel}>RECOMMENDED</Text>
                         </View>
-                        <View style={styles.optimalSaveBadge}>
-                          <Text style={styles.optimalSaveBadgeText}>
-                            Save {journey.optimalProximity.minutesSaved}m & ₹10
-                          </Text>
-                        </View>
+                        {opt.minutesSaved > 0 ? (
+                          <View style={styles.smartRouteFasterBadge}>
+                            <Text style={styles.smartRouteFasterText}>
+                              {opt.minutesSaved}m faster
+                            </Text>
+                          </View>
+                        ) : null}
                       </View>
-                    </View>
 
-                    <Text style={styles.optimalProximityHeadline}>
-                      {journey.optimalProximity.shortHopBus
-                        ? `Direct Bus to ${journey.optimalProximity.shortHopBus.dropStationShortName} (${journey.toStop.shortName} ke paas)!`
-                        : `${journey.fromStop.shortName} aur ${journey.toStop.shortName} sirf ${journey.optimalProximity.directDistanceFormatted} door hain!`}
-                    </Text>
-                    <Text style={styles.optimalProximitySub}>
-                      {journey.optimalProximity.shortHopBus
-                        ? `Bus change karke pura circuit loop ghoomne me ${journey.optimalProximity.circuitTransferDurationMins} min lagte hain. Iske bajaye Bus ${journey.optimalProximity.shortHopBus.busNumber} se ${journey.optimalProximity.shortHopBus.dropStationShortName} utrein:`
-                        : `Nava Raipur BRTS circular loop bus transfer me ${journey.optimalProximity.circuitTransferDurationMins} min lagte hain. Iske bajaye direct walk ya e-rickshaw lein:`}
-                    </Text>
+                      {/* Station Title & Duration / Stops */}
+                      <View style={styles.smartRouteBody}>
+                        <Text style={styles.smartRouteTitle} numberOfLines={1}>
+                          {journey.fromStop.shortName} → {journey.toStop.shortName}
+                        </Text>
+                        <Text style={styles.smartRouteSubMetrics}>
+                          {durationMins} min · {stopsCount}
+                        </Text>
+                      </View>
 
-                    {/* Primary Choice: Short Hop Bus + Short Walk */}
-                    {journey.optimalProximity.hasShortHopBus && journey.optimalProximity.shortHopBus && (
-                      <View style={styles.optimalOptionCard}>
-                        <View style={styles.optimalOptionHeader}>
-                          <View style={styles.optimalOptionTag}>
-                            <Text style={styles.optimalOptionTagText}>⭐ RECOMMENDED SMART ROUTE</Text>
-                          </View>
-                          <Text style={styles.optimalOptionDuration}>
-                            {journey.optimalProximity.shortHopBus.totalCommuteMins} min · ₹{journey.optimalProximity.shortHopBus.fare}
+                      {/* Primary Actionable Bus Row */}
+                      <View style={styles.smartRouteBusRow}>
+                        <View style={styles.smartRouteBusInfo}>
+                          <Bus size={15} color="#18258F" strokeWidth={2.4} />
+                          <Text style={styles.smartRouteBusText} numberOfLines={1}>
+                            <Text style={styles.smartRouteBusBold}>BRT {busNumber.replace(/^BRT\s*/i, '')}</Text>
+                            {' · Next departure '}{nextDeparture}
                           </Text>
-                        </View>
-
-                        <View style={styles.optimalStepItem}>
-                          <View style={styles.optimalStepIconWrapBus}>
-                            <Bus size={14} color="#18258F" strokeWidth={2.4} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.optimalStepMain}>
-                              Board <Text style={{ fontWeight: '700', color: '#18258F' }}>Bus {journey.optimalProximity.shortHopBus.busNumber}</Text> at {journey.optimalProximity.shortHopBus.boardStation} ({journey.optimalProximity.shortHopBus.departureTime})
-                            </Text>
-                            <Text style={styles.optimalStepDetail}>
-                              Ride only {journey.optimalProximity.shortHopBus.busRideMins} min to {journey.optimalProximity.shortHopBus.dropStationShortName}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.optimalStepItem}>
-                          <View style={styles.optimalStepIconWrapWalk}>
-                            <Navigation size={14} color="#059669" strokeWidth={2.4} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.optimalStepMain}>
-                              Connection: <Text style={{ fontWeight: '700', color: '#059669' }}>{journey.optimalProximity.shortHopBus.walkFromDropFormatted}</Text> (~{journey.optimalProximity.shortHopBus.walkFromDropMins}m) to {journey.toStop.shortName}
-                            </Text>
-                            <Text style={styles.optimalStepDetail}>
-                              Total commute: {journey.optimalProximity.shortHopBus.totalCommuteMins} mins instead of {journey.optimalProximity.circuitTransferDurationMins} mins
-                            </Text>
-                          </View>
                         </View>
 
                         <TouchableOpacity
-                          style={styles.optimalSwitchButton}
+                          style={styles.smartRouteViewBtn}
                           onPress={() => {
-                            if (journey.optimalProximity?.shortHopBus?.dropStationShortName) {
-                              setToStation(journey.optimalProximity.shortHopBus.dropStationShortName);
+                            if (bus?.dropStationShortName) {
+                              setToStation(bus.dropStationShortName);
                               setSelectedTripId(null);
+                              triggerCardBounce();
+                            } else {
                               triggerCardBounce();
                             }
                           }}
-                          activeOpacity={0.8}
+                          activeOpacity={0.7}
                         >
-                          <Text style={styles.optimalSwitchButtonText}>
-                            Take Bus {journey.optimalProximity.shortHopBus.busNumber} to {journey.optimalProximity.shortHopBus.dropStationShortName} (Live Tracking) ➔
-                          </Text>
+                          <Text style={styles.smartRouteViewBtnText}>View bus →</Text>
                         </TouchableOpacity>
                       </View>
-                    )}
 
-                    {/* Secondary Choice: Direct Campus Walk / Auto */}
-                    <View style={styles.optimalWalkOptionRow}>
-                      <View style={styles.optimalWalkIconWrap}>
-                        <Navigation size={15} color="#D97706" strokeWidth={2.4} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.optimalWalkTitle}>
-                          {journey.optimalProximity.directDistanceKm <= 3.5 ? '🚶 Direct Campus Walk / E-Rickshaw' : '🛺 Direct Auto / E-Rickshaw'}
-                        </Text>
-                        <Text style={styles.optimalWalkDesc}>
-                          {journey.optimalProximity.directDistanceKm <= 3.5
-                            ? `${journey.optimalProximity.directDistanceFormatted} direct distance · ~${journey.optimalProximity.directWalkingMins}m walk ya 3m e-rickshaw`
-                            : `${journey.optimalProximity.directDistanceFormatted} direct distance · ~15m direct e-rickshaw / auto ride`}
+                      {/* Subtle Secondary Alternative */}
+                      <View style={styles.smartRouteAltRow}>
+                        <Text style={styles.smartRouteAltLabel}>Alternative:</Text>
+                        <Text style={styles.smartRouteAltText}>
+                          {opt.directDistanceKm <= 2.5
+                            ? `Walk ~${opt.directWalkingMins} min or Auto / E-rickshaw ~5 min`
+                            : `Auto / E-rickshaw · ~15 min`}
                         </Text>
                       </View>
                     </View>
-
-                    {/* Note about the circular transfer below */}
-                    <View style={styles.optimalNoticeFooter}>
-                      <Info size={13} color="#6B7280" />
-                      <Text style={styles.optimalNoticeFooterText}>
-                        Neeche diya gaya {journey.optimalProximity.circuitTransferDurationMins}m route official circular BRTS loop hai unke liye jo full route AC bus me baithna chahte hain.
-                      </Text>
-                    </View>
-                  </View>
-                )}
+                  );
+                })()}
 
                 {/* ⚠️ SERVICE ENDED TODAY + PROMINENT ACTIVE TONIGHT ALTERNATIVES */}
                 {journey.serviceEndedToday && (
@@ -5529,192 +5492,119 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  // OPTIMAL PROXIMITY CARD STYLES
-  optimalProximityCard: {
+  // SMART ROUTE RECOMMENDATION CARD STYLES
+  smartRouteCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#E0E7FF',
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  optimalProximityHeader: {
-    marginBottom: 10,
-  },
-  optimalBadgeRow: {
+  smartRouteHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    flexWrap: 'wrap',
+    marginBottom: 8,
   },
-  optimalFastestPill: {
+  smartRouteLabelBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#18258F',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
   },
-  optimalFastestPillText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  optimalSaveBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  optimalSaveBadgeText: {
-    color: '#047857',
-    fontSize: 11,
+  smartRoutePreLabel: {
+    fontSize: 11.5,
     fontWeight: '700',
+    color: '#18258F',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
-  optimalProximityHeadline: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-    lineHeight: 22,
-  },
-  optimalProximitySub: {
-    fontSize: 12,
-    color: '#475569',
-    lineHeight: 17,
-    marginBottom: 12,
-  },
-  optimalOptionCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 10,
-  },
-  optimalOptionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  optimalOptionTag: {
-    backgroundColor: '#EFF6FF',
+  smartRouteFasterBadge: {
+    backgroundColor: '#ECFDF5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#A7F3D0',
   },
-  optimalOptionTagText: {
-    color: '#1D4ED8',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+  smartRouteFasterText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#047857',
   },
-  optimalOptionDuration: {
-    fontSize: 13,
-    fontWeight: '800',
+  smartRouteBody: {
+    marginBottom: 12,
+  },
+  smartRouteTitle: {
+    fontSize: 17,
+    fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.2,
   },
-  optimalStepItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 8,
-  },
-  optimalStepIconWrapBus: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  optimalStepIconWrapWalk: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ECFDF5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  optimalStepMain: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#1E293B',
-    lineHeight: 17,
-  },
-  optimalStepDetail: {
-    fontSize: 11,
+  smartRouteSubMetrics: {
+    fontSize: 13,
+    fontWeight: '500',
     color: '#64748B',
-    marginTop: 1,
+    marginTop: 2,
   },
-  optimalSwitchButton: {
-    backgroundColor: '#18258F',
-    borderRadius: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  optimalSwitchButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  optimalWalkOptionRow: {
+  smartRouteBusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
-    padding: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginBottom: 8,
+    borderColor: '#E2E8F0',
+    gap: 10,
   },
-  optimalWalkIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FEF3C7',
+  smartRouteBusInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    flex: 1,
   },
-  optimalWalkTitle: {
-    fontSize: 12,
+  smartRouteBusText: {
+    fontSize: 12.5,
+    color: '#334155',
+    flex: 1,
+  },
+  smartRouteBusBold: {
     fontWeight: '700',
-    color: '#92400E',
+    color: '#18258F',
   },
-  optimalWalkDesc: {
-    fontSize: 11,
-    color: '#B45309',
-    marginTop: 1,
+  smartRouteViewBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
-  optimalNoticeFooter: {
+  smartRouteViewBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  smartRouteAltRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingTop: 4,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
-  optimalNoticeFooterText: {
-    fontSize: 10.5,
+  smartRouteAltLabel: {
+    fontSize: 11.5,
+    fontWeight: '600',
     color: '#64748B',
+  },
+  smartRouteAltText: {
+    fontSize: 11.5,
+    color: '#475569',
     flex: 1,
-    lineHeight: 15,
   },
 });
