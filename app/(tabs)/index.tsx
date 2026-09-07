@@ -981,8 +981,8 @@ export default function LiveBusScreen() {
         ) : null}
 
         {/* PAGE HEADING */}
-        <View style={styles.pageHeaderTitleRow}>
-          <View style={{ flex: 1, paddingRight: 8 }}>
+        <View style={[styles.pageHeaderTitleRow, planningMode === 'onboard' && { paddingHorizontal: 20, paddingBottom: 0 }]}>
+          <View style={{ flex: 1, paddingRight: 10 }}>
             <Text style={styles.pageMainHeading}>
               {planningMode === 'next'
                 ? 'Bus Track'
@@ -1998,9 +1998,9 @@ export default function LiveBusScreen() {
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
                     <EditorialBusIllustration
-                      width={86}
-                      height={36}
-                      color="rgba(255, 255, 255, 0.85)"
+                      width={78}
+                      height={32}
+                      color="rgba(255, 255, 255, 0.80)"
                       wheelBg="#101A72"
                       accentColor="#93C5FD"
                     />
@@ -2211,11 +2211,22 @@ export default function LiveBusScreen() {
                       >
                         {/* DOT / TRACK CONNECTOR */}
                         <View style={styles.compactJourneyDotCol}>
+                          {/* Upper connector line from previous stop */}
+                          {localIndex > 0 && (
+                            <View
+                              style={[
+                                styles.compactJourneyLineTop,
+                                isPassed && styles.compactJourneyLinePassed,
+                              ]}
+                            />
+                          )}
+
+                          {/* Lower connector line to next stop */}
                           {!isLastInDisplayed && (
                             <View
                               style={[
-                                styles.compactJourneyVerticalLine,
-                                isPassed && styles.compactJourneyVerticalLinePassed,
+                                styles.compactJourneyLineBottom,
+                                (isPassed || isCurrent) && styles.compactJourneyLinePassed,
                               ]}
                             />
                           )}
@@ -3076,30 +3087,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   infoIconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#EEF0F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerSwitchBusBtn: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#DDE2F0',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: '#E2E8F0',
   },
   headerSwitchBusText: {
     fontFamily: FONT.semiBold,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#18258F',
   },
   pageMainHeading: {
@@ -3962,46 +3968,51 @@ const styles = StyleSheet.create({
   /* COMPACT DEPARTURE & DROP-OFF REMINDER */
   compactReminderCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#EAECF0',
+    borderColor: '#E4E7EC',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   compactReminderIconBox: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: 10,
-    backgroundColor: '#FFF4ED',
+    backgroundColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   compactReminderTextBox: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   compactReminderTitle: {
     fontFamily: FONT.semiBold,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#101828',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   compactReminderSubtitle: {
     fontFamily: FONT.regular,
     fontSize: 12,
     fontWeight: '400',
-    color: '#667085',
+    color: '#64748B',
     marginTop: 2,
   },
   compactReminderBtn: {
-    backgroundColor: '#2438B8',
+    backgroundColor: '#18258F',
     paddingHorizontal: 14,
-    height: 38,
-    borderRadius: 10,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -4012,14 +4023,14 @@ const styles = StyleSheet.create({
   },
   compactReminderBtnText: {
     fontFamily: FONT.semiBold,
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
   },
   compactReminderBtnTextActive: {
     fontFamily: FONT.bold,
     fontWeight: '700',
-    color: '#2438B8',
+    color: '#18258F',
   },
 
   /* VIEW TIMETABLE FOOTER CTA */
@@ -4364,32 +4375,32 @@ const styles = StyleSheet.create({
   metricsGridRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 14,
+    marginBottom: 16,
     width: '100%',
   },
   metricCard: {
     flex: 1,
-    height: 104,
+    height: 108,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1.2,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
     justifyContent: 'space-between',
   },
   metricCardRemaining: {
-    backgroundColor: '#FFFFFF', // Clean white surface
-    borderColor: 'rgba(23, 38, 143, 0.08)',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E7EC',
   },
   metricCardFare: {
-    backgroundColor: '#FFFFFF', // White surface, NOT bright yellow
-    borderColor: 'rgba(23, 38, 143, 0.08)',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E7EC',
   },
   metricCardHeader: {
     flexDirection: 'row',
@@ -4914,8 +4925,8 @@ const styles = StyleSheet.create({
   /*               I'M ONBOARD DEDICATED STYLES (WATCH YOUR RIDE)              */
   /* ========================================================================= */
   onboardContainer: {
-    paddingHorizontal: 16,
-    marginTop: 4,
+    paddingHorizontal: 20,
+    marginTop: 16,
   },
   onboardRouteStrip: {
     flexDirection: 'row',
@@ -4975,13 +4986,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#18258F',
     borderRadius: 20,
     paddingVertical: 18,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     position: 'relative',
     overflow: 'hidden',
-    marginBottom: 14,
+    marginBottom: 16,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 3,
   },
@@ -4993,7 +5004,7 @@ const styles = StyleSheet.create({
   onboardLiveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.20)',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
     borderWidth: 1,
     borderColor: '#10B981',
     paddingHorizontal: 8,
@@ -5022,78 +5033,80 @@ const styles = StyleSheet.create({
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 12,
-    right: 14,
+    top: 14,
+    right: 16,
     zIndex: 1,
-    opacity: 0.82,
+    opacity: 0.80,
   },
   onboardHeroNextStopLabel: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.72)',
-    letterSpacing: 1.1,
+    color: 'rgba(255, 255, 255, 0.70)',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginTop: 10,
+    marginTop: 14,
+    marginBottom: 4,
   },
   onboardHeroNextStopTitle: {
     fontSize: 24,
+    lineHeight: 30,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.3,
-    marginTop: 2,
+    letterSpacing: -0.4,
+    marginBottom: 8,
   },
   onboardHeroEtaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   onboardHeroEtaBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    backgroundColor: 'rgba(16, 185, 129, 0.20)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.45)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderColor: 'rgba(16, 185, 129, 0.40)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   onboardHeroEtaText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#34D399',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   onboardHeroDivider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    marginVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    marginVertical: 14,
   },
   onboardHeroRouteMeta: {
-    marginTop: 2,
+    marginTop: 0,
   },
   onboardHeroTowardsText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: -0.1,
+    marginBottom: 2,
   },
   onboardHeroServiceBadge: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#C7D2FE',
-    marginTop: 2,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginBottom: 12,
   },
   onboardHeroProgressContainer: {
-    marginTop: 10,
+    marginTop: 0,
   },
   onboardHeroStopsRemainingText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
-    color: '#BFDBFE',
-    marginBottom: 5,
+    color: 'rgba(255, 255, 255, 0.80)',
+    marginBottom: 6,
   },
   onboardHeroProgressBarTrack: {
-    height: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -5106,17 +5119,17 @@ const styles = StyleSheet.create({
   /* COMPACT ONBOARD JOURNEY MAP */
   compactJourneyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 18,
     paddingTop: 16,
-    paddingBottom: 14,
+    paddingBottom: 16,
     marginBottom: 96,
     borderWidth: 1,
     borderColor: '#E4E7EC',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
     elevation: 1,
   },
   compactJourneyHeader: {
@@ -5190,39 +5203,49 @@ const styles = StyleSheet.create({
   compactJourneyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 32,
-    paddingVertical: 3.5,
-    paddingHorizontal: 4,
+    minHeight: 34,
+    paddingVertical: 4.5,
+    paddingHorizontal: 8,
     borderRadius: 8,
   },
   compactJourneyRowPassed: {
-    minHeight: 26,
-    paddingVertical: 2,
+    minHeight: 28,
+    paddingVertical: 2.5,
+    paddingHorizontal: 8,
   },
   compactJourneyRowCurrent: {
-    backgroundColor: 'rgba(24, 37, 143, 0.05)',
+    backgroundColor: '#EEF2FF',
     paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingVertical: 6,
     marginVertical: 2,
   },
   compactJourneyDotCol: {
-    width: 20,
+    width: 24,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     marginRight: 10,
     alignSelf: 'stretch',
   },
-  compactJourneyVerticalLine: {
+  compactJourneyLineTop: {
     position: 'absolute',
-    top: 14,
-    bottom: -14,
+    top: 0,
+    bottom: '50%',
     width: 2,
     backgroundColor: '#E2E8F0',
-    left: 9,
+    left: 11,
     zIndex: 1,
   },
-  compactJourneyVerticalLinePassed: {
+  compactJourneyLineBottom: {
+    position: 'absolute',
+    top: '50%',
+    bottom: 0,
+    width: 2,
+    backgroundColor: '#E2E8F0',
+    left: 11,
+    zIndex: 1,
+  },
+  compactJourneyLinePassed: {
     backgroundColor: '#CBD5E1',
   },
   compactJourneyPassedDotWrap: {
