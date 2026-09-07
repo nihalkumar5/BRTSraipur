@@ -41,16 +41,46 @@
   },
   {
     "id": "pop-5",
+    "from": "Raipur Railway Station",
+    "to": "Mahanadi Bhawan (Mantralaya)",
+    "fromDisplay": "Raipur Stn",
+    "toDisplay": "Mantralaya",
+    "tag": "Capital Shuttle 101",
+    "typicalDuration": "45m",
+    "fare": 40
+  },
+  {
+    "id": "pop-6",
+    "from": "Telibandha",
+    "to": "Sector 27",
+    "fromDisplay": "Telibandha",
+    "toDisplay": "Sector 27",
+    "tag": "Sector Express",
+    "typicalDuration": "25m",
+    "fare": 30
+  },
+  {
+    "id": "pop-7",
     "from": "Balco Medical Centre",
     "to": "CBD (Commercial Complex)",
     "fromDisplay": "Balco Hospital",
     "toDisplay": "CBD",
-    "tag": "Fast Shuttle",
+    "tag": "Health & Business Shuttle",
     "typicalDuration": "26m",
     "fare": 10
   },
   {
-    "id": "pop-6",
+    "id": "pop-8",
+    "from": "Raipur Railway Station",
+    "to": "Jungle Safari",
+    "fromDisplay": "Raipur Stn",
+    "toDisplay": "Jungle Safari",
+    "tag": "Safari Eco Shuttle",
+    "typicalDuration": "60m",
+    "fare": 45
+  },
+  {
+    "id": "pop-9",
     "from": "North Block",
     "to": "Satya Sai Hospital",
     "fromDisplay": "North Block",
@@ -60,13 +90,33 @@
     "fare": 10
   },
   {
-    "id": "pop-7",
-    "from": "CBD",
+    "id": "pop-10",
+    "from": "CBD (Commercial Complex)",
     "to": "Sector 30",
     "fromDisplay": "CBD",
     "toDisplay": "Sector 30",
     "tag": "Sectors Loop 501",
     "typicalDuration": "17m",
     "fare": 10
+  },
+  {
+    "id": "pop-11",
+    "from": "Raipur Railway Station",
+    "to": "Balco Medical Centre",
+    "fromDisplay": "Raipur Stn",
+    "toDisplay": "Balco Hospital",
+    "tag": "MedExpress Direct",
+    "typicalDuration": "52m",
+    "fare": 40
+  },
+  {
+    "id": "pop-12",
+    "from": "Telibandha",
+    "to": "AIIMS Raipur",
+    "fromDisplay": "Telibandha",
+    "toDisplay": "AIIMS Raipur",
+    "tag": "Medical Corridor",
+    "typicalDuration": "22m",
+    "fare": 15
   }
 ]

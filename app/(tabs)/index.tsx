@@ -15,11 +15,12 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Compass,
   ArrowRight,
+  ArrowLeft,
   ArrowUpRight,
   ArrowUpDown,
   Search,
@@ -193,6 +194,7 @@ function EditorialStopIcon({ size = 20, color = '#18258F' }: { size?: number; co
 export default function LiveBusScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string; to?: string }>();
+  const insets = useSafeAreaInsets();
 
   // Initial state: starts empty by default so the clean Popular Routes screen is the default home screen.
   // Once the user enters stations (or taps a popular route), their chosen route is remembered as the active home screen.
@@ -274,6 +276,11 @@ export default function LiveBusScreen() {
     }
     return false;
   });
+
+  // Popular routes "View all" modal state
+  const [allPopularModalVisible, setAllPopularModalVisible] = useState(false);
+  const [popularCategory, setPopularCategory] = useState<'all' | 'secretariat' | 'campus' | 'tourist' | 'hospital' | 'shuttle'>('all');
+  const [popularSearchQuery, setPopularSearchQuery] = useState('');
 
   // Notification state
   const [reminderBanner, setReminderBanner] = useState<string | null>(null);
@@ -451,6 +458,38 @@ export default function LiveBusScreen() {
     );
   }, [searchQuery]);
 
+  // Filter popular routes for "View all" modal
+  const filteredPopularRoutes = useMemo(() => {
+    return popularRoutes.filter(item => {
+      if (popularCategory === 'secretariat') {
+        const t = (item.tag + ' ' + item.from + ' ' + item.to).toLowerCase();
+        if (!t.includes('secretariat') && !t.includes('capital') && !t.includes('mantralaya')) return false;
+      } else if (popularCategory === 'campus') {
+        const t = (item.tag + ' ' + item.from + ' ' + item.to).toLowerCase();
+        if (!t.includes('campus') && !t.includes('hnlu') && !t.includes('iiit')) return false;
+      } else if (popularCategory === 'tourist') {
+        const t = (item.tag + ' ' + item.from + ' ' + item.to).toLowerCase();
+        if (!t.includes('tourist') && !t.includes('safari') && !t.includes('muktangan')) return false;
+      } else if (popularCategory === 'hospital') {
+        const t = (item.tag + ' ' + item.from + ' ' + item.to).toLowerCase();
+        if (!t.includes('hospital') && !t.includes('medical') && !t.includes('balco') && !t.includes('aiims') && !t.includes('sai')) return false;
+      } else if (popularCategory === 'shuttle') {
+        const t = (item.tag + ' ' + item.from + ' ' + item.to).toLowerCase();
+        if (!t.includes('shuttle') && !t.includes('loop') && !t.includes('feeder')) return false;
+      }
+
+      if (!popularSearchQuery.trim()) return true;
+      const q = popularSearchQuery.toLowerCase();
+      return (
+        item.from.toLowerCase().includes(q) ||
+        item.to.toLowerCase().includes(q) ||
+        item.fromDisplay.toLowerCase().includes(q) ||
+        item.toDisplay.toLowerCase().includes(q) ||
+        item.tag.toLowerCase().includes(q)
+      );
+    });
+  }, [popularCategory, popularSearchQuery]);
+
   const drawerSlideAnim = useRef(new Animated.Value(420)).current;
 
   const triggerCardBounce = () => {
@@ -472,7 +511,7 @@ export default function LiveBusScreen() {
     setActivePicker(type);
     setSearchQuery('');
     setModalVisible(true);
-    drawerSlideAnim.setValue(420);
+    drawerSlideAnim.setValue(600);
     Animated.timing(drawerSlideAnim, {
       toValue: 0,
       duration: 250,
@@ -483,8 +522,8 @@ export default function LiveBusScreen() {
 
   const closePicker = () => {
     Animated.timing(drawerSlideAnim, {
-      toValue: 420,
-      duration: 220,
+      toValue: 600,
+      duration: 200,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: Platform.OS !== 'web',
     }).start(() => {
@@ -529,6 +568,7 @@ export default function LiveBusScreen() {
     setFromStation(route.from);
     setToStation(route.to);
     setSelectedTripId(null);
+    setAllPopularModalVisible(false);
     triggerCardBounce();
   };
 
@@ -780,46 +820,58 @@ export default function LiveBusScreen() {
             {!fromStation || !toStation ? (
               /* STATE 1: UNSELECTED PROMPT */
               <View style={styles.unselectedSection}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeader}>Popular routes</Text>
-                  <Text style={styles.sectionHeaderHint}>Fast corridor direct</Text>
+                <View style={styles.popularSectionHeaderRow}>
+                  <Text style={styles.popularSectionTitle}>Popular Routes</Text>
+                  <TouchableOpacity
+                    onPress={() => setAllPopularModalVisible(true)}
+                    style={styles.popularViewAllBtn}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="View all popular routes"
+                  >
+                    <Text style={styles.popularViewAllText}>View all</Text>
+                    <ChevronRight size={14} color="#18258F" strokeWidth={2.4} />
+                  </TouchableOpacity>
                 </View>
 
-                {/* COMPACT GROUPED ROUTE LIST */}
-                <View style={styles.popularGroupedCard}>
-                  {popularRoutes.slice(0, 4).map((item, index) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[
-                        styles.popularRouteRow,
-                        index === popularRoutes.slice(0, 4).length - 1 && styles.popularRouteRowLast,
-                      ]}
-                      onPress={() => selectPopularRoute(item)}
-                      activeOpacity={0.7}
-                    >
-                      {/* Route Details */}
-                      <View style={styles.popularRouteInfoCol}>
-                        <View style={styles.popularRouteTitleRow}>
-                          <Text style={styles.popularStationName}>{item.fromDisplay}</Text>
-                          <ArrowRight size={12} color="#94A3B8" style={{ marginHorizontal: 6 }} />
-                          <Text style={styles.popularStationName}>{item.toDisplay}</Text>
+                {/* INDIVIDUAL POPULAR ROUTE CARDS (MATCHING USER UPLOADED DESIGN) */}
+                <View style={styles.popularCardsList}>
+                  {popularRoutes.slice(0, 4).map((item) => {
+                    const routeFare = getFare(item.from, item.to) || item.fare;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={styles.popularCard}
+                        onPress={() => selectPopularRoute(item)}
+                        activeOpacity={0.75}
+                      >
+                        {/* BUS SQUIRCLE ICON */}
+                        <View style={styles.popularIconWrap}>
+                          <Bus size={20} color="#18258F" strokeWidth={2.2} />
                         </View>
-                        <View style={styles.popularRouteMetaRow}>
-                          <Text style={styles.popularRouteMetaDuration}>{item.typicalDuration}</Text>
-                          <Text style={styles.popularRouteMetaDot}>·</Text>
-                          <Text style={styles.popularRouteMetaTag}>{item.tag}</Text>
-                        </View>
-                      </View>
 
-                      {/* Fare Pill & Chevron */}
-                      <View style={styles.popularRouteRightCol}>
-                        <View style={styles.popularFarePill}>
-                          <Text style={styles.popularFareText}>{`₹${getFare(item.from, item.to) || item.fare}`}</Text>
+                        {/* ROUTE INFO */}
+                        <View style={styles.popularInfoCol}>
+                          <View style={styles.popularTitleRow}>
+                            <Text style={styles.popularStationText}>{item.fromDisplay}</Text>
+                            <ArrowRight size={12} color="#94A3B8" strokeWidth={2.2} style={{ marginHorizontal: 6 }} />
+                            <Text style={styles.popularStationText}>{item.toDisplay}</Text>
+                          </View>
+                          <Text style={styles.popularMetaText}>
+                            {item.typicalDuration}  ·  {item.tag}
+                          </Text>
                         </View>
-                        <ChevronRight size={15} color="#94A3B8" style={{ marginLeft: 6 }} />
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+
+                        {/* FARE BADGE & CHEVRON */}
+                        <View style={styles.popularRightCol}>
+                          <View style={styles.popularFareBadge}>
+                            <Text style={styles.popularFareBadgeText}>₹{routeFare}</Text>
+                          </View>
+                          <ChevronRight size={16} color="#9CA3AF" style={{ marginLeft: 8 }} />
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
 
                 {/* SUBTLE EMPTY STATE */}
@@ -2280,7 +2332,7 @@ export default function LiveBusScreen() {
 
       </ScrollView>
 
-      {/* --- STEP 10A: RIGHT-SIDE SLIDE-IN STATION PICKER PANEL --- */}
+      {/* --- REDBUS-STYLE FULL-WIDTH STATION SEARCH MODAL (IMAGE 1 DESIGN) --- */}
       <Modal visible={modalVisible} animationType="none" transparent={true}>
         <View style={styles.modalOverlay}>
           {/* TAP OVERLAY OUTSIDE TO CLOSE */}
@@ -2290,52 +2342,57 @@ export default function LiveBusScreen() {
             onPress={closePicker}
           />
 
-          {/* RIGHT-SIDE DRAWER CONTAINER */}
+          {/* FULL-WIDTH SEARCH CONTAINER */}
           <Animated.View
             style={[
               styles.drawerContainer,
-              { transform: [{ translateX: drawerSlideAnim }] },
+              { transform: [{ translateY: drawerSlideAnim }] },
             ]}
           >
-            {/* DRAWER HEADER */}
-            <View style={styles.drawerHeader}>
-              <Text style={styles.drawerTitle}>
-                {activePicker === 'from' ? 'Boarding station' : 'Destination station'}
-              </Text>
-              <TouchableOpacity
-                onPress={closePicker}
-                style={styles.drawerCloseBtn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                activeOpacity={0.7}
-              >
-                <X size={20} color="#18258F" />
-              </TouchableOpacity>
-            </View>
-
-            {/* SEARCH FIELD */}
-            <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused]}>
-              <Search size={16} color={isSearchFocused ? '#18258F' : '#6B7280'} />
-              <TextInput
-                style={[styles.searchInput, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
-                placeholder="Search station, landmark..."
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                autoFocus={true}
-              />
-              {searchQuery ? (
+            {/* TOP SEARCH BAR PILL WITH INLINE BACK ARROW (AS IN UPLOADED IMAGE 1) */}
+            <View style={[styles.searchHeaderWrapper, { paddingTop: Math.max(insets.top, 14) }]}>
+              <View style={[styles.searchPillContainer, isSearchFocused && styles.searchPillFocused]}>
                 <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onPress={closePicker}
+                  style={styles.searchBackBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Back to journey planner"
                 >
-                  <X size={15} color="#556080" />
+                  <ArrowLeft size={20} color="#10131A" strokeWidth={2.2} />
                 </TouchableOpacity>
-              ) : null}
+
+                <TextInput
+                  style={[styles.searchInputPill, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
+                  placeholder={activePicker === 'from' ? 'Search Boarding Point' : 'Search Destination Point'}
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  autoFocus={true}
+                />
+
+                {searchQuery ? (
+                  <TouchableOpacity
+                    onPress={() => setSearchQuery('')}
+                    style={styles.searchClearBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <X size={16} color="#6B7280" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View>
 
-            {/* STATIONS LIST */}
+            {/* SECTION HEADING: Popular Stations near you (AS IN UPLOADED IMAGE 1) */}
+            <View style={styles.searchSectionHeaderRow}>
+              <Text style={styles.searchSectionTitle}>
+                {searchQuery ? 'Search Results' : 'Popular Stations near you'}
+              </Text>
+            </View>
+
+            {/* FULL-WIDTH STATIONS LIST */}
             <FlatList
               data={filteredStops}
               keyExtractor={item => item.id}
@@ -2350,17 +2407,8 @@ export default function LiveBusScreen() {
                   <TouchableOpacity
                     style={[styles.drawerItemRow, isSelected && styles.drawerItemRowSelected]}
                     onPress={() => selectStation(item)}
-                    activeOpacity={0.7}
+                    activeOpacity={0.65}
                   >
-                    {/* BULLET / DOT INDICATOR */}
-                    <View
-                      style={[
-                        styles.drawerItemDot,
-                        isSelected && styles.drawerItemDotSelected,
-                      ]}
-                    />
-
-                    {/* STATION INFO */}
                     <View style={styles.drawerItemInfoCol}>
                       <View style={styles.drawerItemTitleRow}>
                         <Text
@@ -2383,8 +2431,155 @@ export default function LiveBusScreen() {
                   </TouchableOpacity>
                 );
               }}
+              ListEmptyComponent={
+                <View style={styles.drawerEmptyBox}>
+                  <Text style={styles.drawerEmptyText}>
+                    Koi station nahi mila "{searchQuery}" ke liye
+                  </Text>
+                  <Text style={styles.drawerEmptySub}>
+                    Try searching by stop name, landmark, or terminal code
+                  </Text>
+                </View>
+              }
             />
           </Animated.View>
+        </View>
+      </Modal>
+
+      {/* --- ALL POPULAR ROUTES FULL-WIDTH MODAL (VIEW ALL) --- */}
+      <Modal visible={allPopularModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setAllPopularModalVisible(false)}
+          />
+
+          <View style={styles.drawerContainer}>
+            {/* SEARCH PILL BAR WITH INLINE BACK ARROW */}
+            <View style={[styles.searchHeaderWrapper, { paddingTop: Math.max(insets.top, 14) }]}>
+              <View style={styles.searchPillContainer}>
+                <TouchableOpacity
+                  onPress={() => setAllPopularModalVisible(false)}
+                  style={styles.searchBackBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Close popular routes"
+                >
+                  <ArrowLeft size={20} color="#10131A" strokeWidth={2.2} />
+                </TouchableOpacity>
+
+                <TextInput
+                  style={[styles.searchInputPill, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
+                  placeholder="Search popular routes or stops..."
+                  placeholderTextColor="#9CA3AF"
+                  value={popularSearchQuery}
+                  onChangeText={setPopularSearchQuery}
+                  autoFocus={false}
+                />
+
+                {popularSearchQuery ? (
+                  <TouchableOpacity
+                    onPress={() => setPopularSearchQuery('')}
+                    style={styles.searchClearBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <X size={16} color="#6B7280" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+
+            {/* CATEGORY FILTER CHIPS */}
+            <View style={styles.categoryChipsWrapper}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryChipsScroll}>
+                {[
+                  { id: 'all', label: 'All Routes' },
+                  { id: 'secretariat', label: 'Govt Secretariat' },
+                  { id: 'campus', label: 'Colleges & IIIT' },
+                  { id: 'tourist', label: 'Tourist & Safari' },
+                  { id: 'hospital', label: 'Hospitals' },
+                  { id: 'shuttle', label: 'Feeder & Loops' },
+                ].map(chip => (
+                  <TouchableOpacity
+                    key={chip.id}
+                    onPress={() => setPopularCategory(chip.id as any)}
+                    style={[
+                      styles.categoryChip,
+                      popularCategory === chip.id && styles.categoryChipActive,
+                    ]}
+                    activeOpacity={0.75}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        popularCategory === chip.id && styles.categoryChipTextActive,
+                      ]}
+                    >
+                      {chip.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* SECTION TITLE */}
+            <View style={styles.searchSectionHeaderRow}>
+              <Text style={styles.searchSectionTitle}>
+                {popularSearchQuery ? `Matching Routes (${filteredPopularRoutes.length})` : `Popular Routes (${filteredPopularRoutes.length})`}
+              </Text>
+            </View>
+
+            {/* FLATLIST OF POPULAR ROUTE CARDS */}
+            <FlatList
+              data={filteredPopularRoutes}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[styles.drawerListContent, { paddingHorizontal: 16 }]}
+              renderItem={({ item }) => {
+                const routeFare = getFare(item.from, item.to) || item.fare;
+                return (
+                  <TouchableOpacity
+                    style={styles.popularCard}
+                    onPress={() => selectPopularRoute(item)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.popularIconWrap}>
+                      <Bus size={20} color="#18258F" strokeWidth={2.2} />
+                    </View>
+
+                    <View style={styles.popularInfoCol}>
+                      <View style={styles.popularTitleRow}>
+                        <Text style={styles.popularStationText}>{item.fromDisplay}</Text>
+                        <ArrowRight size={12} color="#94A3B8" strokeWidth={2.2} style={{ marginHorizontal: 6 }} />
+                        <Text style={styles.popularStationText}>{item.toDisplay}</Text>
+                      </View>
+                      <Text style={styles.popularMetaText}>
+                        {item.typicalDuration}  ·  {item.tag}
+                      </Text>
+                    </View>
+
+                    <View style={styles.popularRightCol}>
+                      <View style={styles.popularFareBadge}>
+                        <Text style={styles.popularFareBadgeText}>₹{routeFare}</Text>
+                      </View>
+                      <ChevronRight size={16} color="#9CA3AF" style={{ marginLeft: 8 }} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={
+                <View style={styles.drawerEmptyBox}>
+                  <Text style={styles.drawerEmptyText}>
+                    Koi route nahi mila "{popularSearchQuery}" ke liye
+                  </Text>
+                  <Text style={styles.drawerEmptySub}>
+                    Try clearing filters or search by station name
+                  </Text>
+                </View>
+              }
+            />
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -2671,110 +2866,131 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 2,
-  },
-  sectionHeader: {
-    fontFamily: FONT.bold,
-    fontSize: 18, // Section heading: 18 px / 700
-    lineHeight: 24, // Line-height around 24 px
-    fontWeight: '700',
-    color: '#17205F',
-    letterSpacing: -0.2,
-  },
-  sectionHeaderHint: {
-    fontFamily: FONT.medium,
-    fontSize: 12.5, // Metadata: 12–13 px / 500
-    lineHeight: 18,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  popularGroupedCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    overflow: 'hidden',
-    shadowColor: '#17205F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  popularRouteRow: {
+  /* POPULAR ROUTES (MATCHING USER UPLOADED DESIGN) */
+  popularSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F4F9',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  popularSectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  popularViewAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  popularViewAllText: {
+    fontFamily: FONT.bold,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#18258F',
+    marginRight: 2,
+  },
+  popularCardsList: {
+    gap: 10,
+    marginBottom: 18,
+  },
+  popularCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#EFF2F7',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1.5,
   },
-  popularRouteRowLast: {
-    borderBottomWidth: 0,
+  popularIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 13,
   },
-  popularRouteInfoCol: {
+  popularInfoCol: {
     flex: 1,
     justifyContent: 'center',
   },
-  popularRouteTitleRow: {
+  popularTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  popularStationName: {
+  popularStationText: {
     fontFamily: FONT.bold,
-    fontSize: 15.5, // Route / Station name: 15–16 px / 700
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#111827',
     letterSpacing: -0.1,
   },
-  popularRouteMetaRow: {
+  popularMetaText: {
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
+    color: '#6B7280',
+    marginTop: 3,
+  },
+  popularRightCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginLeft: 8,
   },
-  popularRouteMetaDuration: {
-    fontFamily: FONT.medium,
-    fontSize: 12.5,
-    fontWeight: '500',
-    color: '#475569',
+  popularFareBadge: {
+    backgroundColor: '#EFF3FF',
+    paddingHorizontal: 12,
+    paddingVertical: 5.5,
+    borderRadius: 14,
+  },
+  popularFareBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#18258F',
     fontVariant: ['tabular-nums'],
   },
-  popularRouteMetaDot: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginHorizontal: 4,
+  categoryChipsWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF2',
   },
-  popularRouteMetaTag: {
+  categoryChipsScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 6.5,
+    borderRadius: 18,
+    backgroundColor: '#F1F3FA',
+  },
+  categoryChipActive: {
+    backgroundColor: '#18258F',
+  },
+  categoryChipText: {
     fontFamily: FONT.medium,
     fontSize: 12,
-    fontWeight: '500',
-    color: '#64748B',
+    fontWeight: '600',
+    color: '#4B5563',
   },
-  popularRouteRightCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  popularFarePill: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  popularFareText: {
+  categoryChipTextActive: {
     fontFamily: FONT.bold,
-    fontSize: 14.5, // Fare: 14–15 px / 700
-    fontWeight: '700',
-    color: '#1E293B',
-    fontVariant: ['tabular-nums'],
+    color: '#FFFFFF',
   },
   emptyStateSection: {
     alignItems: 'center',
@@ -3864,202 +4080,163 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  /* --- RIGHT-SIDE SLIDE-IN STATION PICKER STYLES --- */
+  /* --- REDBUS-STYLE FULL-WIDTH SEARCH MODAL STYLES (IMAGE 1) --- */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(16, 26, 114, 0.16)',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     width: '100%',
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        } as any)
-      : {}),
+    height: '100%',
   },
   drawerContainer: {
-    backgroundColor: 'rgba(250, 249, 246, 0.94)',
-    width: 400,
-    maxWidth: '92%',
-    height: '100%',
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingTop: 20,
-    paddingHorizontal: 18,
-    paddingBottom: 24,
-    shadowColor: '#18258F',
-    shadowOffset: { width: -4, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 20,
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(24, 37, 143, 0.06)',
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        } as any)
-      : {}),
-  },
-  drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 2,
-  },
-  drawerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#18258F',
-    letterSpacing: -0.3,
-  },
-  drawerCloseBtn: {
-    padding: 6,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.10)',
-    borderRadius: 12,
-    height: 44,
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    width: '100%',
+    maxWidth: 480,
+    height: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 24,
   },
-  searchBarFocused: {
+  searchHeaderWrapper: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF2',
+  },
+  searchPillContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F3FA',
+    borderRadius: 24,
+    height: 48,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  searchPillFocused: {
     borderColor: '#18258F',
     backgroundColor: '#FFFFFF',
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 1,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 13.5,
-    color: '#10131A',
-    paddingVertical: 0,
-    fontWeight: '500',
-    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
-  },
-  drawerListContent: {
-    paddingBottom: 40,
-  },
-  nearMeInlineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ECFDF5',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    marginRight: 6,
-  },
-  nearMeInlineText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#047857',
-  },
-  useCurrentLocRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#ECFDF5',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    marginBottom: 12,
-  },
-  useCurrentLocIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#D1FAE5',
+  searchBackBtn: {
+    paddingRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  useCurrentLocTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#065F46',
+  searchInputPill: {
+    flex: 1,
+    fontFamily: FONT.medium,
+    fontSize: 14.5,
+    color: '#10131A',
+    fontWeight: '500',
+    paddingVertical: 0,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
-  useCurrentLocSub: {
-    fontSize: 11,
-    color: '#047857',
-    marginTop: 1,
+  searchClearBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchSectionHeaderRow: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  searchSectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#10131A',
+    letterSpacing: -0.2,
+  },
+  drawerListContent: {
+    paddingBottom: 60,
   },
   drawerItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 6,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(24, 37, 143, 0.06)',
-    borderRadius: 10,
+    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
   },
   drawerItemRowSelected: {
-    backgroundColor: 'rgba(24, 37, 143, 0.03)',
-  },
-  drawerItemDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#9CA3AF',
-    marginRight: 12,
-  },
-  drawerItemDotSelected: {
-    backgroundColor: '#18258F',
+    backgroundColor: '#F0F4FF',
   },
   drawerItemInfoCol: {
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
   },
   drawerItemTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    marginBottom: 3,
   },
   drawerItemName: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: FONT.medium,
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#10131A',
-    flex: 1,
     letterSpacing: -0.1,
+    flex: 1,
+    marginRight: 8,
   },
   drawerItemNameSelected: {
+    fontFamily: FONT.bold,
     color: '#18258F',
+    fontWeight: '700',
   },
   drawerItemCodeBadge: {
-    backgroundColor: '#F1F3FA',
+    backgroundColor: '#EEF2FF',
     borderWidth: 1,
-    borderColor: '#DDE2F0',
-    paddingHorizontal: 6,
+    borderColor: '#C7D2FE',
+    paddingHorizontal: 6.5,
     paddingVertical: 2,
     borderRadius: 5,
   },
   drawerItemCodeText: {
+    fontFamily: FONT.bold,
     fontSize: 10.5,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#18258F',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   drawerItemSub: {
-    fontSize: 11.5,
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
     color: '#6B7280',
-    marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '400',
+  },
+  drawerEmptyBox: {
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerEmptyText: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    color: '#18258F',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  drawerEmptySub: {
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 
   /* UPCOMING DEPARTURES TIMELINE */

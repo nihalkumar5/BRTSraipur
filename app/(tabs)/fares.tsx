@@ -12,13 +12,14 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowUpDown, ShieldCheck, Search, X } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowUpDown, ShieldCheck, Search, X, ArrowLeft } from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
 export default function FaresScreen() {
+  const insets = useSafeAreaInsets();
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
   const [toStop, setToStop] = useState<string>('HNLU (National Law University)');
 
@@ -76,7 +77,7 @@ export default function FaresScreen() {
     setActivePicker(type);
     setSearchQuery('');
     setModalVisible(true);
-    drawerSlideAnim.setValue(420);
+    drawerSlideAnim.setValue(600);
     Animated.timing(drawerSlideAnim, {
       toValue: 0,
       duration: 250,
@@ -87,8 +88,8 @@ export default function FaresScreen() {
 
   const closePicker = () => {
     Animated.timing(drawerSlideAnim, {
-      toValue: 420,
-      duration: 220,
+      toValue: 600,
+      duration: 200,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: Platform.OS !== 'web',
     }).start(() => {
@@ -251,7 +252,7 @@ export default function FaresScreen() {
         </View>
       </ScrollView>
 
-      {/* --- STEP 10A: RIGHT-SIDE SLIDE-IN STATION PICKER DRAWER --- */}
+      {/* --- REDBUS-STYLE FULL-WIDTH STATION SEARCH MODAL (IMAGE 1 DESIGN) --- */}
       <Modal visible={modalVisible} animationType="none" transparent={true}>
         <View style={styles.modalOverlay}>
           {/* TAP OVERLAY OUTSIDE TO CLOSE */}
@@ -261,52 +262,57 @@ export default function FaresScreen() {
             onPress={closePicker}
           />
 
-          {/* RIGHT-SIDE DRAWER CONTAINER */}
+          {/* FULL-WIDTH SEARCH CONTAINER */}
           <Animated.View
             style={[
               styles.drawerContainer,
-              { transform: [{ translateX: drawerSlideAnim }] },
+              { transform: [{ translateY: drawerSlideAnim }] },
             ]}
           >
-            {/* DRAWER HEADER */}
-            <View style={styles.drawerHeader}>
-              <Text style={styles.drawerTitle}>
-                {activePicker === 'from' ? 'Boarding station' : 'Destination station'}
-              </Text>
-              <TouchableOpacity
-                onPress={closePicker}
-                style={styles.drawerCloseBtn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                activeOpacity={0.7}
-              >
-                <X size={20} color="#002081" />
-              </TouchableOpacity>
-            </View>
-
-            {/* SEARCH FIELD */}
-            <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused]}>
-              <Search size={16} color={isSearchFocused ? '#002081' : '#556080'} />
-              <TextInput
-                style={[styles.searchInput, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
-                placeholder="Search station, landmark..."
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                autoFocus={true}
-              />
-              {searchQuery ? (
+            {/* TOP SEARCH BAR PILL WITH INLINE BACK ARROW (AS IN UPLOADED IMAGE 1) */}
+            <View style={[styles.searchHeaderWrapper, { paddingTop: Math.max(insets.top, 14) }]}>
+              <View style={[styles.searchPillContainer, isSearchFocused && styles.searchPillFocused]}>
                 <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onPress={closePicker}
+                  style={styles.searchBackBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Back to fare calculator"
                 >
-                  <X size={15} color="#556080" />
+                  <ArrowLeft size={20} color="#10131A" strokeWidth={2.2} />
                 </TouchableOpacity>
-              ) : null}
+
+                <TextInput
+                  style={[styles.searchInputPill, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}]}
+                  placeholder={activePicker === 'from' ? 'Search Boarding Point' : 'Search Destination Point'}
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  autoFocus={true}
+                />
+
+                {searchQuery ? (
+                  <TouchableOpacity
+                    onPress={() => setSearchQuery('')}
+                    style={styles.searchClearBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <X size={16} color="#6B7280" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View>
 
-            {/* STATION LIST */}
+            {/* SECTION HEADING: Popular Stations near you (AS IN UPLOADED IMAGE 1) */}
+            <View style={styles.searchSectionHeaderRow}>
+              <Text style={styles.searchSectionTitle}>
+                {searchQuery ? 'Search Results' : 'Popular Stations near you'}
+              </Text>
+            </View>
+
+            {/* FULL-WIDTH STATIONS LIST */}
             <FlatList
               data={filteredStops}
               keyExtractor={item => item.id}
@@ -321,17 +327,8 @@ export default function FaresScreen() {
                   <TouchableOpacity
                     style={[styles.drawerItemRow, isSelected && styles.drawerItemRowSelected]}
                     onPress={() => selectStation(item)}
-                    activeOpacity={0.7}
+                    activeOpacity={0.65}
                   >
-                    {/* BULLET / DOT INDICATOR */}
-                    <View
-                      style={[
-                        styles.drawerItemDot,
-                        isSelected && styles.drawerItemDotSelected,
-                      ]}
-                    />
-
-                    {/* STATION INFO */}
                     <View style={styles.drawerItemInfoCol}>
                       <View style={styles.drawerItemTitleRow}>
                         <Text
@@ -354,6 +351,16 @@ export default function FaresScreen() {
                   </TouchableOpacity>
                 );
               }}
+              ListEmptyComponent={
+                <View style={styles.drawerEmptyBox}>
+                  <Text style={styles.drawerEmptyText}>
+                    Koi station nahi mila "{searchQuery}" ke liye
+                  </Text>
+                  <Text style={styles.drawerEmptySub}>
+                    Try searching by stop name, landmark, or terminal code
+                  </Text>
+                </View>
+              }
             />
           </Animated.View>
         </View>
@@ -600,143 +607,164 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  /* --- STEP 10A: RIGHT-SIDE SLIDE-IN STATION PICKER STYLES --- */
+  /* --- REDBUS-STYLE FULL-WIDTH SEARCH MODAL STYLES (IMAGE 1) --- */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.12)', // Lightweight 12% overlay
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     width: '100%',
+    height: '100%',
   },
   drawerContainer: {
-    backgroundColor: '#F8F9FC',
-    width: 400,
-    maxWidth: '92%',
-    height: '100%',
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingTop: 20,
-    paddingHorizontal: 18,
-    paddingBottom: 24,
-    shadowColor: '#18258F',
-    shadowOffset: { width: -4, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 20,
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(24, 37, 143, 0.06)',
-  },
-  drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 2,
-  },
-  drawerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#18258F',
-    letterSpacing: -0.3,
-  },
-  drawerCloseBtn: {
-    padding: 6,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.10)',
-    borderRadius: 12,
-    height: 44,
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    width: '100%',
+    maxWidth: 480,
+    height: '100%',
+    flex: 1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 24,
   },
-  searchBarFocused: {
+  searchHeaderWrapper: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF2',
+  },
+  searchPillContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F3FA',
+    borderRadius: 24,
+    height: 48,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  searchPillFocused: {
     borderColor: '#18258F',
     backgroundColor: '#FFFFFF',
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 1,
   },
-  searchInput: {
+  searchBackBtn: {
+    paddingRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchInputPill: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 13.5,
+    fontFamily: FONT.medium,
+    fontSize: 14.5,
     color: '#10131A',
-    paddingVertical: 0,
     fontWeight: '500',
+    paddingVertical: 0,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
+  searchClearBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchSectionHeaderRow: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  searchSectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#10131A',
+    letterSpacing: -0.2,
+  },
   drawerListContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   drawerItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 6,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(24, 37, 143, 0.06)',
-    borderRadius: 10,
+    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
   },
   drawerItemRowSelected: {
-    backgroundColor: '#E9ECFF',
-  },
-  drawerItemDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#9CA3AF',
-    marginRight: 12,
-  },
-  drawerItemDotSelected: {
-    backgroundColor: '#18258F',
+    backgroundColor: '#F0F4FF',
   },
   drawerItemInfoCol: {
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
   },
   drawerItemTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    marginBottom: 3,
   },
   drawerItemName: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: FONT.medium,
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#10131A',
-    flex: 1,
     letterSpacing: -0.1,
+    flex: 1,
+    marginRight: 8,
   },
   drawerItemNameSelected: {
+    fontFamily: FONT.bold,
     color: '#18258F',
+    fontWeight: '700',
   },
   drawerItemCodeBadge: {
-    backgroundColor: '#F5EAD8',
+    backgroundColor: '#EEF2FF',
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
-    paddingHorizontal: 6,
+    borderColor: '#C7D2FE',
+    paddingHorizontal: 6.5,
     paddingVertical: 2,
     borderRadius: 5,
   },
   drawerItemCodeText: {
+    fontFamily: FONT.bold,
     fontSize: 10.5,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#18258F',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   drawerItemSub: {
-    fontSize: 11.5,
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
     color: '#6B7280',
-    marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '400',
+  },
+  drawerEmptyBox: {
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerEmptyText: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    color: '#18258F',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  drawerEmptySub: {
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 
