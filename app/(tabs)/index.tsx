@@ -363,6 +363,9 @@ export default function LiveBusScreen() {
   const [popularCategory, setPopularCategory] = useState<'all' | 'secretariat' | 'campus' | 'tourist' | 'hospital' | 'shuttle'>('all');
   const [popularSearchQuery, setPopularSearchQuery] = useState('');
 
+  // Route details popup modal state (View route)
+  const [routeDetailsModalVisible, setRouteDetailsModalVisible] = useState(false);
+
   // Notification state
   const [reminderBanner, setReminderBanner] = useState<string | null>(null);
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
@@ -664,6 +667,11 @@ export default function LiveBusScreen() {
 
   // Comprehensive Back navigation handler (closes modals/sheets/inspectors only)
   const handleBack = useCallback(() => {
+    // 0. If route details modal is open, close it
+    if (routeDetailsModalVisible) {
+      setRouteDetailsModalVisible(false);
+      return true;
+    }
     // 1. If station picker sheet is open, close it
     if (modalVisible) {
       closePicker();
@@ -680,9 +688,9 @@ export default function LiveBusScreen() {
       return true;
     }
     return false;
-  }, [modalVisible, allPopularModalVisible, selectedTripId]);
+  }, [routeDetailsModalVisible, modalVisible, allPopularModalVisible, selectedTripId]);
 
-  const isBackable = modalVisible || allPopularModalVisible || !!selectedTripId;
+  const isBackable = routeDetailsModalVisible || modalVisible || allPopularModalVisible || !!selectedTripId;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1510,7 +1518,7 @@ export default function LiveBusScreen() {
                       {journey.durationMins} min · {journey.fromTime} → {journey.toTime}
                     </Text>
                     <TouchableOpacity
-                      onPress={() => router.push('/timetable' as any)}
+                      onPress={() => setRouteDetailsModalVisible(true)}
                       activeOpacity={0.7}
                       style={styles.cleanRouteStatusViewBtn}
                     >
@@ -2408,6 +2416,251 @@ export default function LiveBusScreen() {
               }
             />
           </View>
+        </View>
+      </Modal>
+
+      {/* --- ROUTE DETAILS POPUP MODAL (PREMIUM THEMED SHEET) --- */}
+      <Modal
+        visible={routeDetailsModalVisible && !!journey}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setRouteDetailsModalVisible(false)}
+      >
+        <View style={styles.routeModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setRouteDetailsModalVisible(false)}
+          />
+
+          {journey && (
+            <View style={styles.routeModalContainer}>
+              {/* TOP DRAG HANDLE */}
+              <View style={styles.routeModalDragHandle} />
+
+              {/* MODAL HEADER */}
+              <View style={styles.routeModalHeaderRow}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <View style={styles.routeModalBadgeRow}>
+                    <View style={styles.routeModalCategoryBadge}>
+                      <Text style={styles.routeModalCategoryBadgeText}>CORRIDOR ROUTE</Text>
+                    </View>
+                    <View style={styles.routeModalLiveStatusPill}>
+                      <View style={styles.routeModalLiveDot} />
+                      <Text style={styles.routeModalLiveText}>On schedule</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.routeModalTitle}>Route Details</Text>
+                  <Text style={styles.routeModalSubtitle} numberOfLines={1}>
+                    {journey.fromStop.shortName} → {journey.toStop.shortName}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setRouteDetailsModalVisible(false)}
+                  style={styles.routeModalCloseBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Close route details"
+                >
+                  <X size={18} color="#475569" strokeWidth={2.2} />
+                </TouchableOpacity>
+              </View>
+
+              {/* SCROLLABLE ROUTE DETAILS */}
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[
+                  styles.routeModalScrollContent,
+                  { paddingBottom: Math.max(insets.bottom, 20) + 16 },
+                ]}
+              >
+                {/* 1. ROYAL NAVY HERO CARD */}
+                <View style={styles.routeModalHeroCard}>
+                  {/* HERO TOP BADGES */}
+                  <View style={styles.routeModalHeroTop}>
+                    <View style={styles.routeModalHeroPillGroup}>
+                      <View style={styles.routeModalRoutePill}>
+                        <Text style={styles.routeModalRoutePillText}>
+                          {journey.routeBadge || journey.trip.routeNumber}
+                        </Text>
+                      </View>
+                      <View style={styles.routeModalServicePill}>
+                        <Text style={styles.routeModalServicePillText}>
+                          {journey.trip.serviceName || 'AC Express'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.routeModalFareTag}>₹{journey.fare}</Text>
+                  </View>
+
+                  {/* ORIGIN & DESTINATION JOURNEY PATH */}
+                  <View style={styles.routeModalPathRow}>
+                    <View style={styles.routeModalPathStationCol}>
+                      <View style={styles.routeModalPathDotOrigin} />
+                      <Text style={styles.routeModalStationName} numberOfLines={1}>
+                        {journey.fromStop.name}
+                      </Text>
+                      <Text style={styles.routeModalTimeText}>
+                        Dep {journey.fromTime}
+                      </Text>
+                    </View>
+
+                    <View style={styles.routeModalPathMidCol}>
+                      <ArrowRight size={16} color="#93C5FD" strokeWidth={2.2} />
+                      <Text style={styles.routeModalDurationPill}>
+                        {journey.durationMins}m
+                      </Text>
+                    </View>
+
+                    <View style={[styles.routeModalPathStationCol, { alignItems: 'flex-end' }]}>
+                      <View style={styles.routeModalPathDotDest} />
+                      <Text style={[styles.routeModalStationName, { textAlign: 'right' }]} numberOfLines={1}>
+                        {journey.toStop.name}
+                      </Text>
+                      <Text style={[styles.routeModalTimeText, { textAlign: 'right' }]}>
+                        Arr {journey.toTime}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* METRIC STATS ROW */}
+                  <View style={styles.routeModalStatsRow}>
+                    <View style={styles.routeModalStatBox}>
+                      <Clock size={13} color="#BFDBFE" strokeWidth={2.2} />
+                      <Text style={styles.routeModalStatVal}>{journey.durationMins} min</Text>
+                      <Text style={styles.routeModalStatLabel}>Duration</Text>
+                    </View>
+                    <View style={styles.routeModalStatDivider} />
+                    <View style={styles.routeModalStatBox}>
+                      <MapPin size={13} color="#BFDBFE" strokeWidth={2.2} />
+                      <Text style={styles.routeModalStatVal}>
+                        {journey.intermediateStops.length} stops
+                      </Text>
+                      <Text style={styles.routeModalStatLabel}>Stations</Text>
+                    </View>
+                    <View style={styles.routeModalStatDivider} />
+                    <View style={styles.routeModalStatBox}>
+                      <Zap size={13} color="#BFDBFE" strokeWidth={2.2} />
+                      <Text style={styles.routeModalStatVal}>15-20 min</Text>
+                      <Text style={styles.routeModalStatLabel}>Frequency</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* 2. TRANSFER CALLOUT (IF APPLICABLE) */}
+                {journey.isTransfer && journey.transferHub && (
+                  <View style={styles.routeModalTransferNotice}>
+                    <View style={styles.routeModalTransferNoticeHeader}>
+                      <Info size={15} color="#18258F" strokeWidth={2.2} />
+                      <Text style={styles.routeModalTransferNoticeTitle}>
+                        Transfer Hub: {journey.transferHub}
+                      </Text>
+                    </View>
+                    <Text style={styles.routeModalTransferNoticeText}>
+                      Change at {journey.transferHub} to {journey.connectingTrip?.routeNumber || 'connecting feeder'}. Expected wait time: ~{journey.transferWaitMins ?? 5} min.
+                    </Text>
+                  </View>
+                )}
+
+                {/* 3. STOPS TIMELINE SECTION */}
+                <View style={styles.routeModalTimelineSection}>
+                  <View style={styles.routeModalSectionHeaderRow}>
+                    <Text style={styles.routeModalSectionTitle}>STOPS & SCHEDULE</Text>
+                    <Text style={styles.routeModalSectionCount}>
+                      {journey.intermediateStops.length} stations
+                    </Text>
+                  </View>
+
+                  <View style={styles.routeModalTimelineList}>
+                    {journey.intermediateStops.map((stopItem, index) => {
+                      const isFirst = index === 0;
+                      const isLast = index === journey.intermediateStops.length - 1;
+
+                      return (
+                        <View key={`${stopItem.name}_${index}`} style={styles.routeModalTimelineItem}>
+                          {/* TIMELINE INDICATOR COLUMN */}
+                          <View style={styles.routeModalTimelineIndicatorCol}>
+                            {!isLast && <View style={styles.routeModalTimelineLine} />}
+
+                            {isFirst ? (
+                              <View style={styles.routeModalOriginDot}>
+                                <View style={styles.routeModalOriginDotInner} />
+                              </View>
+                            ) : isLast ? (
+                              <View style={styles.routeModalDestDot}>
+                                <View style={styles.routeModalDestDotInner} />
+                              </View>
+                            ) : (
+                              <View style={styles.routeModalIntermediateDot} />
+                            )}
+                          </View>
+
+                          {/* STATION INFO */}
+                          <View style={[styles.routeModalTimelineInfoRow, isLast && { paddingBottom: 6 }]}>
+                            <View style={{ flex: 1, marginRight: 12 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <Text
+                                  style={[
+                                    styles.routeModalStationTitle,
+                                    (isFirst || isLast) && styles.routeModalStationTitleBold,
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {stopItem.name}
+                                </Text>
+
+                                {isFirst ? (
+                                  <View style={styles.routeModalBoardingTag}>
+                                    <Text style={styles.routeModalBoardingTagText}>Boarding</Text>
+                                  </View>
+                                ) : isLast ? (
+                                  <View style={styles.routeModalDropoffTag}>
+                                    <Text style={styles.routeModalDropoffTagText}>Drop-off</Text>
+                                  </View>
+                                ) : null}
+                              </View>
+
+                              <Text style={styles.routeModalStationCode}>
+                                {stopItem.code ? `Platform ${stopItem.code}` : 'BRTS Dedicated Shelter'}
+                              </Text>
+                            </View>
+
+                            {/* SCHEDULE TIME */}
+                            <Text
+                              style={[
+                                styles.routeModalTimeColText,
+                                (isFirst || isLast) && styles.routeModalTimeColTextBold,
+                              ]}
+                            >
+                              {stopItem.time}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* 4. OFFICIAL SERVICE FOOTNOTE */}
+                <View style={styles.routeModalFootnoteBox}>
+                  <ShieldCheck size={14} color="#059669" strokeWidth={2.2} />
+                  <Text style={styles.routeModalFootnoteText}>
+                    Official Nava Raipur Tatpar BRTS service · Automatic RFID / GPS tracking
+                  </Text>
+                </View>
+
+                {/* 5. CLOSE ACTION BUTTON */}
+                <TouchableOpacity
+                  style={styles.routeModalDoneBtn}
+                  onPress={() => setRouteDetailsModalVisible(false)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.routeModalDoneBtnText}>Done</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          )}
         </View>
       </Modal>
     </SafeAreaView>
@@ -5632,5 +5885,462 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#475569',
     flex: 1,
+  },
+
+  /* --- ROUTE DETAILS POPUP MODAL STYLES --- */
+  routeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  routeModalContainer: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '88%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 24,
+  },
+  routeModalDragHandle: {
+    width: 38,
+    height: 4.5,
+    backgroundColor: '#D0D5DD',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  routeModalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  routeModalBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  routeModalCategoryBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+  },
+  routeModalCategoryBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#18258F',
+    letterSpacing: 0.6,
+  },
+  routeModalLiveStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    gap: 4,
+  },
+  routeModalLiveDot: {
+    width: 5.5,
+    height: 5.5,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  routeModalLiveText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  routeModalTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  routeModalSubtitle: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 1,
+  },
+  routeModalCloseBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  routeModalScrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  routeModalHeroCard: {
+    backgroundColor: '#18258F',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  routeModalHeroTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  routeModalHeroPillGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  routeModalRoutePill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 7,
+  },
+  routeModalRoutePillText: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  routeModalServicePill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 7,
+  },
+  routeModalServicePillText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#E0E7FF',
+  },
+  routeModalFareTag: {
+    fontFamily: FONT.bold,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  routeModalPathRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  routeModalPathStationCol: {
+    flex: 1,
+  },
+  routeModalPathDotOrigin: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34D399',
+    marginBottom: 4,
+  },
+  routeModalPathDotDest: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F87171',
+    marginBottom: 4,
+  },
+  routeModalStationName: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  routeModalTimeText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#93C5FD',
+    marginTop: 2,
+  },
+  routeModalPathMidCol: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    gap: 2,
+  },
+  routeModalDurationPill: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#BFDBFE',
+    marginTop: 2,
+  },
+  routeModalStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.14)',
+    paddingTop: 12,
+  },
+  routeModalStatBox: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  routeModalStatVal: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginTop: 3,
+  },
+  routeModalStatLabel: {
+    fontFamily: FONT.regular,
+    fontSize: 10.5,
+    fontWeight: '400',
+    color: '#BFDBFE',
+    marginTop: 1,
+  },
+  routeModalStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  routeModalTransferNotice: {
+    backgroundColor: '#F0F4FF',
+    borderWidth: 1,
+    borderColor: '#D8E2FD',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 16,
+  },
+  routeModalTransferNoticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  routeModalTransferNoticeTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  routeModalTransferNoticeText: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: '#334155',
+    lineHeight: 17,
+  },
+  routeModalTimelineSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    marginBottom: 16,
+  },
+  routeModalSectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  routeModalSectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.8,
+  },
+  routeModalSectionCount: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+  routeModalTimelineList: {
+    paddingLeft: 4,
+  },
+  routeModalTimelineItem: {
+    flexDirection: 'row',
+    minHeight: 46,
+  },
+  routeModalTimelineIndicatorCol: {
+    width: 26,
+    alignItems: 'center',
+  },
+  routeModalTimelineLine: {
+    position: 'absolute',
+    top: 14,
+    bottom: 0,
+    width: 2,
+    backgroundColor: '#E2E8F0',
+  },
+  routeModalOriginDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#18258F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  routeModalOriginDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  routeModalDestDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#059669',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  routeModalDestDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  routeModalIntermediateDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#94A3B8',
+    marginTop: 7,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  routeModalTimelineInfoRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingLeft: 10,
+    paddingBottom: 16,
+  },
+  routeModalStationTitle: {
+    fontFamily: FONT.medium,
+    fontSize: 13.5,
+    fontWeight: '500',
+    color: '#334155',
+  },
+  routeModalStationTitleBold: {
+    fontFamily: FONT.bold,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  routeModalBoardingTag: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  routeModalBoardingTagText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  routeModalDropoffTag: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  routeModalDropoffTagText: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  routeModalStationCode: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    fontWeight: '400',
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  routeModalTimeColText: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748B',
+    fontVariant: ['tabular-nums'],
+  },
+  routeModalTimeColTextBold: {
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  routeModalFootnoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  routeModalFootnoteText: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    color: '#475569',
+    flex: 1,
+  },
+  routeModalDoneBtn: {
+    backgroundColor: '#18258F',
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  routeModalDoneBtnText: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
