@@ -191,6 +191,10 @@ export function findNearbyDirectAlternatives(
   const nearbyOrigins = getNearbyStations(fromStop.name, maxRadiusKm);
   for (const nearby of nearbyOrigins) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+
+    // Strict walking buffer: bus departure must be after the user finishes walking there
+    const earliestBoardingMins = nowMins + Math.max(1, nearby.walkingMins - 1);
+
     const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
@@ -211,9 +215,22 @@ export function findNearbyDirectAlternatives(
 
     if (matching.length > 0) {
       matching.sort((a, b) => a.depMins - b.depMins);
-      const upcoming = matching.filter(m => m.depMins >= nowMins - 1);
-      const chosen = upcoming.length > 0 ? upcoming[0] : matching[0];
+      const reachableToday = matching.filter(m => m.depMins >= earliestBoardingMins);
+
+      let chosen: (typeof matching)[0];
+      let isToday = true;
+
+      if (reachableToday.length > 0) {
+        chosen = reachableToday[0];
+      } else {
+        chosen = matching[0];
+        isToday = false;
+      }
+
       const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : (chosen.arrMins + 1440 - chosen.depMins);
+      const minutesUntilDeparture = isToday
+        ? Math.max(0, chosen.depMins - nowMins)
+        : (chosen.depMins + 1440 - nowMins);
 
       alternatives.push({
         type: 'nearby_origin',
@@ -229,6 +246,9 @@ export function findNearbyDirectAlternatives(
         arrivalTime: chosen.trip.stops[chosen.tIdx].time,
         durationMins,
         fare: getFare(nearby.stop.name, toStop.name),
+        depMins: chosen.depMins,
+        minutesUntilDeparture,
+        isToday,
       });
     }
   }
@@ -237,6 +257,8 @@ export function findNearbyDirectAlternatives(
   const nearbyDestinations = getNearbyStations(toStop.name, maxRadiusKm);
   for (const nearby of nearbyDestinations) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
+    if (alternatives.some(a => a.suggestedStop.id === nearby.stop.id)) continue;
+
     const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number; arrMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
@@ -257,9 +279,22 @@ export function findNearbyDirectAlternatives(
 
     if (matching.length > 0) {
       matching.sort((a, b) => a.depMins - b.depMins);
-      const upcoming = matching.filter(m => m.depMins >= nowMins - 1);
-      const chosen = upcoming.length > 0 ? upcoming[0] : matching[0];
+      const reachableToday = matching.filter(m => m.depMins >= nowMins - 1);
+
+      let chosen: (typeof matching)[0];
+      let isToday = true;
+
+      if (reachableToday.length > 0) {
+        chosen = reachableToday[0];
+      } else {
+        chosen = matching[0];
+        isToday = false;
+      }
+
       const durationMins = chosen.arrMins >= chosen.depMins ? chosen.arrMins - chosen.depMins : (chosen.arrMins + 1440 - chosen.depMins);
+      const minutesUntilDeparture = isToday
+        ? Math.max(0, chosen.depMins - nowMins)
+        : (chosen.depMins + 1440 - nowMins);
 
       alternatives.push({
         type: 'nearby_destination',
@@ -275,12 +310,20 @@ export function findNearbyDirectAlternatives(
         arrivalTime: chosen.trip.stops[chosen.tIdx].time,
         durationMins,
         fare: getFare(fromStop.name, nearby.stop.name),
+        depMins: chosen.depMins,
+        minutesUntilDeparture,
+        isToday,
       });
     }
   }
 
-  // Sort by closest distance first
-  alternatives.sort((a, b) => a.distanceKm - b.distanceKm);
+  // Prioritize active trips running today, then nearest distance
+  alternatives.sort((a, b) => {
+    if (a.isToday && !b.isToday) return -1;
+    if (!a.isToday && b.isToday) return 1;
+    return a.distanceKm - b.distanceKm;
+  });
+
   return alternatives.slice(0, 4);
 }
 
@@ -288,7 +331,8 @@ export function getNearbyStationsWithService(
   fromName: string,
   toName: string,
   forceServiceDay?: 'weekday' | 'weekend',
-  maxRadiusKm: number = 4.5
+  nowMins: number = getCurrentMinutesOfDay(),
+  maxRadiusKm: number = 2.5
 ): NearbyServiceStation[] {
   const fromStop = getStopByName(fromName);
   const toStop = getStopByName(toName);
@@ -302,7 +346,9 @@ export function getNearbyStationsWithService(
   for (const nearby of nearbyOrigins) {
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
 
-    let directRoute: string | null = null;
+    const earliestBoardingMins = nowMins + Math.max(1, nearby.walkingMins - 1);
+
+    const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
       let fIdx = -1, tIdx = -1;
@@ -311,12 +357,33 @@ export function getNearbyStationsWithService(
         if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, toStop)) tIdx = idx;
       });
       if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
-        directRoute = trip.routeNumber;
-        break;
+        matching.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins });
       }
     }
 
-    if (directRoute) {
+    if (matching.length > 0) {
+      matching.sort((a, b) => a.depMins - b.depMins);
+      const reachableToday = matching.filter(m => m.depMins >= earliestBoardingMins);
+
+      let chosen: (typeof matching)[0];
+      let isToday = true;
+
+      if (reachableToday.length > 0) {
+        chosen = reachableToday[0];
+      } else {
+        chosen = matching[0];
+        isToday = false;
+      }
+
+      const depTime = chosen.trip.stops[chosen.fIdx].time;
+      const minutesUntilDeparture = isToday
+        ? Math.max(0, chosen.depMins - nowMins)
+        : (chosen.depMins + 1440 - nowMins);
+
+      const routeSummary = isToday
+        ? `Bus ${chosen.trip.routeNumber} at ${depTime} (in ${minutesUntilDeparture}m · ~${nearby.walkingMins}m walk)`
+        : `Service ended today · First bus tomorrow at ${depTime} (Bus ${chosen.trip.routeNumber})`;
+
       results.push({
         stop: nearby.stop,
         distanceKm: nearby.distanceKm,
@@ -324,7 +391,12 @@ export function getNearbyStationsWithService(
         distanceFormatted: nearby.distanceFormatted,
         serviceType: 'direct',
         actionType: 'board',
-        routeSummary: `Direct Bus ${directRoute} to ${toStop.shortName}`,
+        routeNumber: chosen.trip.routeNumber,
+        depMins: chosen.depMins,
+        minutesUntilDeparture,
+        departureTimeText: depTime,
+        isToday,
+        routeSummary,
       });
     }
   }
@@ -335,7 +407,7 @@ export function getNearbyStationsWithService(
     if (nearby.stop.id === fromStop.id || nearby.stop.id === toStop.id) continue;
     if (results.some(r => r.stop.id === nearby.stop.id)) continue;
 
-    let directRoute: string | null = null;
+    const matching: { trip: Trip; fIdx: number; tIdx: number; depMins: number }[] = [];
     for (const trip of schedules) {
       if (trip.serviceDay !== serviceDay) continue;
       let fIdx = -1, tIdx = -1;
@@ -344,12 +416,33 @@ export function getNearbyStationsWithService(
         if (tIdx === -1 && fIdx !== -1 && matchStop(s.stop, nearby.stop)) tIdx = idx;
       });
       if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
-        directRoute = trip.routeNumber;
-        break;
+        matching.push({ trip, fIdx, tIdx, depMins: trip.stops[fIdx].mins });
       }
     }
 
-    if (directRoute) {
+    if (matching.length > 0) {
+      matching.sort((a, b) => a.depMins - b.depMins);
+      const reachableToday = matching.filter(m => m.depMins >= nowMins - 1);
+
+      let chosen: (typeof matching)[0];
+      let isToday = true;
+
+      if (reachableToday.length > 0) {
+        chosen = reachableToday[0];
+      } else {
+        chosen = matching[0];
+        isToday = false;
+      }
+
+      const depTime = chosen.trip.stops[chosen.fIdx].time;
+      const minutesUntilDeparture = isToday
+        ? Math.max(0, chosen.depMins - nowMins)
+        : (chosen.depMins + 1440 - nowMins);
+
+      const routeSummary = isToday
+        ? `Bus ${chosen.trip.routeNumber} at ${depTime} (departs in ${minutesUntilDeparture}m) to ${nearby.stop.shortName} (~${nearby.walkingMins}m walk)`
+        : `Service ended today · First bus tomorrow at ${depTime} to ${nearby.stop.shortName}`;
+
       results.push({
         stop: nearby.stop,
         distanceKm: nearby.distanceKm,
@@ -357,12 +450,23 @@ export function getNearbyStationsWithService(
         distanceFormatted: nearby.distanceFormatted,
         serviceType: 'direct',
         actionType: 'deboard',
-        routeSummary: `Bus ${directRoute} to ${nearby.stop.shortName} (~${nearby.walkingMins}m walk to ${toStop.shortName})`,
+        routeNumber: chosen.trip.routeNumber,
+        depMins: chosen.depMins,
+        minutesUntilDeparture,
+        departureTimeText: depTime,
+        isToday,
+        routeSummary,
       });
     }
   }
 
-  results.sort((a, b) => a.distanceKm - b.distanceKm);
+  // Prioritize active trips running today
+  results.sort((a, b) => {
+    if (a.isToday && !b.isToday) return -1;
+    if (!a.isToday && b.isToday) return 1;
+    return a.distanceKm - b.distanceKm;
+  });
+
   return results.slice(0, 4);
 }
 

@@ -401,14 +401,14 @@ export default function LiveBusScreen() {
   // If no direct or transfer route found, find nearby stations that have direct service
   const noRouteAlternatives: NearbyDirectAlternative[] = useMemo(() => {
     if (journey || !fromStation || !toStation || fromStation === toStation) return [];
-    return findNearbyDirectAlternatives(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 4.0);
+    return findNearbyDirectAlternatives(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 2.5);
   }, [journey, fromStation, toStation, planningMode, currentTimeMins]);
 
   // Nearby stations that specifically offer bus service to destination
   const nearbyServiceStations: NearbyServiceStation[] = useMemo(() => {
     if (journey || !fromStation || !toStation || fromStation === toStation) return [];
-    return getNearbyStationsWithService(fromStation, toStation, planningMode ? 'weekday' : undefined, 4.5);
-  }, [journey, fromStation, toStation, planningMode]);
+    return getNearbyStationsWithService(fromStation, toStation, planningMode ? 'weekday' : undefined, currentTimeMins, 2.5);
+  }, [journey, fromStation, toStation, planningMode, currentTimeMins]);
 
   // Derived next stop details for live operational dashboard
   const nextStopObj = useMemo(() => {
@@ -1131,9 +1131,9 @@ export default function LiveBusScreen() {
                             <Text style={styles.nearbyAltDistText}>({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)</Text>
                           </View>
                           <Text style={styles.nearbyAltTripDesc}>
-                            {alt.type === 'nearby_origin'
-                              ? `Direct Bus ${alt.routeNumber} to ${toStation} · ~${alt.durationMins}m ride · ₹${alt.fare}`
-                              : `Direct Bus ${alt.routeNumber} to ${alt.suggestedStop.shortName} · ~${alt.durationMins}m ride · ₹${alt.fare}`}
+                            {alt.isToday
+                              ? `Bus ${alt.routeNumber} at ${alt.departureTime} (in ${alt.minutesUntilDeparture}m · ~${alt.walkingMins}m walk) · ₹${alt.fare}`
+                              : `Service ended today · First bus tomorrow at ${alt.departureTime} · ₹${alt.fare}`}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -1499,9 +1499,9 @@ export default function LiveBusScreen() {
                             <Text style={styles.noRouteAltDistText}>({alt.distanceFormatted} · ~{alt.walkingMins}m walk)</Text>
                           </View>
                           <Text style={styles.noRouteAltDetail}>
-                            {alt.type === 'nearby_origin'
-                              ? `Direct Bus ${alt.routeNumber} to ${toStation} · ₹${alt.fare}`
-                              : `Direct Bus ${alt.routeNumber} to ${alt.suggestedStop.shortName} · ₹${alt.fare}`}
+                            {alt.isToday
+                              ? `Bus ${alt.routeNumber} at ${alt.departureTime} (in ${alt.minutesUntilDeparture}m · ~${alt.walkingMins}m walk) · ₹${alt.fare}`
+                              : `Service ended today · First bus tomorrow at ${alt.departureTime} · ₹${alt.fare}`}
                           </Text>
                         </View>
                         <TouchableOpacity

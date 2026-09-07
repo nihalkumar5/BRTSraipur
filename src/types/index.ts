@@ -142,6 +142,11 @@ export interface NearbyServiceStation {
   distanceFormatted: string;
   serviceType: 'direct' | 'connecting';
   actionType: 'board' | 'deboard';
+  routeNumber: string;
+  depMins: number;
+  minutesUntilDeparture: number;
+  departureTimeText: string;
+  isToday: boolean;
   routeSummary: string;
 }
 
@@ -159,6 +164,9 @@ export interface NearbyDirectAlternative {
   arrivalTime: string;
   durationMins: number;
   fare: number;
+  depMins: number;
+  minutesUntilDeparture: number;
+  isToday: boolean;
 }
 
 export interface PopularRoute {
