@@ -17,7 +17,7 @@
     "toDisplay": "Mantralaya",
     "tag": "Govt Secretariat Direct",
     "typicalDuration": "30m",
-    "fare": 25
+    "fare": 30
   },
   {
     "id": "pop-3",
@@ -27,7 +27,7 @@
     "toDisplay": "IIIT",
     "tag": "Campus Special",
     "typicalDuration": "45m",
-    "fare": 30
+    "fare": 40
   },
   {
     "id": "pop-4",
@@ -37,7 +37,7 @@
     "toDisplay": "Muktangan",
     "tag": "Tourist Feeder",
     "typicalDuration": "58m",
-    "fare": 40
+    "fare": 45
   },
   {
     "id": "pop-5",

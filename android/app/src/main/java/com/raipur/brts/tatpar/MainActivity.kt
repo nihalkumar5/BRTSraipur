@@ -20,17 +20,19 @@ class MainActivity : ReactActivity() {
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         window.navigationBarColor = android.graphics.Color.parseColor("#F7F7F4")
-        window.statusBarColor = android.graphics.Color.parseColor("#18258F")
+        window.statusBarColor = android.graphics.Color.parseColor("#F7F7F4")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
           window.insetsController?.setSystemBarsAppearance(
-            android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+            android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS or
+            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
             android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS or
             android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
           )
         } else {
           @Suppress("DEPRECATION")
           window.decorView.systemUiVisibility = (
-            android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR or
+            android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
           )
         }
       }

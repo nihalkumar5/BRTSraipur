@@ -470,5 +470,225 @@
       "latitude": 21.136,
       "longitude": 81.8025
     }
+  },
+  {
+    "id": "AGC",
+    "name": "Agriculture College",
+    "shortName": "Agri College",
+    "code": "AGC",
+    "hindiName": "\u0915\u0943\u0937\u093f \u092e\u0939\u093e\u0935\u093f\u0926\u094d\u092f\u093e\u0932\u092f",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Indira Gandhi Krishi Vishwavidyalaya, Krishak Nagar",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "Pedestrian Crossing"
+    ],
+    "coordinates": {
+      "latitude": 21.2372,
+      "longitude": 81.7058
+    }
+  },
+  {
+    "id": "RSU",
+    "name": "Rawatpura Sarkar University",
+    "shortName": "Rawatpura Univ",
+    "code": "RSU",
+    "hindiName": "\u0930\u093e\u0935\u0924\u092a\u0941\u0930\u093e \u0938\u0930\u0915\u093e\u0930 \u0935\u093f\u0936\u094d\u0935\u0935\u093f\u0926\u094d\u092f\u093e\u0932\u092f",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Shri Rawatpura Sarkar University Campus, Dhaneli",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform",
+      "Campus Shuttle Transfer"
+    ],
+    "coordinates": {
+      "latitude": 21.1685,
+      "longitude": 81.7925
+    }
+  },
+  {
+    "id": "THN",
+    "name": "Thanaud",
+    "shortName": "Thanaud",
+    "code": "THN",
+    "hindiName": "\u0920\u0928\u094c\u0926",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Thanaud Chowk, Nava Raipur",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.155,
+      "longitude": 81.785
+    }
+  },
+  {
+    "id": "NH30",
+    "name": "NH 30 Chowk",
+    "shortName": "NH 30 Chowk",
+    "code": "NH30",
+    "hindiName": "\u090f\u0928\u090f\u091a \u0969\u0966 \u091a\u094c\u0915",
+    "type": "junction",
+    "corridor": "Corridor 1",
+    "landmark": "NH-30 Raipur-Jagdalpur Highway Junction",
+    "interchange": true,
+    "facilities": [
+      "Highway Interchange",
+      "Pedestrian Crossing"
+    ],
+    "coordinates": {
+      "latitude": 21.138,
+      "longitude": 81.765
+    }
+  },
+  {
+    "id": "MLS",
+    "name": "Military Station",
+    "shortName": "Military Stn",
+    "code": "MLS",
+    "hindiName": "\u092e\u093f\u0932\u093f\u091f\u094d\u0930\u0940 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Military Cantonment, Nava Raipur",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.173,
+      "longitude": 81.802
+    }
+  },
+  {
+    "id": "S17",
+    "name": "Sector 17",
+    "shortName": "Sec 17",
+    "code": "S17",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0967\u096d",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Residential Sector 17, Nava Raipur",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.157,
+      "longitude": 81.765
+    }
+  },
+  {
+    "id": "S22",
+    "name": "Sector 22",
+    "shortName": "Sec 22",
+    "code": "S22",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0968\u0968",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Residential & Commercial Sector 22",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.171,
+      "longitude": 81.775
+    }
+  },
+  {
+    "id": "CRS",
+    "name": "CBD Railway Station",
+    "shortName": "CBD Rail Stn",
+    "code": "CRS",
+    "hindiName": "\u0938\u0940\u092c\u0940\u0921\u0940 \u0930\u0947\u0932\u0935\u0947 \u0938\u094d\u091f\u0947\u0936\u0928",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Central Business District Railway Station",
+    "interchange": true,
+    "facilities": [
+      "Sheltered Platform",
+      "Railway Transfer"
+    ],
+    "coordinates": {
+      "latitude": 21.162,
+      "longitude": 81.778
+    }
+  },
+  {
+    "id": "OCB",
+    "name": "Office Complex Block A B",
+    "shortName": "Office Complex",
+    "code": "OCB",
+    "hindiName": "\u0911\u092b\u093f\u0938 \u0915\u0949\u092e\u094d\u092a\u094d\u0932\u0947\u0915\u094d\u0938 \u092c\u094d\u0932\u0949\u0915 \u090f \u092c\u0940",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Commercial Office Complexes Block A & B, CBD",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.1635,
+      "longitude": 81.7795
+    }
+  },
+  {
+    "id": "MAW",
+    "name": "Mantri Aawas",
+    "shortName": "Mantri Aawas",
+    "code": "MAW",
+    "hindiName": "\u092e\u0902\u0924\u094d\u0930\u0940 \u0906\u0935\u093e\u0938",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Ministerial Enclave, Capitol Complex",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.161,
+      "longitude": 81.788
+    }
+  },
+  {
+    "id": "RKV",
+    "name": "Rakhi village",
+    "shortName": "Rakhi Village",
+    "code": "RKV",
+    "hindiName": "\u0930\u093e\u0916\u0940 \u0917\u093e\u0902\u0935",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Rakhi Village, Nava Raipur",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.166,
+      "longitude": 81.771
+    }
+  },
+  {
+    "id": "S27M",
+    "name": "Sector 27-29 Mid",
+    "shortName": "Sec 27-29 Mid",
+    "code": "S27M",
+    "hindiName": "\u0938\u0947\u0915\u094d\u091f\u0930 \u0968\u096d-\u0968\u096f \u092e\u093f\u0921",
+    "type": "station",
+    "corridor": "Corridor 1",
+    "landmark": "Connecting Corridor Between Sector 27 and Sector 29",
+    "interchange": false,
+    "facilities": [
+      "Sheltered Platform"
+    ],
+    "coordinates": {
+      "latitude": 21.1585,
+      "longitude": 81.793
+    }
   }
 ]

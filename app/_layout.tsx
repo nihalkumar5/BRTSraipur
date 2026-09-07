@@ -30,8 +30,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <View style={styles.rootWrapper}>
         <StatusBar
-          style="light"
-          backgroundColor="#18258F"
+          style={isLoading ? 'light' : 'dark'}
+          backgroundColor={isLoading ? '#18258F' : '#F7F7F4'}
           translucent={false}
         />
         {Platform.OS === 'web' ? (
@@ -212,7 +212,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   rootWrapper: {
     flex: 1,
-    backgroundColor: '#18258F', // Matches splash screen perfectly, zero white flash
+    backgroundColor: '#F7F7F4',
   },
   nativeContainer: {
     flex: 1,

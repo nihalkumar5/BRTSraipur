@@ -12,3 +12,7 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# Keep line numbers and source file names for crash de-obfuscation in Google Play Console
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
