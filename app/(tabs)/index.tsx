@@ -1432,32 +1432,43 @@ export default function LiveBusScreen() {
                         {/* ROUTE */}
                         <View style={styles.busCardBottomMetaItem}>
                           <View style={styles.busCardIconBox}>
-                            <Bus size={19} color="#2563EB" strokeWidth={2} />
+                            <Bus size={15} color="#2563EB" strokeWidth={2.2} />
                           </View>
-                          <View>
-                            <Text style={styles.busCardMetaTitle}>{journey.routeBadge}</Text>
+                          <View style={styles.busCardMetaTextCol}>
+                            <Text style={styles.busCardMetaTitle} numberOfLines={1}>
+                              {journey.routeBadge}
+                            </Text>
                             <Text style={styles.busCardMetaSubtitle} numberOfLines={1}>
                               {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'}
                             </Text>
                           </View>
                         </View>
 
+                        {/* SUBTLE VERTICAL DIVIDER */}
+                        <View style={styles.busCardVerticalDivider} />
+
                         {/* TRAVEL TIME */}
                         <View style={styles.busCardBottomMetaItem}>
                           <View style={styles.busCardIconBox}>
-                            <Clock size={19} color="#2563EB" strokeWidth={2} />
+                            <Clock size={15} color="#2563EB" strokeWidth={2.2} />
                           </View>
-                          <View>
-                            <Text style={styles.busCardMetaTitle}>{journey.durationMins} min</Text>
-                            <Text style={styles.busCardMetaSubtitle}>Travel Time</Text>
+                          <View style={styles.busCardMetaTextCol}>
+                            <Text style={styles.busCardMetaTitle} numberOfLines={1}>
+                              {journey.durationMins} min
+                            </Text>
+                            <Text style={styles.busCardMetaSubtitle} numberOfLines={1}>
+                              Travel Time
+                            </Text>
                           </View>
                         </View>
 
                         {/* DEPARTING IN ACTION PILL */}
                         <View style={styles.busCardCountdownPill}>
-                          <View>
-                            <Text style={styles.busCardCountdownPreLabel}>DEPARTING IN</Text>
-                            <Text style={styles.busCardCountdownValue}>
+                          <View style={styles.busCardCountdownTextCol}>
+                            <Text style={styles.busCardCountdownPreLabel} numberOfLines={1}>
+                              DEPARTING IN
+                            </Text>
+                            <Text style={styles.busCardCountdownValue} numberOfLines={1}>
                               {(() => {
                                 let diff = journey.departureMins - currentTimeMins;
                                 if (diff < 0) diff += 1440;
@@ -1470,7 +1481,7 @@ export default function LiveBusScreen() {
                             </Text>
                           </View>
                           <View style={styles.busCardChevronBtn}>
-                            <ChevronRight size={17} color="#18258F" strokeWidth={2.6} />
+                            <ChevronRight size={13} color="#18258F" strokeWidth={2.8} />
                           </View>
                         </View>
                       </View>
@@ -3305,20 +3316,21 @@ const styles = StyleSheet.create({
   /* --- REDESIGNED BUS HERO CARD (MATCHING USER UPLOADED DESIGN) --- */
   modernBusCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 20,
+    borderRadius: 24,
+    paddingHorizontal: 15,
+    paddingVertical: 16,
     borderWidth: 1.5,
     borderColor: '#EDF2F7',
     marginBottom: 20,
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+    shadowRadius: 20,
+    elevation: 3,
     overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 12px 32px rgba(24, 37, 143, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 10px 28px rgba(24, 37, 143, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04)',
         } as any)
       : {}),
   },
@@ -3329,141 +3341,160 @@ const styles = StyleSheet.create({
   },
   busCardLeftCol: {
     flex: 1,
+    minWidth: 0,
     paddingRight: 6,
   },
   nextBusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EBF3FE',
-    paddingHorizontal: 12,
-    paddingVertical: 5.5,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
     borderRadius: 20,
-    gap: 7,
+    gap: 6,
     alignSelf: 'flex-start',
   },
   nextBusBadgeText: {
     fontFamily: FONT.bold,
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '700',
     color: '#2563EB',
-    letterSpacing: 1.1,
+    letterSpacing: 0.9,
   },
   busCardTimeText: {
     fontFamily: FONT.extraBold,
-    fontSize: 35,
+    fontSize: 32,
     fontWeight: '800',
     color: '#0B132B',
     letterSpacing: -0.6,
-    marginTop: 8,
-    marginBottom: 2,
+    marginTop: 6,
+    marginBottom: 1,
     fontVariant: ['tabular-nums'],
   },
   busCardRouteCodesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
     marginTop: 2,
   },
   busCardRouteCodes: {
     fontFamily: FONT.extraBold,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0B132B',
     letterSpacing: -0.3,
   },
   busCardArrow: {
     color: '#64748B',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   busCardStationNames: {
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 3,
   },
   busCardRightIllustration: {
-    width: 165,
-    height: 105,
+    width: 130,
+    height: 82,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   busCard3DImage: {
-    width: 165,
-    height: 105,
+    width: 130,
+    height: 82,
   },
   busCardDivider: {
     height: 1,
     backgroundColor: '#F1F5F9',
-    marginVertical: 18,
+    marginVertical: 14,
   },
   busCardBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
   },
   busCardBottomMetaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    flexShrink: 1,
+    gap: 6,
+    flex: 1,
+    minWidth: 0,
+  },
+  busCardMetaTextCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   busCardIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   busCardMetaTitle: {
     fontFamily: FONT.bold,
-    fontSize: 14.5,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0B132B',
     letterSpacing: -0.2,
   },
   busCardMetaSubtitle: {
     fontFamily: FONT.medium,
-    fontSize: 11.5,
+    fontSize: 10,
     fontWeight: '500',
     color: '#64748B',
     marginTop: 1,
+  },
+  busCardVerticalDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#EDF2F7',
+    marginHorizontal: 2,
+    flexShrink: 0,
   },
   busCardCountdownPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EFF6FF',
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 18,
-    gap: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    gap: 6,
     flexShrink: 0,
+  },
+  busCardCountdownTextCol: {
+    alignItems: 'flex-start',
   },
   busCardCountdownPreLabel: {
     fontFamily: FONT.bold,
-    fontSize: 9.5,
+    fontSize: 7.5,
     fontWeight: '700',
-    color: '#475569',
-    letterSpacing: 0.6,
+    color: '#64748B',
+    letterSpacing: 0.5,
   },
   busCardCountdownValue: {
     fontFamily: FONT.extraBold,
-    fontSize: 14.5,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#0B132B',
     marginTop: 1,
     fontVariant: ['tabular-nums'],
   },
   busCardChevronBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   royalBlueHeroCard: {
     backgroundColor: '#18258F', // Signature Deep Navy Background
