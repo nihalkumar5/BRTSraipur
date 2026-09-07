@@ -642,6 +642,18 @@ export default function LiveBusScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
+        {/* FULL WIDTH HERO BANNER — ONLY IN INITIAL UNSEARCHED STATE */}
+        {planningMode === 'next' && (!fromStation || !toStation) ? (
+          <View style={styles.heroBannerContainer}>
+            <Image
+              source={require('../../assets/images/brtshero.webp')}
+              style={styles.heroBannerImage}
+              resizeMode="cover"
+              accessibilityLabel="Nava Raipur BRTS Transit Corridor"
+            />
+          </View>
+        ) : null}
+
         {/* PAGE HEADING */}
         <View style={styles.pageHeaderTitleRow}>
           <View style={{ flex: 1 }}>
@@ -2418,6 +2430,20 @@ const styles = StyleSheet.create({
   topTabLabelActive: {
     color: '#18258F',
     fontWeight: '700',
+  },
+
+  /* HERO BANNER (INITIAL UNSEARCHED STATE) */
+  heroBannerContainer: {
+    width: '100%',
+    aspectRatio: 1671 / 941,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(24, 37, 143, 0.08)',
+  },
+  heroBannerImage: {
+    width: '100%',
+    height: '100%',
   },
 
   /* PAGE HEADING */
