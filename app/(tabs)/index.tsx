@@ -947,10 +947,72 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
+                {/* ⚠️ SERVICE ENDED TODAY + PROMINENT ACTIVE TONIGHT ALTERNATIVES */}
+                {journey.serviceEndedToday && (
+                  <View style={styles.serviceEndedCard}>
+                    <View style={styles.serviceEndedHeaderRow}>
+                      <View style={styles.serviceEndedIconWrap}>
+                        <Clock size={18} color="#DC2626" strokeWidth={2.4} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.serviceEndedTitle}>
+                          Service Ended for Today from {journey.fromStop.shortName}
+                        </Text>
+                        <Text style={styles.serviceEndedSub}>
+                          {journey.lastDepartedTodayTime ? `Last direct bus left at ${journey.lastDepartedTodayTime}. ` : ''}
+                          {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.some(a => a.isToday)
+                            ? `Paas ke stations se abhi direct bus mil sakti hai:`
+                            : `Is route par agli bus kal subah ${journey.fromTime} ko chalegi.`}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Nearby Active Stops Tonight */}
+                    {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.filter(a => a.isToday).length > 0 && (
+                      <View style={styles.serviceEndedOptionsWrap}>
+                        {journey.nearbyDirectAlternatives.filter(a => a.isToday).slice(0, 2).map((alt, idx) => (
+                          <TouchableOpacity
+                            key={`ended-alt-${idx}`}
+                            style={styles.serviceEndedOptionItem}
+                            onPress={() => {
+                              if (alt.type === 'nearby_origin') {
+                                setFromStation(alt.suggestedStop.shortName);
+                              } else {
+                                setToStation(alt.suggestedStop.shortName);
+                              }
+                              setSelectedTripId(null);
+                              triggerCardBounce();
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <View style={{ flex: 1, marginRight: 8 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <Text style={styles.serviceEndedStopName}>{alt.suggestedStop.shortName}</Text>
+                                <Text style={styles.serviceEndedDistBadge}>
+                                  ({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)
+                                </Text>
+                              </View>
+                              <Text style={styles.serviceEndedTripInfo}>
+                                Bus {alt.routeNumber} at <Text style={{ fontWeight: '800', color: '#047857' }}>{alt.departureTime}</Text> (in {alt.minutesUntilDeparture}m) · ₹{alt.fare}
+                                {alt.previousDepartureTime ? ` · (Prev: ${alt.previousDepartureTime})` : ''}
+                              </Text>
+                            </View>
+                            <View style={styles.serviceEndedSwitchBtn}>
+                              <Text style={styles.serviceEndedSwitchBtnText}>Board here ➔</Text>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {/* NEXT BUS SIGNATURE HERO CARD */}
                 <Animated.View style={[styles.royalBlueHeroCard, { transform: [{ scale: cardScaleAnim }] }]}>
                   <View style={styles.heroInfoContent}>
-                    <Text style={styles.heroPreLabel}>NEXT BUS</Text>
+                    <Text style={styles.heroPreLabel}>
+                      {journey.serviceEndedToday ? "TODAY'S SERVICE ENDED · FIRST BUS TOMORROW" : 'NEXT BUS'}
+                    </Text>
                     <Text style={styles.heroTimeText}>{journey.fromTime}</Text>
                     <View style={styles.heroRouteRow}>
                       <Text style={styles.heroRouteCodes}>
@@ -1005,8 +1067,11 @@ export default function LiveBusScreen() {
                     >
                       {journey.upcomingDepartures.map(dep => {
                         const isSelected = journey.trip.id === dep.tripId;
-                        const isCurrent = !dep.isNextDay && dep.diffMins === 0;
-                        const diffLabel = dep.isNextDay
+                        const isDeparted = !!dep.isDeparted;
+                        const isCurrent = !dep.isNextDay && !isDeparted && dep.diffMins === 0;
+                        const diffLabel = isDeparted
+                          ? (dep.isLastToday ? 'LAST TODAY' : 'DEPARTED')
+                          : dep.isNextDay
                           ? 'TOMORROW'
                           : dep.diffMins === 0
                           ? 'NOW'
@@ -1019,6 +1084,7 @@ export default function LiveBusScreen() {
                             key={dep.tripId}
                             style={[
                               styles.depCard,
+                              isDeparted && styles.depCardDeparted,
                               isSelected && styles.depCardSelected,
                             ]}
                             onPress={() => {
@@ -1039,6 +1105,7 @@ export default function LiveBusScreen() {
                               <Text
                                 style={[
                                   styles.depTimeText,
+                                  isDeparted && styles.depTimeTextDeparted,
                                   isSelected ? styles.depTimeTextSelected : styles.depTimeTextFuture,
                                 ]}
                               >
@@ -1048,6 +1115,7 @@ export default function LiveBusScreen() {
                             <Text
                               style={[
                                 styles.depStatusText,
+                                isDeparted && styles.depStatusTextDeparted,
                                 isSelected ? styles.depStatusTextSelected : styles.depStatusTextFuture,
                               ]}
                             >
@@ -1171,10 +1239,15 @@ export default function LiveBusScreen() {
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                             <Text style={styles.nearbyAltStationName}>{alt.suggestedStop.shortName}</Text>
                             <Text style={styles.nearbyAltDistText}>({alt.distanceFormatted} away · ~{alt.walkingMins}m walk)</Text>
+                            {alt.isReachableNow && (
+                              <View style={styles.reachableNowPill}>
+                                <Text style={styles.reachableNowPillText}>Reachable</Text>
+                              </View>
+                            )}
                           </View>
                           <Text style={styles.nearbyAltTripDesc}>
                             {alt.isToday
-                              ? `Bus ${alt.routeNumber} at ${alt.departureTime} (in ${alt.minutesUntilDeparture}m · ~${alt.walkingMins}m walk) · ₹${alt.fare}`
+                              ? `Bus ${alt.routeNumber} at ${alt.departureTime} (in ${alt.minutesUntilDeparture}m · ~${alt.walkingMins}m walk) · ₹${alt.fare}${alt.previousDepartureTime ? ` · (Prev was ${alt.previousDepartureTime})` : ''}`
                               : `Service ended today · First bus tomorrow at ${alt.departureTime} · ₹${alt.fare}`}
                           </Text>
                         </View>
@@ -1749,8 +1822,13 @@ export default function LiveBusScreen() {
                   >
                     {journey.upcomingDepartures.map(dep => {
                       const isSelected = journey.trip.id === dep.tripId;
-                      const isCurrent = dep.isInTransit || dep.diffMins === 0;
-                      const diffLabel = isCurrent
+                      const isDeparted = !!dep.isDeparted;
+                      const isCurrent = (dep.isInTransit || dep.diffMins === 0) && !isDeparted;
+                      const diffLabel = isDeparted
+                        ? (dep.isLastToday ? 'LAST TODAY' : 'DEPARTED')
+                        : dep.isNextDay
+                        ? 'TOMORROW'
+                        : isCurrent
                         ? 'NOW'
                         : dep.diffMins < 60
                         ? `${dep.diffMins} MIN`
@@ -1761,6 +1839,7 @@ export default function LiveBusScreen() {
                           key={dep.tripId}
                           style={[
                             styles.depCard,
+                            isDeparted && styles.depCardDeparted,
                             isSelected && styles.depCardSelected,
                           ]}
                           onPress={() => {
@@ -1781,6 +1860,7 @@ export default function LiveBusScreen() {
                             <Text
                               style={[
                                 styles.depTimeText,
+                                isDeparted && styles.depTimeTextDeparted,
                                 isSelected ? styles.depTimeTextSelected : styles.depTimeTextFuture,
                               ]}
                             >
@@ -1790,6 +1870,7 @@ export default function LiveBusScreen() {
                           <Text
                             style={[
                               styles.depStatusText,
+                              isDeparted && styles.depStatusTextDeparted,
                               isSelected ? styles.depStatusTextSelected : styles.depStatusTextFuture,
                             ]}
                           >
@@ -3821,6 +3902,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#64748B',
   },
+  depCardDeparted: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    opacity: 0.75,
+  },
+  depTimeTextDeparted: {
+    fontWeight: '500',
+    color: '#94A3B8',
+  },
+  depStatusTextDeparted: {
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
   transferAlertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -4090,6 +4184,95 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nearbyAltSwitchBtnText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  reachableNowPill: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  reachableNowPillText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  serviceEndedCard: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  serviceEndedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  serviceEndedIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  serviceEndedTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#991B1B',
+  },
+  serviceEndedSub: {
+    fontSize: 12,
+    color: '#B91C1C',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  serviceEndedOptionsWrap: {
+    marginTop: 10,
+    gap: 8,
+  },
+  serviceEndedOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  serviceEndedStopName: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  serviceEndedDistBadge: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  serviceEndedTripInfo: {
+    fontSize: 11.5,
+    color: '#475569',
+    marginTop: 2,
+  },
+  serviceEndedSwitchBtn: {
+    backgroundColor: '#047857',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  serviceEndedSwitchBtnText: {
     fontSize: 11.5,
     fontWeight: '800',
     color: '#FFFFFF',

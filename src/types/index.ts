@@ -48,6 +48,8 @@ export interface UpcomingDeparture {
   departureMins: number;
   diffMins: number;
   isNextDay: boolean;
+  isDeparted?: boolean;
+  isLastToday?: boolean;
   isInTransit?: boolean;
   currentStopIndex?: number;
 }
@@ -98,6 +100,8 @@ export interface ActiveJourney {
   secondLegStops?: JourneyStopInfo[];
   nearbyDirectAlternatives?: NearbyDirectAlternative[];
   optimalProximity?: OptimalProximityHop | null;
+  serviceEndedToday?: boolean;
+  lastDepartedTodayTime?: string;
 }
 
 export interface OptimalProximityHop {
@@ -167,6 +171,8 @@ export interface NearbyDirectAlternative {
   depMins: number;
   minutesUntilDeparture: number;
   isToday: boolean;
+  previousDepartureTime?: string;
+  isReachableNow?: boolean;
 }
 
 export interface PopularRoute {
