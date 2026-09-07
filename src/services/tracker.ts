@@ -871,12 +871,10 @@ function calculateTransferJourney(
       }
     }
   }
-
   const dedupedOptions = Array.from(uniqueTransferMap.values()).sort((a, b) => a.depMins1 - b.depMins1);
 
   // Filter for upcoming departures
   const upcomingTransfers = dedupedOptions.filter(t => t.depMins1 >= nowMins - 1);
-
   let chosen: TransferOption;
   let isNextDay = false;
   if (selectedTripId) {
@@ -902,7 +900,7 @@ function calculateTransferJourney(
   const hubArrivalTime = chosen.leg1Trip.stops[chosen.t1Idx].time;
   const hubDepartureTime = chosen.leg2Trip.stops[chosen.f2Idx].time;
 
-  // Leg 1 stops
+  // Intermediate stops for first leg
   const intermediateStops: JourneyStopInfo[] = chosen.leg1Trip.stops
     .slice(chosen.f1Idx, chosen.t1Idx + 1)
     .map((s, idx, arr) => {
@@ -912,14 +910,14 @@ function calculateTransferJourney(
         code: matched ? matched.code : s.stop.slice(0, 3).toUpperCase(),
         time: s.time,
         mins: s.mins,
-        passed: s.mins < nowMins,
+        passed: false,
         isCurrentNext: false,
         isBoarding: idx === 0,
         isDropoff: idx === arr.length - 1,
       };
     });
 
-  // Leg 2 stops
+  // Second leg intermediate stops
   const secondLegStops: JourneyStopInfo[] = chosen.leg2Trip.stops
     .slice(chosen.f2Idx, chosen.t2Idx + 1)
     .map((s, idx, arr) => {
@@ -944,7 +942,7 @@ function calculateTransferJourney(
   const lastDepartedTransfer = pastTransfersToday.length > 0 ? pastTransfersToday[pastTransfersToday.length - 1] : null;
   const lastDepartedTodayTime = lastDepartedTransfer ? lastDepartedTransfer.leg1Trip.stops[lastDepartedTransfer.f1Idx].time : undefined;
 
-  // Build upcoming departures, and include previous departed buses from today (so users can see earlier schedule)
+  // Build past departures from today - ONLY mark isLastToday if truly no upcoming transfers remain today
   const pastDeparturesList: UpcomingDeparture[] = pastTransfersToday.slice(-2).map((o, idx, arr) => {
     const diff = o.depMins1 - nowMins;
     return {
@@ -956,7 +954,7 @@ function calculateTransferJourney(
       diffMins: diff,
       isNextDay: false,
       isDeparted: true,
-      isLastToday: idx === arr.length - 1,
+      isLastToday: upcomingTransfers.length === 0 && idx === arr.length - 1,
       isInTransit: false,
     };
   });
@@ -992,7 +990,14 @@ function calculateTransferJourney(
     });
   }
 
-  const transferDepartures: UpcomingDeparture[] = [...pastDeparturesList, ...forwardDepartures];
+  // When transfers are running today, prioritize upcoming transfers first so user sees the next bus!
+  let transferDepartures: UpcomingDeparture[] = [];
+  if (upcomingTransfers.length > 0) {
+    transferDepartures = forwardDepartures;
+  } else {
+    const lastRunToday = pastDeparturesList.length > 0 ? [pastDeparturesList[pastDeparturesList.length - 1]] : [];
+    transferDepartures = [...lastRunToday, ...forwardDepartures];
+  }
 
   return {
     trip: {
@@ -1141,7 +1146,14 @@ export function calculateJourney(
         isInTransit = true;
       }
     } else {
-      chosen = matchingTrips[0];
+      // Fall back to next upcoming bus if selectedTripId is not in this route
+      const upcomingTrips = matchingTrips.filter(m => m.depMins >= nowMins);
+      if (upcomingTrips.length > 0) {
+        chosen = upcomingTrips[0];
+      } else {
+        chosen = matchingTrips[0];
+        isNextDay = true;
+      }
     }
   } else if (mode === 'onboard') {
     // Look for a bus that is currently running on the route between origin/boarding and destination
@@ -1267,23 +1279,6 @@ export function calculateJourney(
   const lastDepartedTrip = pastTripsToday.length > 0 ? pastTripsToday[pastTripsToday.length - 1] : null;
   const lastDepartedTodayTime = lastDepartedTrip ? lastDepartedTrip.trip.stops[lastDepartedTrip.fromIndex].time : undefined;
 
-  // Build past departures from earlier today
-  const pastDeparturesList: UpcomingDeparture[] = pastTripsToday.slice(-2).map((m, idx, arr) => {
-    const diff = m.depMins - nowMins;
-    return {
-      tripId: m.trip.id,
-      route: m.trip.route,
-      departureTime: m.trip.stops[m.fromIndex].time,
-      arrivalTime: m.trip.stops[m.toIndex].time,
-      departureMins: m.depMins,
-      diffMins: diff,
-      isNextDay: false,
-      isDeparted: true,
-      isLastToday: idx === arr.length - 1,
-      isInTransit: false,
-    };
-  });
-
   // Build upcoming departures strictly forward from current time (nowMins)
   const todayUpcoming = matchingTrips
     .filter(m => m.depMins >= nowMins - 1)
@@ -1333,11 +1328,53 @@ export function calculateJourney(
     if (!seenTimes.has(dep.departureTime)) {
       seenTimes.add(dep.departureTime);
       forwardDepartures.push(dep);
-      if (forwardDepartures.length >= 6) break;
+      if (forwardDepartures.length >= 8) break;
     }
   }
 
-  const upcomingDepartures: UpcomingDeparture[] = [...pastDeparturesList, ...forwardDepartures];
+  // Build past departures from earlier today
+  // CRITICAL FIX: Only mark isLastToday: true if truly NO upcoming buses remain today!
+  const pastDeparturesList: UpcomingDeparture[] = pastTripsToday.slice(-2).map((m, idx, arr) => {
+    const diff = m.depMins - nowMins;
+    return {
+      tripId: m.trip.id,
+      route: m.trip.route,
+      departureTime: m.trip.stops[m.fromIndex].time,
+      arrivalTime: m.trip.stops[m.toIndex].time,
+      departureMins: m.depMins,
+      diffMins: diff,
+      isNextDay: false,
+      isDeparted: true,
+      isLastToday: todayUpcoming.length === 0 && idx === arr.length - 1,
+      isInTransit: false,
+    };
+  });
+
+  // When buses are still running today, UPCOMING buses must come first so the user sees the next bus!
+  let upcomingDepartures: UpcomingDeparture[] = [];
+  if (todayUpcoming.length > 0) {
+    if (mode === 'onboard' && chosen && chosen.depMins < nowMins) {
+      const chosenDep: UpcomingDeparture = {
+        tripId: chosen.trip.id,
+        route: chosen.trip.route,
+        departureTime: chosen.trip.stops[chosen.fromIndex].time,
+        arrivalTime: chosen.trip.stops[chosen.toIndex].time,
+        departureMins: chosen.depMins,
+        diffMins: chosen.depMins - nowMins,
+        isNextDay: false,
+        isDeparted: true,
+        isLastToday: false,
+        isInTransit: true,
+      };
+      upcomingDepartures = [chosenDep, ...forwardDepartures.filter(d => d.tripId !== chosen.trip.id)];
+    } else {
+      upcomingDepartures = forwardDepartures;
+    }
+  } else {
+    // All today's buses have ended: show the final bus of today (with LAST TODAY), then tomorrow morning's departures
+    const lastRunToday = pastDeparturesList.length > 0 ? [pastDeparturesList[pastDeparturesList.length - 1]] : [];
+    upcomingDepartures = [...lastRunToday, ...forwardDepartures];
+  }
 
   return {
     trip,

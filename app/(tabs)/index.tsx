@@ -253,6 +253,11 @@ export default function LiveBusScreen() {
   const [planningMode, setPlanningMode] = useState<'next' | 'onboard'>('next');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
+  // Always reset selectedTripId when origin or destination changes
+  useEffect(() => {
+    setSelectedTripId(null);
+  }, [fromStation, toStation]);
+
   // Station search modal
   const [modalVisible, setModalVisible] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.location?.search?.includes('sheet=open')) {
@@ -492,6 +497,7 @@ export default function LiveBusScreen() {
     } else {
       setToStation(station.name);
     }
+    setSelectedTripId(null);
     closePicker();
     triggerCardBounce();
   };
@@ -514,17 +520,25 @@ export default function LiveBusScreen() {
     const temp = fromStation;
     setFromStation(toStation);
     setToStation(temp);
+    setSelectedTripId(null);
     triggerCardBounce();
   };
 
   const selectPopularRoute = (route: PopularRoute) => {
     setFromStation(route.from);
     setToStation(route.to);
+    setSelectedTripId(null);
     triggerCardBounce();
   };
 
-  const clearFrom = () => setFromStation('');
-  const clearTo = () => setToStation('');
+  const clearFrom = () => {
+    setFromStation('');
+    setSelectedTripId(null);
+  };
+  const clearTo = () => {
+    setToStation('');
+    setSelectedTripId(null);
+  };
 
   // Handle scheduling 30 min and 15 min notifications
   const handleScheduleNotifications = async () => {
@@ -1116,7 +1130,7 @@ export default function LiveBusScreen() {
 
                         return (
                           <TouchableOpacity
-                            key={dep.tripId}
+                            key={`${dep.tripId}_${dep.departureTime}_${dep.isNextDay ? 'next' : 'today'}_${dep.isDeparted ? 'dep' : 'up'}`}
                             style={[
                               styles.depCard,
                               isDeparted && styles.depCardDeparted,
@@ -1875,7 +1889,7 @@ export default function LiveBusScreen() {
 
                       return (
                         <TouchableOpacity
-                          key={dep.tripId}
+                          key={`${dep.tripId}_${dep.departureTime}_${dep.isNextDay ? 'next' : 'today'}_${dep.isDeparted ? 'dep' : 'up'}`}
                           style={[
                             styles.depCard,
                             isDeparted && styles.depCardDeparted,
