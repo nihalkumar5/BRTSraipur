@@ -631,7 +631,8 @@ export function getOptimalProximityHop(
   toStop: Stop,
   serviceDay: 'weekday' | 'weekend' = isWeekendDay() ? 'weekend' : 'weekday',
   nowMins: number = getCurrentMinutesOfDay(),
-  transferDurationMins: number = 60
+  transferDurationMins: number = 60,
+  targetDepMins?: number
 ): OptimalProximityHop | null {
   if (!fromStop || !toStop || !fromStop.coordinates || !toStop.coordinates) return null;
 
@@ -679,7 +680,7 @@ export function getOptimalProximityHop(
     walkDist: number;
     commuteFromDropMins: number;
     totalCommuteMins: number;
-    totalTimeFromNow: number;
+    totalScore: number;
     cand: { stop: Stop; dist: number; isRouteAdjacent: boolean; offset: number; routeDelta: number };
   } | null = null;
 
@@ -696,28 +697,31 @@ export function getOptimalProximityHop(
       if (fIdx !== -1 && tIdx !== -1 && fIdx < tIdx) {
         const depMins = trip.stops[fIdx].mins;
         const arrMins = trip.stops[tIdx].mins;
-        if (depMins >= nowMins - 1) {
-          const waitMins = depMins - nowMins;
-          const busRideMins = arrMins >= depMins ? arrMins - depMins : arrMins + 1440 - depMins;
-          const walkMins = Math.max(1, Math.round((cand.dist / 4.5) * 60));
-          const commuteFromDropMins = cand.isRouteAdjacent ? Math.min(walkMins, cand.routeDelta + 5) : walkMins;
-          const totalCommuteMins = busRideMins + commuteFromDropMins;
-          const totalTimeFromNow = waitMins + totalCommuteMins;
 
-          if (!bestHop || totalTimeFromNow < bestHop.totalTimeFromNow) {
-            bestHop = {
-              trip,
-              fIdx,
-              tIdx,
-              dropStop: cand.stop,
-              busRideMins,
-              walkDist: cand.dist,
-              commuteFromDropMins,
-              totalCommuteMins,
-              totalTimeFromNow,
-              cand,
-            };
-          }
+        // Cyclic wait time: if targetDepMins is provided, match that departure; otherwise cyclic from nowMins
+        const waitMins = targetDepMins !== undefined
+          ? Math.abs(depMins - targetDepMins)
+          : (depMins >= nowMins ? depMins - nowMins : depMins + 1440 - nowMins);
+
+        const busRideMins = arrMins >= depMins ? arrMins - depMins : arrMins + 1440 - depMins;
+        const walkMins = Math.max(1, Math.round((cand.dist / 4.5) * 60));
+        const commuteFromDropMins = cand.isRouteAdjacent ? Math.min(walkMins, cand.routeDelta + 5) : walkMins;
+        const totalCommuteMins = busRideMins + commuteFromDropMins;
+        const totalScore = waitMins * 2 + totalCommuteMins;
+
+        if (!bestHop || totalScore < bestHop.totalScore) {
+          bestHop = {
+            trip,
+            fIdx,
+            tIdx,
+            dropStop: cand.stop,
+            busRideMins,
+            walkDist: cand.dist,
+            commuteFromDropMins,
+            totalCommuteMins,
+            totalScore,
+            cand,
+          };
         }
       }
     }
@@ -1064,7 +1068,7 @@ function calculateTransferJourney(
     connectingToTime: toTime,
     secondLegStops,
     nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),
-    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, chosen.totalDuration),
+    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, chosen.totalDuration, chosen.depMins1),
     serviceEndedToday,
     lastDepartedTodayTime,
   };
@@ -1429,7 +1433,7 @@ export function calculateJourney(
     serviceEndedToday,
     lastDepartedTodayTime,
     nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),
-    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, durationMins),
+    optimalProximity: getOptimalProximityHop(fromStop, toStop, serviceDay, nowMins, durationMins, trip.stops[fromIndex].mins),
   };
 }
 

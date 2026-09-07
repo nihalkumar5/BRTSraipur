@@ -1224,7 +1224,9 @@ export default function LiveBusScreen() {
                       {journey.durationMins} <Text style={styles.metricUnitText}>min</Text>
                     </Text>
                     <Text style={styles.metricCardSub} numberOfLines={1}>
-                      {journey.isTransfer
+                      {journey.optimalProximity?.shortHopBus
+                        ? `Save ${journey.optimalProximity.minutesSaved}m via ${journey.optimalProximity.shortHopBus.dropStationShortName}`
+                        : journey.isTransfer
                         ? `incl. ${journey.transferWaitMins}m wait at ${journey.transferHub}`
                         : `to ${journey.toStop.shortName}`}
                     </Text>
@@ -1243,7 +1245,9 @@ export default function LiveBusScreen() {
                     </View>
                     <Text style={styles.metricCardValue}>₹{journey.fare}</Text>
                     <Text style={styles.metricCardSub} numberOfLines={1}>
-                      {journey.isTransfer
+                      {journey.optimalProximity?.shortHopBus
+                        ? `Direct bus: ₹${journey.optimalProximity.shortHopBus.fare} (Save ₹${journey.fare - journey.optimalProximity.shortHopBus.fare})`
+                        : journey.isTransfer
                         ? `Total for 2 Buses (via ${journey.transferHub})`
                         : journey.trip.serviceDay === 'weekend'
                         ? 'Weekend Express'
@@ -1289,7 +1293,7 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
 
                 {/* NEARBY DIRECT ROUTE PRO-TIP / FASTER ALTERNATIVE */}
-                {!journey.serviceEndedToday && journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
+                {journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
                   <View style={styles.nearbyAlternativeCard}>
                     <View style={styles.nearbyAltHeaderRow}>
                       <View style={styles.nearbyAltIconWrap}>
@@ -1427,6 +1431,31 @@ export default function LiveBusScreen() {
                         </Text>
                       </View>
                     </View>
+
+                    {journey.optimalProximity?.shortHopBus && (
+                      <TouchableOpacity
+                        style={styles.busChangeProximityFooter}
+                        onPress={() => {
+                          if (journey.optimalProximity?.shortHopBus?.dropStationShortName) {
+                            setToStation(journey.optimalProximity.shortHopBus.dropStationShortName);
+                            setSelectedTripId(null);
+                            triggerCardBounce();
+                          }
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Zap size={14} color="#059669" strokeWidth={2.4} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.busChangeProximityTitle}>
+                            Faster Alternative: Take Bus {journey.optimalProximity.shortHopBus.busNumber} to {journey.optimalProximity.shortHopBus.dropStationShortName}
+                          </Text>
+                          <Text style={styles.busChangeProximitySub}>
+                            Ride only {journey.optimalProximity.shortHopBus.busRideMins}m instead of {journey.durationMins}m detour · Save {journey.optimalProximity.minutesSaved}m!
+                          </Text>
+                        </View>
+                        <Text style={styles.busChangeProximityBtnText}>Switch ➔</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
 
@@ -4218,6 +4247,34 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#78350F',
     lineHeight: 16,
+  },
+  busChangeProximityFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F0FDF4',
+    borderTopWidth: 1,
+    borderTopColor: '#DCFCE7',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    marginTop: 8,
+  },
+  busChangeProximityTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  busChangeProximitySub: {
+    fontSize: 11,
+    color: '#047857',
+    marginTop: 2,
+  },
+  busChangeProximityBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#059669',
   },
   nearbyAlternativeCard: {
     backgroundColor: '#ECFDF5',
