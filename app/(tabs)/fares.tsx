@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Platform,
   Animated,
   Easing,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowUpDown, ShieldCheck, Search, X, ArrowLeft } from 'lucide-react-native';
@@ -96,6 +97,55 @@ export default function FaresScreen() {
       setModalVisible(false);
     });
   };
+
+  const handleBack = useCallback(() => {
+    if (modalVisible) {
+      closePicker();
+      return true;
+    }
+    return false;
+  }, [modalVisible]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__handleActiveScreenBack = handleBack;
+      if ((window as any).ReactNativeWebView?.postMessage) {
+        try {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'CAN_GO_BACK', canGoBack: modalVisible })
+          );
+        } catch (e) {}
+      }
+    }
+  }, [handleBack, modalVisible]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      return handleBack();
+    });
+    return () => sub.remove();
+  }, [handleBack]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (modalVisible) {
+      if (!window.history.state || !window.history.state.tatparFaresModal) {
+        window.history.pushState({ tatparFaresModal: true }, '');
+      }
+    }
+    const onPopState = () => {
+      if (modalVisible) {
+        closePicker();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (typeof window !== 'undefined' && (window as any).__handleActiveScreenBack === handleBack) {
+        (window as any).__handleActiveScreenBack = null;
+      }
+    };
+  }, [modalVisible, handleBack]);
 
   const selectStation = (station: Stop) => {
     if (activePicker === 'from') {
@@ -253,7 +303,12 @@ export default function FaresScreen() {
       </ScrollView>
 
       {/* --- REDBUS-STYLE FULL-WIDTH STATION SEARCH MODAL (IMAGE 1 DESIGN) --- */}
-      <Modal visible={modalVisible} animationType="none" transparent={true}>
+      <Modal
+        visible={modalVisible}
+        animationType="none"
+        transparent={true}
+        onRequestClose={closePicker}
+      >
         <View style={styles.modalOverlay}>
           {/* TAP OVERLAY OUTSIDE TO CLOSE */}
           <TouchableOpacity

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Modal,
   Linking,
   Share,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -44,6 +45,55 @@ export default function AllStopsScreen() {
   const [filter, setFilter] = useState<'all' | 'hub' | 'hospital' | 'campus' | 'feeder' | 'corridor'>('all');
   const [isFocused, setIsFocused] = useState(false);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
+
+  const handleBack = useCallback(() => {
+    if (selectedStop) {
+      setSelectedStop(null);
+      return true;
+    }
+    return false;
+  }, [selectedStop]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__handleActiveScreenBack = handleBack;
+      if ((window as any).ReactNativeWebView?.postMessage) {
+        try {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'CAN_GO_BACK', canGoBack: !!selectedStop })
+          );
+        } catch (e) {}
+      }
+    }
+  }, [handleBack, selectedStop]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      return handleBack();
+    });
+    return () => sub.remove();
+  }, [handleBack]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (selectedStop) {
+      if (!window.history.state || !window.history.state.tatparStopModal) {
+        window.history.pushState({ tatparStopModal: true }, '');
+      }
+    }
+    const onPopState = () => {
+      if (selectedStop) {
+        setSelectedStop(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (typeof window !== 'undefined' && (window as any).__handleActiveScreenBack === handleBack) {
+        (window as any).__handleActiveScreenBack = null;
+      }
+    };
+  }, [selectedStop, handleBack]);
 
   const nowMins = getCurrentMinutesOfDay();
 

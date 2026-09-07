@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
   Easing,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Bus, ArrowRight, ArrowLeftRight } from 'lucide-react-native';
@@ -22,6 +23,42 @@ export default function TimetableScreen() {
   const [serviceFilter, setServiceFilter] = useState<'all' | 'trunk' | 'feeder'>('all');
   const [selectedRoute, setSelectedRoute] = useState<string>('all');
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
+
+  const handleBack = useCallback(() => {
+    if (expandedTripId) {
+      setExpandedTripId(null);
+      return true;
+    }
+    return false;
+  }, [expandedTripId]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__handleActiveScreenBack = handleBack;
+      if ((window as any).ReactNativeWebView?.postMessage) {
+        try {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'CAN_GO_BACK', canGoBack: !!expandedTripId })
+          );
+        } catch (e) {}
+      }
+    }
+  }, [handleBack, expandedTripId]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      return handleBack();
+    });
+    return () => sub.remove();
+  }, [handleBack]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && (window as any).__handleActiveScreenBack === handleBack) {
+        (window as any).__handleActiveScreenBack = null;
+      }
+    };
+  }, [handleBack]);
 
   const swapSpinAnim = useRef(new Animated.Value(0)).current;
 

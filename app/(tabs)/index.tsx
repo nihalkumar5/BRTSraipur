@@ -14,6 +14,7 @@ import {
   Easing,
   Linking,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -654,6 +655,79 @@ export default function LiveBusScreen() {
     setSelectedTripId(null);
   };
 
+  // Comprehensive Back navigation handler
+  const handleBack = useCallback(() => {
+    // 1. If station picker sheet is open, close it
+    if (modalVisible) {
+      closePicker();
+      return true;
+    }
+    // 2. If all popular routes modal is open, close it
+    if (allPopularModalVisible) {
+      setAllPopularModalVisible(false);
+      return true;
+    }
+    // 3. If inspecting a trip detail inspector, dismiss inspector
+    if (selectedTripId) {
+      setSelectedTripId(null);
+      return true;
+    }
+    // 4. If a route search / popular route is active, reset to empty home screen
+    if (fromStation || toStation) {
+      setFromStation('');
+      setToStation('');
+      setSelectedTripId(null);
+      triggerCardBounce();
+      return true;
+    }
+    return false;
+  }, [modalVisible, allPopularModalVisible, selectedTripId, fromStation, toStation]);
+
+  const isBackable = modalVisible || allPopularModalVisible || !!selectedTripId || !!(fromStation || toStation);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__handleActiveScreenBack = handleBack;
+      if ((window as any).ReactNativeWebView?.postMessage) {
+        try {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'CAN_GO_BACK', canGoBack: isBackable })
+          );
+        } catch (e) {}
+      }
+    }
+  }, [handleBack, isBackable]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      return handleBack();
+    });
+    return () => sub.remove();
+  }, [handleBack]);
+
+  // Browser & Mobile Web history popstate support
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (isBackable) {
+      if (!window.history.state || !window.history.state.tatparBack) {
+        window.history.pushState({ tatparBack: true }, '');
+      }
+    }
+
+    const onPopState = () => {
+      handleBack();
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (typeof window !== 'undefined' && (window as any).__handleActiveScreenBack === handleBack) {
+        (window as any).__handleActiveScreenBack = null;
+      }
+    };
+  }, [isBackable, handleBack]);
+
   // Handle scheduling 30 min and 15 min notifications
   const handleScheduleNotifications = async () => {
     if (!journey) return;
@@ -717,7 +791,7 @@ export default function LiveBusScreen() {
                   : styles.topTabLabelInactive,
               ]}
             >
-              Bus tickets
+              Bus track
             </Text>
           </View>
           <View
@@ -788,7 +862,7 @@ export default function LiveBusScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.pageMainHeading}>
               {planningMode === 'next'
-                ? 'Bus Tickets'
+                ? 'Bus Track'
                 : "I'm Onboard · Live"}
             </Text>
             <Text style={styles.pageSubHeading}>
@@ -2464,8 +2538,12 @@ export default function LiveBusScreen() {
 
       </ScrollView>
 
-      {/* --- REDBUS-STYLE FULL-WIDTH STATION SEARCH MODAL (IMAGE 1 DESIGN) --- */}
-      <Modal visible={modalVisible} animationType="none" transparent={true}>
+      <Modal
+        visible={modalVisible}
+        animationType="none"
+        transparent={true}
+        onRequestClose={closePicker}
+      >
         <View style={styles.modalOverlay}>
           {/* TAP OVERLAY OUTSIDE TO CLOSE */}
           <TouchableOpacity
@@ -2579,7 +2657,12 @@ export default function LiveBusScreen() {
       </Modal>
 
       {/* --- ALL POPULAR ROUTES FULL-WIDTH MODAL (VIEW ALL) --- */}
-      <Modal visible={allPopularModalVisible} animationType="slide" transparent={true}>
+      <Modal
+        visible={allPopularModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAllPopularModalVisible(false)}
+      >
         <View style={styles.modalOverlay}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}

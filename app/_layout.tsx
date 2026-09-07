@@ -27,13 +27,32 @@ export default function RootLayout() {
     PlusJakartaSans_800ExtraBold,
   });
 
+  const [canGoBackWeb, setCanGoBackWeb] = useState(false);
+
   const onAndroidBackPress = useCallback(() => {
-    if (canGoBack && webViewRef.current) {
-      webViewRef.current.goBack();
-      return true;
+    if (webViewRef.current) {
+      if (canGoBackWeb) {
+        webViewRef.current.injectJavaScript(`
+          (function() {
+            try {
+              if (typeof window.__handleAppBack === 'function') {
+                window.__handleAppBack();
+              } else if (window.history.length > 1) {
+                window.history.back();
+              }
+            } catch (e) {}
+          })();
+          true;
+        `);
+        return true;
+      }
+      if (canGoBack) {
+        webViewRef.current.goBack();
+        return true;
+      }
     }
     return false;
-  }, [canGoBack]);
+  }, [canGoBack, canGoBackWeb]);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -220,6 +239,14 @@ export default function RootLayout() {
               `}
               onNavigationStateChange={(navState) => {
                 setCanGoBack(navState.canGoBack);
+              }}
+              onMessage={(event) => {
+                try {
+                  const data = JSON.parse(event.nativeEvent.data);
+                  if (data && data.type === 'CAN_GO_BACK') {
+                    setCanGoBackWeb(Boolean(data.canGoBack));
+                  }
+                } catch (e) {}
               }}
             />
           </View>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   LayoutAnimation,
   UIManager,
+  BackHandler,
 } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Home, MapPin, Calendar, IndianRupee } from 'lucide-react-native';
@@ -20,6 +21,47 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = Math.max(16, insets.bottom + 6);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    (window as any).__handleAppBack = () => {
+      if (typeof (window as any).__handleActiveScreenBack === 'function') {
+        const handled = (window as any).__handleActiveScreenBack();
+        if (handled) return true;
+      }
+      if (state.index !== 0) {
+        navigation.navigate('index');
+        return true;
+      }
+      return false;
+    };
+
+    if ((window as any).ReactNativeWebView?.postMessage) {
+      try {
+        if (state.index !== 0) {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'CAN_GO_BACK', canGoBack: true })
+          );
+        }
+      } catch (e) {}
+    }
+  }, [state.index, navigation]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (typeof window !== 'undefined' && typeof (window as any).__handleActiveScreenBack === 'function') {
+        const handled = (window as any).__handleActiveScreenBack();
+        if (handled) return true;
+      }
+      if (state.index !== 0) {
+        navigation.navigate('index');
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [state.index, navigation]);
 
   return (
     <View style={[styles.tabBarWrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
