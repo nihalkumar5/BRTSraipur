@@ -366,6 +366,7 @@ export default function LiveBusScreen() {
   // Route details popup modal state (View route)
   const [routeDetailsModalVisible, setRouteDetailsModalVisible] = useState(false);
   const [showAllOnboardStops, setShowAllOnboardStops] = useState(false);
+  const [departuresExpanded, setDeparturesExpanded] = useState(false);
 
   // Notification state
   const [reminderBanner, setReminderBanner] = useState<string | null>(null);
@@ -711,6 +712,11 @@ export default function LiveBusScreen() {
       setRouteDetailsModalVisible(false);
       return true;
     }
+    // 0b. If departures card is expanded, collapse it
+    if (departuresExpanded) {
+      setDeparturesExpanded(false);
+      return true;
+    }
     // 1. If station picker sheet is open, close it
     if (modalVisible) {
       closePicker();
@@ -727,9 +733,9 @@ export default function LiveBusScreen() {
       return true;
     }
     return false;
-  }, [routeDetailsModalVisible, modalVisible, allPopularModalVisible, selectedTripId]);
+  }, [routeDetailsModalVisible, departuresExpanded, modalVisible, allPopularModalVisible, selectedTripId]);
 
-  const isBackable = routeDetailsModalVisible || modalVisible || allPopularModalVisible || !!selectedTripId;
+  const isBackable = routeDetailsModalVisible || departuresExpanded || modalVisible || allPopularModalVisible || !!selectedTripId;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1492,48 +1498,114 @@ export default function LiveBusScreen() {
 
                 {/* NEXT DEPARTURES STRIP (CLEAN MINIMAL TEXT ROW) */}
                 {(() => {
-                  const otherDeps = (journey.upcomingDepartures || [])
+                  const allUpcomingDeps = journey.upcomingDepartures || [];
+                  if (allUpcomingDeps.length === 0) return null;
+
+                  const otherDeps = allUpcomingDeps
                     .filter(dep => dep.tripId !== journey.trip.id)
                     .slice(0, 3);
-                  if (otherDeps.length === 0) return null;
+                  if (otherDeps.length === 0 && !departuresExpanded) return null;
 
                   return (
-                    <View style={styles.cleanNextDeparturesCard}>
+                    <View style={[styles.cleanNextDeparturesCard, departuresExpanded && styles.cleanNextDeparturesCardExpanded]}>
                       <View style={styles.cleanNextDeparturesHeaderRow}>
-                        <Text style={styles.cleanNextDeparturesTitle}>Next departures</Text>
-                        <TouchableOpacity
-                          onPress={() => router.push('/timetable' as any)}
-                          activeOpacity={0.7}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <Text style={styles.cleanViewFullTimetableLink}>View full timetable →</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.cleanNextDeparturesTitle}>
+                          {departuresExpanded ? `All departures (${allUpcomingDeps.length})` : 'Next departures'}
+                        </Text>
+                        {departuresExpanded ? (
+                          <TouchableOpacity
+                            onPress={() => setDeparturesExpanded(false)}
+                            activeOpacity={0.7}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.cleanDeparturesCloseBtn}
+                            accessibilityLabel="Close all departures"
+                          >
+                            <X size={15} color="#475569" strokeWidth={2.4} />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity
+                            onPress={() => setDeparturesExpanded(true)}
+                            activeOpacity={0.7}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Text style={styles.cleanViewFullTimetableLink}>View all departures →</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
 
-                      <View style={styles.cleanNextDeparturesTimesRow}>
-                        {otherDeps.map((dep, idx) => (
-                          <React.Fragment key={`${dep.tripId}_${dep.departureTime}`}>
-                            {idx > 0 && <Text style={styles.cleanNextDepDot}>·</Text>}
-                            <TouchableOpacity
-                              onPress={() => {
-                                setSelectedTripId(dep.tripId);
-                                triggerCardBounce();
-                              }}
-                              activeOpacity={0.7}
-                              style={styles.cleanNextDepBtn}
-                            >
-                              <Text
-                                style={[
-                                  styles.cleanNextDepTimeText,
-                                  journey.trip.id === dep.tripId && styles.cleanNextDepTimeTextSelected,
-                                ]}
+                      {departuresExpanded ? (
+                        <View style={styles.cleanDeparturesExpandedContent}>
+                          <View style={styles.cleanDeparturesGrid}>
+                            {allUpcomingDeps.map((dep) => {
+                              const isSelected = journey.trip.id === dep.tripId;
+                              return (
+                                <TouchableOpacity
+                                  key={`${dep.tripId}_${dep.departureTime}`}
+                                  onPress={() => {
+                                    setSelectedTripId(dep.tripId);
+                                    triggerCardBounce();
+                                  }}
+                                  activeOpacity={0.75}
+                                  style={[
+                                    styles.cleanDepPill,
+                                    isSelected && styles.cleanDepPillSelected,
+                                  ]}
+                                >
+                                  {dep.route ? (
+                                    <Text
+                                      style={[
+                                        styles.cleanDepPillRoute,
+                                        isSelected && styles.cleanDepPillRouteSelected,
+                                      ]}
+                                    >
+                                      {dep.route}
+                                    </Text>
+                                  ) : null}
+                                  <Text
+                                    style={[
+                                      styles.cleanDepPillTime,
+                                      isSelected && styles.cleanDepPillTimeSelected,
+                                    ]}
+                                  >
+                                    {dep.departureTime}
+                                  </Text>
+                                  {isSelected && (
+                                    <View style={styles.cleanDepSelectedDot} />
+                                  )}
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                          <Text style={styles.cleanDeparturesHintText}>
+                            Tap any departure time to select and track that bus
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.cleanNextDeparturesTimesRow}>
+                          {otherDeps.map((dep, idx) => (
+                            <React.Fragment key={`${dep.tripId}_${dep.departureTime}`}>
+                              {idx > 0 && <Text style={styles.cleanNextDepDot}>·</Text>}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setSelectedTripId(dep.tripId);
+                                  triggerCardBounce();
+                                }}
+                                activeOpacity={0.7}
+                                style={styles.cleanNextDepBtn}
                               >
-                                {dep.departureTime}
-                              </Text>
-                            </TouchableOpacity>
-                          </React.Fragment>
-                        ))}
-                      </View>
+                                <Text
+                                  style={[
+                                    styles.cleanNextDepTimeText,
+                                    journey.trip.id === dep.tripId && styles.cleanNextDepTimeTextSelected,
+                                  ]}
+                                >
+                                  {dep.departureTime}
+                                </Text>
+                              </TouchableOpacity>
+                            </React.Fragment>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   );
                 })()}
@@ -3403,6 +3475,80 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#94A3B8',
+  },
+  cleanNextDeparturesCardExpanded: {
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cleanDeparturesCloseBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cleanDeparturesExpandedContent: {
+    marginTop: 8,
+  },
+  cleanDeparturesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  cleanDepPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  cleanDepPillSelected: {
+    backgroundColor: '#18258F',
+    borderColor: '#18258F',
+  },
+  cleanDepPillRoute: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  cleanDepPillRouteSelected: {
+    color: '#93C5FD',
+  },
+  cleanDepPillTime: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontVariant: ['tabular-nums'],
+  },
+  cleanDepPillTimeSelected: {
+    color: '#FFFFFF',
+  },
+  cleanDepSelectedDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#34D399',
+  },
+  cleanDeparturesHintText: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 6,
   },
 
   /* ROUTE STATUS COMPONENT (REPLACES TRAVEL TIME & FARE CARDS) */
