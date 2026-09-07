@@ -166,23 +166,42 @@ function calculateTransferJourney(
     return null;
   }
 
+  // Deduplicate transfer options by departure time (depMins1)
+  // If multiple interchange hubs or connection pairings exist for the exact same initial bus departure,
+  // select the optimal option (shortest total duration, then shortest platform wait time).
+  const uniqueTransferMap = new Map<number, TransferOption>();
+  for (const opt of transferOptions) {
+    const existing = uniqueTransferMap.get(opt.depMins1);
+    if (!existing) {
+      uniqueTransferMap.set(opt.depMins1, opt);
+    } else {
+      if (
+        opt.totalDuration < existing.totalDuration ||
+        (opt.totalDuration === existing.totalDuration && opt.waitMins < existing.waitMins)
+      ) {
+        uniqueTransferMap.set(opt.depMins1, opt);
+      }
+    }
+  }
+
+  const dedupedOptions = Array.from(uniqueTransferMap.values()).sort((a, b) => a.depMins1 - b.depMins1);
+
   // Filter for upcoming departures
-  transferOptions.sort((a, b) => a.depMins1 - b.depMins1);
-  const upcomingTransfers = transferOptions.filter(t => t.depMins1 >= nowMins - 1);
+  const upcomingTransfers = dedupedOptions.filter(t => t.depMins1 >= nowMins - 1);
 
   let chosen: TransferOption;
   let isNextDay = false;
   if (selectedTripId) {
-    const found = transferOptions.find(o => `${o.leg1Trip.id}_${o.leg2Trip.id}` === selectedTripId);
+    const found = dedupedOptions.find(o => `${o.leg1Trip.id}_${o.leg2Trip.id}` === selectedTripId);
     if (found) {
       chosen = found;
       isNextDay = chosen.depMins1 < nowMins - 1;
     } else {
-      chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
+      chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : dedupedOptions[0];
       isNextDay = upcomingTransfers.length === 0;
     }
   } else {
-    chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : transferOptions[0];
+    chosen = upcomingTransfers.length > 0 ? upcomingTransfers[0] : dedupedOptions[0];
     isNextDay = upcomingTransfers.length === 0;
   }
 
@@ -248,7 +267,7 @@ function calculateTransferJourney(
       };
     });
   } else {
-    transferDepartures = transferOptions.slice(0, 8).map(o => {
+    transferDepartures = dedupedOptions.slice(0, 8).map(o => {
       const diff = o.depMins1 + 1440 - nowMins;
       return {
         tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
@@ -550,11 +569,11 @@ export function calculateJourney(
       };
     });
 
-  let upcomingDepartures: UpcomingDeparture[] = [];
+  let rawUpcoming: UpcomingDeparture[] = [];
 
   if (todayUpcoming.length > 0) {
     todayUpcoming.sort((a, b) => a.diffMins - b.diffMins);
-    upcomingDepartures = todayUpcoming.slice(0, 8);
+    rawUpcoming = todayUpcoming;
   } else {
     // All today's buses have departed; show tomorrow's morning departures
     const tomorrowDepartures = matchingTrips.map(m => {
@@ -571,7 +590,18 @@ export function calculateJourney(
       };
     });
     tomorrowDepartures.sort((a, b) => a.departureMins - b.departureMins);
-    upcomingDepartures = tomorrowDepartures.slice(0, 8);
+    rawUpcoming = tomorrowDepartures;
+  }
+
+  // Deduplicate by departureTime so identical times are never repeated
+  const upcomingDepartures: UpcomingDeparture[] = [];
+  const seenTimes = new Set<string>();
+  for (const dep of rawUpcoming) {
+    if (!seenTimes.has(dep.departureTime)) {
+      seenTimes.add(dep.departureTime);
+      upcomingDepartures.push(dep);
+      if (upcomingDepartures.length >= 8) break;
+    }
   }
 
   return {
