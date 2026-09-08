@@ -1523,10 +1523,10 @@ export default function LiveBusScreen() {
                           </Text>
                         </View>
 
-                        {/* RIGHT 3D BUS ILLUSTRATION WITH CITY SKYLINE BEHIND */}
+                        {/* RIGHT 3D BUS ILLUSTRATION WITH PROPERLY ALIGNED CITY SKYLINE BEHIND */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
                           <View style={styles.busCardCitySkylineBg}>
-                            <CitySkylineSvg width={160} height={68} color="#18258F" opacity={0.10} />
+                            <CitySkylineSvg width={200} height={92} color="#18258F" opacity={0.16} />
                           </View>
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
@@ -2032,7 +2032,7 @@ export default function LiveBusScreen() {
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
                     <View style={styles.onboardCitySkylineBg}>
-                      <CitySkylineSvg width={155} height={68} color="#18258F" opacity={0.10} />
+                      <CitySkylineSvg width={195} height={90} color="#18258F" opacity={0.16} />
                     </View>
                     <Image
                       source={require('../../assets/images/redbus_3d.png')}
@@ -3574,8 +3574,8 @@ const styles = StyleSheet.create({
   },
   busCardCitySkylineBg: {
     position: 'absolute',
-    bottom: 4,
-    right: 0,
+    bottom: 2,
+    right: -10,
     zIndex: 0,
   },
   busCard3DImage: {
@@ -5110,14 +5110,18 @@ const styles = StyleSheet.create({
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 14,
-    right: 8,
+    top: 10,
+    right: 4,
     zIndex: 1,
+    width: 154,
+    height: 95,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
   },
   onboardCitySkylineBg: {
     position: 'absolute',
-    bottom: 2,
-    right: 0,
+    bottom: 0,
+    right: -10,
     zIndex: 0,
   },
   onboardBus3DImage: {
