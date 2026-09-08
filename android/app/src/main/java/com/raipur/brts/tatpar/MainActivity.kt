@@ -62,22 +62,24 @@ class MainActivity : ReactActivity() {
           ){})
   }
 
+  private var lastBackPressTime: Long = 0
+
   /**
-    * Align the back button behavior with Android S
-    * where moving root activities to background instead of finishing activities.
-    * @see <a href="https://developer.android.com/reference/android/app/Activity#onBackPressed()">onBackPressed</a>
+    * Prevent direct app exit on back press. Requires pressing back twice within 2 seconds to exit.
     */
   override fun invokeDefaultOnBackPressed() {
-      if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-          if (!moveTaskToBack(false)) {
-              // For non-root activities, use the default implementation to finish them.
-              super.invokeDefaultOnBackPressed()
+      val currentTime = System.currentTimeMillis()
+      if (currentTime - lastBackPressTime < 2000) {
+          if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+              if (!moveTaskToBack(false)) {
+                  super.invokeDefaultOnBackPressed()
+              }
+              return
           }
-          return
+          super.invokeDefaultOnBackPressed()
+      } else {
+          lastBackPressTime = currentTime
+          android.widget.Toast.makeText(this, "Press back again to exit", android.widget.Toast.LENGTH_SHORT).show()
       }
-
-      // Use the default back button implementation on Android S
-      // because it's doing more than [Activity.moveTaskToBack] in fact.
-      super.invokeDefaultOnBackPressed()
   }
 }

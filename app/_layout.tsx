@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Platform, StyleSheet, BackHandler } from 'react-native';
+import { View, Platform, StyleSheet, BackHandler, ToastAndroid } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import * as Notifications from 'expo-notifications';
@@ -20,6 +20,7 @@ export default function RootLayout() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
+  const lastBackPressRef = useRef<number>(0);
 
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -37,30 +38,105 @@ export default function RootLayout() {
     }
   }, []);
 
+  const lastExitPressRef = useRef<number>(0);
+
   const onAndroidBackPress = useCallback(() => {
-    if (webViewRef.current) {
-      if (canGoBackWeb) {
-        webViewRef.current.injectJavaScript(`
-          (function() {
-            try {
-              if (typeof window.__handleAppBack === 'function') {
-                window.__handleAppBack();
-              } else if (window.history.length > 1) {
-                window.history.back();
+    if (!webViewRef.current) return true;
+
+    // Send immediate script to handle back press inside the WebView
+    webViewRef.current.injectJavaScript(`
+      (function() {
+        try {
+          // 1. If active screen has custom back handler (e.g. stop details modal)
+          if (typeof window.__handleActiveScreenBack === 'function' && window.__handleActiveScreenBack()) {
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+            }
+            return;
+          }
+          if (typeof window.__handleAppBack === 'function' && window.__handleAppBack()) {
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+            }
+            return;
+          }
+
+          // 2. Check for any visible close/back button in overlays or sheets
+          var closeButtons = document.querySelectorAll(
+            '[aria-label="Close"], [aria-label="close"], [aria-label="Back"], [aria-label="back"], button[data-testid="back-button"], button[data-testid="close-modal"]'
+          );
+          for (var i = closeButtons.length - 1; i >= 0; i--) {
+            var btn = closeButtons[i];
+            if (btn && btn.offsetParent !== null) {
+              btn.click();
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
               }
-            } catch (e) {}
-          })();
-          true;
-        `);
-        return true;
-      }
-      if (canGoBack) {
-        webViewRef.current.goBack();
-        return true;
-      }
-    }
-    return false;
-  }, [canGoBack, canGoBackWeb]);
+              return;
+            }
+          }
+
+          // 3. Check if currently on a sub-screen or non-Home tab (Stops, Schedule, Fares)
+          var path = window.location.pathname || '';
+          var isNotHomePath = (path !== '/' && path !== '' && path !== '/index.html' && path !== '/(tabs)' && path !== '/(tabs)/index');
+          
+          var activePill = document.querySelector('[class*="activeTabText"], [aria-selected="true"]');
+          var activeLabel = activePill ? (activePill.textContent || '').trim() : '';
+          var isNotHomeTab = (activeLabel && activeLabel !== 'Home');
+
+          if (isNotHomePath || isNotHomeTab) {
+            // Find and click Home tab button
+            var homeTab = document.querySelector('[aria-label="Home"], [aria-label="home"]');
+            if (homeTab) {
+              homeTab.click();
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+              }
+              return;
+            }
+
+            var allEls = document.querySelectorAll('div, button, a');
+            for (var j = 0; j < allEls.length; j++) {
+              var el = allEls[j];
+              if ((el.textContent || '').trim() === 'Home' && el.offsetParent !== null) {
+                el.click();
+                if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+                }
+                return;
+              }
+            }
+
+            if (window.history.length > 1) {
+              window.history.back();
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+              }
+              return;
+            }
+
+            window.location.href = '/';
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'BACK_CONSUMED' }));
+            }
+            return;
+          }
+
+          // 4. Already at Home!
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ON_HOME_ROOT' }));
+          }
+        } catch (e) {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ON_HOME_ROOT' }));
+          }
+        }
+      })();
+      true;
+    `);
+
+    return true; // CRITICAL: NEVER permit Android OS to kill the app directly
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -74,7 +150,7 @@ export default function RootLayout() {
       <View style={styles.rootWrapper}>
         <StatusBar
           style={isLoading ? 'light' : 'dark'}
-          backgroundColor={isLoading ? '#18258F' : '#F8F6F0'}
+          backgroundColor={isLoading ? '#1E2D99' : '#F8F6F0'}
           translucent={false}
         />
         {Platform.OS === 'web' ? (
@@ -238,6 +314,40 @@ export default function RootLayout() {
                     if (target) {
                       target.appendChild(style);
                     }
+
+                    // 3. Expose Android Hardware Back Handler to Native
+                    window.__handleAndroidBack = function() {
+                      try {
+                        // A. Try closing visible modal or back-button in overlays
+                        const closeBtns = document.querySelectorAll('[aria-label="Close"], [aria-label="close"], [aria-label="Back"], [aria-label="back"], button[data-testid="back-button"], button[data-testid="close-modal"]');
+                        for (let i = closeBtns.length - 1; i >= 0; i--) {
+                          const btn = closeBtns[i];
+                          if (btn && btn.offsetParent !== null) {
+                            btn.click();
+                            return true;
+                          }
+                        }
+
+                        // B. If on a sub-screen or non-Home tab, return to Home tab
+                        const homeTabBtn = document.querySelector('[aria-label="Home"], [aria-label="home"]');
+                        if (homeTabBtn) {
+                          homeTabBtn.click();
+                          return true;
+                        }
+
+                        // C. Fallback history back
+                        if (window.history.length > 1) {
+                          window.history.back();
+                          return true;
+                        }
+
+                        // D. Force root
+                        window.location.href = '/';
+                        return true;
+                      } catch (e) {
+                        return false;
+                      }
+                    };
                   } catch (e) {}
                 })();
                 true;
@@ -298,7 +408,19 @@ export default function RootLayout() {
                 try {
                   const data = JSON.parse(event.nativeEvent.data);
                   if (!data) return;
-                  if (data.type === 'CAN_GO_BACK') {
+                  if (data.type === 'ON_HOME_ROOT') {
+                    const now = Date.now();
+                    if (now - lastExitPressRef.current < 2000) {
+                      BackHandler.exitApp();
+                    } else {
+                      lastExitPressRef.current = now;
+                      if (Platform.OS === 'android') {
+                        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+                      }
+                    }
+                  } else if (data.type === 'BACK_CONSUMED') {
+                    lastExitPressRef.current = 0; // Reset exit timer, user navigated back within app
+                  } else if (data.type === 'CAN_GO_BACK') {
                     setCanGoBackWeb(Boolean(data.canGoBack));
                   } else if (data.type === 'SCHEDULE_BUS_NOTIFICATION') {
                     const { routeBadge, fromStop, toStop, departureTime, arrivalTime, triggerSeconds, minutesBefore } = data.payload || {};
@@ -343,7 +465,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   rootWrapper: {
     flex: 1,
-    backgroundColor: '#F8F6F0',
+    backgroundColor: '#1E2D99', // Matches loading screen royal blue perfectly, zero flicker
   },
   nativeContainer: {
     flex: 1,

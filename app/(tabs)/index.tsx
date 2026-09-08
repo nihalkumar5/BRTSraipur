@@ -1262,76 +1262,6 @@ export default function LiveBusScreen() {
                   );
                 })()}
 
-                {/* ⚠️ SERVICE ENDED TODAY + PROMINENT ACTIVE TONIGHT ALTERNATIVES */}
-                {journey.serviceEndedToday && (
-                  <View style={styles.serviceEndedCard}>
-                    <View style={styles.serviceEndedHeaderRow}>
-                      <View style={styles.serviceEndedIconWrap}>
-                        <Clock size={18} color="#DC2626" strokeWidth={2.4} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.serviceEndedTitle}>
-                          Direct Service to {journey.toStop.shortName} Ended Today
-                        </Text>
-                        <Text style={styles.serviceEndedSub}>
-                          {journey.lastDepartedTodayTime ? `Last direct bus left at ${journey.lastDepartedTodayTime}. ` : ''}
-                          {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.some(a => a.isToday)
-                            ? (journey.nearbyDirectAlternatives.some(a => a.isToday && a.type === 'nearby_destination')
-                                ? `Lekin paas ke station tak abhi bus mil rahi hai (paidal ya auto se aage ja sakte hain):`
-                                : `Paas ke stations se abhi direct bus mil sakti hai:`)
-                            : `Is route par agli bus kal subah ${journey.fromTime} ko chalegi.`}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Nearby Active Stops Tonight */}
-                    {journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.filter(a => a.isToday).length > 0 && (
-                      <View style={styles.serviceEndedOptionsWrap}>
-                        {journey.nearbyDirectAlternatives.filter(a => a.isToday).slice(0, 2).map((alt, idx) => {
-                          const isDest = alt.type === 'nearby_destination';
-                          return (
-                            <TouchableOpacity
-                              key={`ended-alt-${idx}`}
-                              style={styles.serviceEndedOptionItem}
-                              onPress={() => {
-                                if (alt.type === 'nearby_origin') {
-                                  setFromStation(alt.suggestedStop.shortName);
-                                } else {
-                                  setToStation(alt.suggestedStop.shortName);
-                                }
-                                setSelectedTripId(null);
-                                triggerCardBounce();
-                              }}
-                              activeOpacity={0.8}
-                            >
-                              <View style={{ flex: 1, marginRight: 8 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                  <Text style={styles.serviceEndedStopName}>
-                                    {isDest ? `Drop at ${alt.suggestedStop.shortName}` : alt.suggestedStop.shortName}
-                                  </Text>
-                                  <Text style={styles.serviceEndedDistBadge}>
-                                    ({alt.stopsAway
-                                      ? `${alt.stopsAway} stop${alt.stopsAway > 1 ? 's' : ''} before ${journey.toStop.shortName} · ~${alt.routeTimeDeltaMins}m on route`
-                                      : `${alt.distanceFormatted} ${isDest ? `from ${journey.toStop.shortName}` : 'away'} · ~${alt.walkingMins}m walk`})
-                                  </Text>
-                                </View>
-                                <Text style={styles.serviceEndedTripInfo}>
-                                  Bus {alt.routeNumber} at <Text style={{ fontWeight: '800', color: '#047857' }}>{alt.departureTime}</Text> (in {alt.minutesUntilDeparture}m) · ₹{alt.fare}
-                                  {alt.previousDepartureTime ? ` · (Prev: ${alt.previousDepartureTime})` : ''}
-                                </Text>
-                              </View>
-                              <View style={styles.serviceEndedSwitchBtn}>
-                                <Text style={styles.serviceEndedSwitchBtnText}>
-                                  {isDest ? 'Drop here ➔' : 'Board here ➔'}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    )}
-                  </View>
-                )}
 
                 {/* ⚡ SMART OPTIMIZED ROUTE BANNER */}
                 {journey.isProximityOptimized && (
@@ -1405,7 +1335,6 @@ export default function LiveBusScreen() {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Zap size={13} color="#FBBF24" strokeWidth={2.4} />
                         <Text style={styles.heroAlternativeHintText}>
                           {journey.nearbyDirectAlternatives.find(a => a.isToday)?.type === 'nearby_destination'
                             ? `Take bus till ${journey.nearbyDirectAlternatives.find(a => a.isToday)?.suggestedStop.shortName} tonight (${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway ? `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway} stop${(journey.nearbyDirectAlternatives.find(a => a.isToday)?.stopsAway || 1) > 1 ? 's' : ''} before ${journey.toStop.shortName}` : `${journey.nearbyDirectAlternatives.find(a => a.isToday)?.distanceFormatted} to ${journey.toStop.shortName}`}) ➔`
@@ -6426,21 +6355,21 @@ const styles = StyleSheet.create({
   heroAlternativeHintPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(251, 191, 36, 0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.45)',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1.2,
+    borderColor: '#FCD34D',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     marginTop: 8,
     marginBottom: 6,
     alignSelf: 'flex-start',
   },
   heroAlternativeHintText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#FDE68A',
+    color: '#92400E',
+    letterSpacing: 0.2,
   },
   noRouteContainer: {
     marginTop: 16,
