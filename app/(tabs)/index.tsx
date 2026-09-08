@@ -2027,12 +2027,10 @@ export default function LiveBusScreen() {
                     <Text style={styles.onboardLiveBadgeText}>LIVE ONBOARD</Text>
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
-                    <EditorialBusIllustration
-                      width={78}
-                      height={32}
-                      color="rgba(255, 255, 255, 0.80)"
-                      wheelBg="#101A72"
-                      accentColor="#93C5FD"
+                    <Image
+                      source={require('../../assets/images/redbus_3d.png')}
+                      style={styles.onboardBus3DImage}
+                      resizeMode="contain"
                     />
                   </View>
                 </View>
@@ -5023,18 +5021,25 @@ const styles = StyleSheet.create({
     color: '#18258F',
   },
   onboardHeroCard: {
-    backgroundColor: '#18258F',
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 20,
     position: 'relative',
     overflow: 'hidden',
     marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#EDF2F7',
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
     elevation: 3,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 10px 28px rgba(24, 37, 143, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        } as any)
+      : {}),
   },
   onboardHeroTopRow: {
     flexDirection: 'row',
@@ -5044,9 +5049,9 @@ const styles = StyleSheet.create({
   onboardLiveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    backgroundColor: '#ECFDF5',
     borderWidth: 1,
-    borderColor: '#10B981',
+    borderColor: '#A7F3D0',
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 6,
@@ -5068,20 +5073,23 @@ const styles = StyleSheet.create({
   onboardLiveBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#059669',
     letterSpacing: 0.8,
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 14,
-    right: 16,
+    top: 10,
+    right: 14,
     zIndex: 1,
-    opacity: 0.80,
+  },
+  onboardBus3DImage: {
+    width: 95,
+    height: 58,
   },
   onboardHeroNextStopLabel: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.70)',
+    color: '#64748B',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginTop: 14,
@@ -5091,7 +5099,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#0B132B',
     letterSpacing: -0.4,
     marginBottom: 8,
   },
@@ -5101,9 +5109,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   onboardHeroEtaBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.20)',
+    backgroundColor: '#ECFDF5',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.40)',
+    borderColor: '#A7F3D0',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 6,
@@ -5111,13 +5119,13 @@ const styles = StyleSheet.create({
   },
   onboardHeroEtaText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: '#059669',
     letterSpacing: 0.2,
   },
   onboardHeroDivider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#F1F5F9',
     marginVertical: 14,
   },
   onboardHeroRouteMeta: {
@@ -5126,13 +5134,13 @@ const styles = StyleSheet.create({
   onboardHeroTowardsText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#0B132B',
     marginBottom: 2,
   },
   onboardHeroServiceBadge: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: '#64748B',
     marginBottom: 12,
   },
   onboardHeroProgressContainer: {
@@ -5141,19 +5149,19 @@ const styles = StyleSheet.create({
   onboardHeroStopsRemainingText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.80)',
+    color: '#475569',
     marginBottom: 6,
   },
   onboardHeroProgressBarTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    borderRadius: 2,
+    height: 5,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
     overflow: 'hidden',
   },
   onboardHeroProgressBarFill: {
     height: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 2,
+    backgroundColor: '#18258F',
+    borderRadius: 3,
   },
 
   /* COMPACT ONBOARD JOURNEY MAP */
