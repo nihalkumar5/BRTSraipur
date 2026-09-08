@@ -12,7 +12,7 @@
     -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover"
     />
 
     <!-- PWA / mobile-web-app behaviour -->
@@ -32,20 +32,47 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Prevent text size auto-adjustment on orientation change -->
+    <!-- Prevent text size auto-adjustment and disable pinch zoom / double tap zoom -->
     <style>
       html, body, #root {
         background-color: #F8F6F0;
         margin: 0;
         overflow: hidden;
-        /* Prevent rubber-band / overscroll on iOS Safari */
         overscroll-behavior: none;
+        touch-action: pan-x pan-y;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
-      /* Remove tap highlight on mobile */
       * {
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
     </style>
+    <script>
+      (function() {
+        // Prevent multi-touch pinch zoom
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        // Prevent double tap zoom
+        var lastTouch = 0;
+        document.addEventListener('touchend', function(e) {
+          var now = Date.now();
+          if (now - lastTouch <= 300) {
+            e.preventDefault();
+          }
+          lastTouch = now;
+        }, false);
+
+        // Prevent iOS Safari gesture zoom
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

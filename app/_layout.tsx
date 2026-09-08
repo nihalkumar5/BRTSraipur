@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { View, Platform, StyleSheet, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import * as Notifications from 'expo-notifications';
+import { requestNotificationPermissions } from '../src/services/notifications';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -28,6 +30,12 @@ export default function RootLayout() {
   });
 
   const [canGoBackWeb, setCanGoBackWeb] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      requestNotificationPermissions();
+    }
+  }, []);
 
   const onAndroidBackPress = useCallback(() => {
     if (webViewRef.current) {
@@ -145,9 +153,47 @@ export default function RootLayout() {
               domStorageEnabled={true}
               allowsBackForwardNavigationGestures={true}
               pullToRefreshEnabled={true}
+              scalesPageToFit={false}
+              setBuiltInZoomControls={false}
+              setDisplayZoomControls={false}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+              overScrollMode="never"
+              bounces={false}
+              textZoom={100}
+              nestedScrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={`
                 (function() {
                   try {
+                    // 1. Rigid viewport and touch zoom lockdown
+                    let meta = document.querySelector('meta[name="viewport"]');
+                    if (!meta) {
+                      meta = document.createElement('meta');
+                      meta.name = 'viewport';
+                      (document.head || document.documentElement).appendChild(meta);
+                    }
+                    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover';
+
+                    // 2. Prevent multi-touch pinch zoom & double-tap zoom
+                    document.addEventListener('touchstart', function(e) {
+                      if (e.touches && e.touches.length > 1) {
+                        e.preventDefault();
+                      }
+                    }, { passive: false });
+
+                    var lastTouchTime = 0;
+                    document.addEventListener('touchend', function(e) {
+                      var now = Date.now();
+                      if (now - lastTouchTime <= 300) {
+                        e.preventDefault();
+                      }
+                      lastTouchTime = now;
+                    }, false);
+
+                    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+                    document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+                    document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+
                     const fontLink = document.createElement('link');
                     fontLink.rel = 'stylesheet';
                     fontLink.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap';
@@ -156,8 +202,16 @@ export default function RootLayout() {
                     const style = document.createElement('style');
                     style.id = 'tatpar-custom-styles';
                     style.innerHTML = \`
+                      html, body, #root {
+                        touch-action: pan-x pan-y !important;
+                        -webkit-text-size-adjust: 100% !important;
+                        text-size-adjust: 100% !important;
+                        overscroll-behavior: none !important;
+                      }
                       * {
                         font-family: 'Plus Jakarta Sans', sans-serif !important;
+                        touch-action: manipulation !important;
+                        -webkit-tap-highlight-color: transparent !important;
                       }
                       div, span, p, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, [class*="css-text-"], [class*="r-fontFamily-"] {
                         font-family: 'Plus Jakarta Sans', sans-serif !important;
@@ -240,11 +294,33 @@ export default function RootLayout() {
               onNavigationStateChange={(navState) => {
                 setCanGoBack(navState.canGoBack);
               }}
-              onMessage={(event) => {
+              onMessage={async (event) => {
                 try {
                   const data = JSON.parse(event.nativeEvent.data);
-                  if (data && data.type === 'CAN_GO_BACK') {
+                  if (!data) return;
+                  if (data.type === 'CAN_GO_BACK') {
                     setCanGoBackWeb(Boolean(data.canGoBack));
+                  } else if (data.type === 'SCHEDULE_BUS_NOTIFICATION') {
+                    const { routeBadge, fromStop, toStop, departureTime, arrivalTime, triggerSeconds, minutesBefore } = data.payload || {};
+                    await requestNotificationPermissions();
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: `🚍 ${routeBadge} departing in ${minutesBefore} mins!`,
+                        body: `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`,
+                        sound: 'default',
+                        color: '#18258F',
+                        priority: Notifications.AndroidNotificationPriority.HIGH,
+                      },
+                      trigger: {
+                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                        seconds: Math.max(1, Number(triggerSeconds) || 1),
+                        channelId: 'default',
+                      },
+                    });
+                  } else if (data.type === 'CANCEL_NOTIFICATION') {
+                    if (data.payload?.notificationId) {
+                      await Notifications.cancelScheduledNotificationAsync(data.payload.notificationId);
+                    }
                   }
                 } catch (e) {}
               }}

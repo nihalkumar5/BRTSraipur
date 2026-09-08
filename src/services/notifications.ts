@@ -5,8 +5,11 @@ import { Platform } from 'react-native';
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    priority: Notifications.AndroidNotificationPriority.HIGH,
   }),
 });
 
@@ -33,10 +36,11 @@ export async function requestNotificationPermissions(): Promise<boolean> {
         description: 'Notifications for upcoming bus departures and schedule alerts',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#2563EB',
+        lightColor: '#18258F',
         sound: 'default',
         enableLights: true,
         enableVibrate: true,
+        showBadge: true,
       });
     } catch (e) {
       console.warn('Error setting Android notification channel:', e);
@@ -117,15 +121,35 @@ export async function scheduleBusNotification(
           title: `🚍 ${routeBadge} departing in ${minutesBefore} mins!`,
           body: `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`,
           sound: 'default',
+          color: '#18258F',
+          priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: triggerSeconds,
+          channelId: 'default',
         },
       });
-    } else {
-      // Web notification support
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      // If running inside React Native Android/iOS WebView host
+      if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+        try {
+          (window as any).ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'SCHEDULE_BUS_NOTIFICATION',
+              payload: {
+                routeBadge,
+                fromStop,
+                toStop,
+                departureTime,
+                arrivalTime,
+                triggerSeconds,
+                minutesBefore,
+              },
+            })
+          );
+        } catch (e) {}
+      } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        // Pure Web notification support
         setTimeout(() => {
           new Notification(`🚍 ${routeBadge} departing in ${minutesBefore} mins!`, {
             body: `Board at ${fromStop} by ${departureTime}. ETA at ${toStop}: ${arrivalTime}.`,
@@ -166,6 +190,16 @@ export async function cancelReminder(id: string): Promise<void> {
     } catch (e) {
       console.warn('Error cancelling notification:', e);
     }
+  }
+  if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+    try {
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({
+          type: 'CANCEL_NOTIFICATION',
+          payload: { id, notificationId: item?.notificationId },
+        })
+      );
+    } catch (e) {}
   }
   activeReminders = activeReminders.filter(r => r.id !== id);
 }
