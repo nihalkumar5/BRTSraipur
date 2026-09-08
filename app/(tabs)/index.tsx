@@ -61,6 +61,7 @@ import {
 } from '../../src/services/notifications';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 import { FONT, typography } from '../../src/theme/typography';
+import { BusSvgRepoIcon } from '../../src/components/BusSvgRepoIcon';
 
 function EditorialBusIllustration({
   width = 155,
@@ -1534,13 +1535,9 @@ export default function LiveBusScreen() {
                           </View>
                         </View>
 
-                        {/* RIGHT: BUS ILLUSTRATION — modern white/silver bus */}
+                        {/* RIGHT: BUS SVG REPO ICON */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
-                          <Image
-                            source={require('../../assets/images/whitebus_3d.png')}
-                            style={styles.busCard3DImage}
-                            resizeMode="contain"
-                          />
+                          <BusSvgRepoIcon size={44} color="#FFFFFF" strokeWidth={1.6} />
                         </View>
                       </View>
 
@@ -3590,17 +3587,16 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   busCardRightIllustration: {
-    width: 140,
-    height: 86,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
-    marginRight: -6,
-    marginBottom: -4,
-  },
-  busCard3DImage: {
-    width: 140,
-    height: 86,
+    marginLeft: 10,
   },
   busCardDivider: {
     height: 1,
