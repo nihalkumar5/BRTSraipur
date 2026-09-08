@@ -61,6 +61,7 @@ import {
 } from '../../src/services/notifications';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 import { FONT, typography } from '../../src/theme/typography';
+import { CitySkylineSvg } from '../../src/components/CitySkylineSvg';
 
 function EditorialBusIllustration({
   width = 155,
@@ -1522,8 +1523,11 @@ export default function LiveBusScreen() {
                           </Text>
                         </View>
 
-                        {/* RIGHT 3D BUS ILLUSTRATION */}
+                        {/* RIGHT 3D BUS ILLUSTRATION WITH CITY SKYLINE BEHIND */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
+                          <View style={styles.busCardCitySkylineBg}>
+                            <CitySkylineSvg width={160} height={68} color="#18258F" opacity={0.10} />
+                          </View>
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
                             style={styles.busCard3DImage}
@@ -2027,6 +2031,9 @@ export default function LiveBusScreen() {
                     <Text style={styles.onboardLiveBadgeText}>LIVE ONBOARD</Text>
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
+                    <View style={styles.onboardCitySkylineBg}>
+                      <CitySkylineSvg width={155} height={68} color="#18258F" opacity={0.10} />
+                    </View>
                     <Image
                       source={require('../../assets/images/redbus_3d.png')}
                       style={styles.onboardBus3DImage}
@@ -3563,10 +3570,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    position: 'relative',
+  },
+  busCardCitySkylineBg: {
+    position: 'absolute',
+    bottom: 4,
+    right: 0,
+    zIndex: 0,
   },
   busCard3DImage: {
     width: 154,
     height: 95,
+    zIndex: 1,
   },
   busCardDivider: {
     height: 1,
@@ -5082,9 +5097,16 @@ const styles = StyleSheet.create({
     right: 8,
     zIndex: 1,
   },
+  onboardCitySkylineBg: {
+    position: 'absolute',
+    bottom: 2,
+    right: 0,
+    zIndex: 0,
+  },
   onboardBus3DImage: {
     width: 148,
     height: 92,
+    zIndex: 1,
   },
   onboardHeroNextStopLabel: {
     fontSize: 10.5,
