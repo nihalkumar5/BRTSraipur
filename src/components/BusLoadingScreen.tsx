@@ -423,9 +423,9 @@ export default function BusLoadingScreen({
           <Text style={styles.statusText}>{statusText}</Text>
         </View>
 
-        {/* Footer Authority */}
+        {/* Footer Transit Branding */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>छत्तीसगढ़ शासन · रायपुर स्मार्ट सिटी लिमिटेड</Text>
+          <Text style={styles.footerText}>नवा रायपुर अटल नगर · रायपुर बीआरटीएस गाइड</Text>
         </View>
       </Animated.View>
     </View>
