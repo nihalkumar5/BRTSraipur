@@ -1480,11 +1480,17 @@ export default function LiveBusScreen() {
                       { transform: [{ scale: cardScaleAnim }] },
                     ]}
                   >
+                    {/* DECORATIVE TOP ACCENT STRIP */}
+                    <View style={styles.busCardAccentStrip} />
+
+                    {/* DECORATIVE GLOW CIRCLE (top-right) */}
+                    <View style={styles.busCardGlowCircle} pointerEvents="none" />
+
                     <TouchableOpacity
                       activeOpacity={0.92}
                       onPress={() => setSelectedTripId(journey.trip.id)}
                     >
-                      {/* TOP ROW: INFO ON LEFT, 3D RED BUS ON RIGHT */}
+                      {/* TOP ROW: INFO ON LEFT, BUS ON RIGHT */}
                       <View style={styles.busCardTopRow}>
                         <View style={styles.busCardLeftCol}>
                           {/* ● NEXT BUS BADGE */}
@@ -1516,14 +1522,21 @@ export default function LiveBusScreen() {
                             {journey.targetDestinationStop && ` (for ${journey.targetDestinationStop.shortName})`}
                           </Text>
 
-                          {/* ROUTE META LINE (ROUTE · SERVICE · FARE) */}
-                          <Text style={styles.heroRouteMetaText} numberOfLines={1}>
-                            {journey.routeBadge} · {journey.isTransfer ? `Via ${journey.transferHub}` : 'AC Express'} · ₹{journey.fare}
-                          </Text>
+                          {/* ROUTE META: BADGE · FARE */}
+                          <View style={styles.heroMetaPillRow}>
+                            <View style={styles.heroMetaPill}>
+                              <Text style={styles.heroMetaPillText}>
+                                {journey.routeBadge}
+                              </Text>
+                            </View>
+                            <Text style={styles.heroMetaDot}>·</Text>
+                            <Text style={styles.heroMetaFare}>₹{journey.fare}</Text>
+                          </View>
                         </View>
 
-                        {/* RIGHT 3D BUS ILLUSTRATION */}
+                        {/* RIGHT: BUS ILLUSTRATION with blended bg circle */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
+                          <View style={styles.busCardIllustrationGlow} />
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
                             style={styles.busCard3DImage}
@@ -1532,23 +1545,23 @@ export default function LiveBusScreen() {
                         </View>
                       </View>
 
-                      {/* CLEAN DIVIDER */}
-                      <View style={styles.heroDividerLine} />
-
                       {/* BOTTOM ROW: DEPARTS IN */}
                       <View style={styles.heroDepartsInRow}>
                         <Text style={styles.heroDepartsInLabel}>Departs in</Text>
-                        <Text style={styles.heroDepartsInValue}>
-                          {(() => {
-                            let diff = journey.departureMins - currentTimeMins;
-                            if (diff < 0) diff += 1440;
-                            if (diff === 0) return 'NOW';
-                            const hrs = Math.floor(diff / 60);
-                            const mins = diff % 60;
-                            if (hrs > 0) return `${hrs}h ${mins}m`;
-                            return `${mins} min`;
-                          })()}
-                        </Text>
+                        <View style={styles.heroDepartsInChip}>
+                          <Clock size={12} color="#FFFFFF" strokeWidth={2.4} />
+                          <Text style={styles.heroDepartsInValue}>
+                            {(() => {
+                              let diff = journey.departureMins - currentTimeMins;
+                              if (diff < 0) diff += 1440;
+                              if (diff === 0) return 'NOW';
+                              const hrs = Math.floor(diff / 60);
+                              const mins = diff % 60;
+                              if (hrs > 0) return `${hrs}h ${mins}m`;
+                              return `${mins} min`;
+                            })()}
+                          </Text>
+                        </View>
                       </View>
                     </TouchableOpacity>
                   </Animated.View>
@@ -3481,7 +3494,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#18258F',
     borderRadius: 24,
     paddingHorizontal: 15,
-    paddingVertical: 16,
+    paddingTop: 0,
+    paddingBottom: 16,
     borderWidth: 0,
     marginBottom: 20,
     shadowColor: '#18258F',
@@ -3495,6 +3509,24 @@ const styles = StyleSheet.create({
           boxShadow: '0 10px 32px rgba(24, 37, 143, 0.35), 0 2px 8px rgba(0, 0, 0, 0.1)',
         } as any)
       : {}),
+  },
+  busCardAccentStrip: {
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginHorizontal: 20,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+    marginBottom: 14,
+  },
+  busCardGlowCircle: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    pointerEvents: 'none',
   },
   busCardTopRow: {
     flexDirection: 'row',
@@ -3564,6 +3596,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    position: 'relative',
+  },
+  busCardIllustrationGlow: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -60 }, { translateY: -60 }],
   },
   busCard3DImage: {
     width: 154,
@@ -3687,6 +3730,37 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
     marginTop: 6,
   },
+  heroMetaPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  heroMetaPill: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  heroMetaPillText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  heroMetaDot: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+  },
+  heroMetaFare: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   heroDividerLine: {
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.12)',
@@ -3696,6 +3770,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 14,
+    paddingHorizontal: 2,
   },
   heroDepartsInLabel: {
     fontFamily: FONT.medium,
@@ -3703,9 +3779,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255,255,255,0.65)',
   },
+  heroDepartsInChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
   heroDepartsInValue: {
     fontFamily: FONT.bold,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
   },
