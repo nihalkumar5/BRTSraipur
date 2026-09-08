@@ -1776,80 +1776,84 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
-                {/* DEDICATED STEP-BY-STEP BUS CHANGE GUIDE CARD */}
+                {/* BUS CHANGE GUIDE — CLEAN REDESIGN */}
                 {journey.isTransfer && (
                   <View style={styles.busChangeGuideCard}>
+
+                    {/* HEADER */}
                     <View style={styles.busChangeGuideHeader}>
                       <View style={styles.busChangeIconBox}>
-                        <ArrowUpDown size={18} color="#18258F" strokeWidth={2.4} />
+                        <ArrowUpDown size={15} color="#2438B8" strokeWidth={2.4} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={styles.busChangeGuideTitle}>Bus Change Guide</Text>
-                          <View style={styles.busChangeCountBadge}>
-                            <Text style={styles.busChangeCountBadgeText}>1 Transfer</Text>
-                          </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Text style={styles.busChangeGuideTitle}>Bus change</Text>
+                          <Text style={styles.busChangeCountInline}>1 transfer</Text>
                         </View>
-                        <Text style={styles.busChangeGuideSubtitle}>
-                          Kaun si bus kab badalni hai (Switch at {journey.transferHub})
-                        </Text>
+                        <Text style={styles.busChangeGuideSubtitle}>Switch at {journey.transferHub}</Text>
                       </View>
                     </View>
 
-                    {/* STEP 1: FIRST BUS */}
-                    <View style={styles.busChangeStepItem}>
-                      <View style={styles.busChangeStepNumberBadge}>
-                        <Text style={styles.busChangeStepNumberText}>1</Text>
-                      </View>
-                      <View style={styles.busChangeStepBody}>
-                        <View style={styles.busChangeStepTopRow}>
-                          <View style={styles.busChangeRoutePillLeg1}>
-                            <Bus size={11} color="#FFFFFF" />
-                            <Text style={styles.busChangeRoutePillText}>Bus {journey.trip.routeNumber}</Text>
-                          </View>
-                          <Text style={styles.busChangeStepTimeText}>{journey.fromTime} → {journey.transferArrivalTime || ''}</Text>
-                        </View>
-                        <Text style={styles.busChangeStepDesc}>
-                          Board at <Text style={styles.busChangeBoldText}>{journey.fromStop.shortName}</Text> ({journey.fromTime}) · Alight at <Text style={styles.busChangeBoldText}>{journey.transferHub}</Text> ({journey.transferArrivalTime || ''})
+                    {/* STEP 1 */}
+                    <View style={styles.busChangeLeg}>
+                      <Text style={styles.busChangeLegNumber}>①</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.busChangeLegRoute}>BUS {journey.trip.routeNumber}</Text>
+                        <Text style={styles.busChangeLegStops}>
+                          {journey.fromStop.shortName} → {journey.transferHub}
                         </Text>
+                        <View style={styles.busChangeTimeRow}>
+                          <View style={styles.busChangeTimeCol}>
+                            <Text style={styles.busChangeTimeValue}>{journey.fromTime}</Text>
+                            <Text style={styles.busChangeTimeLabel}>Board</Text>
+                          </View>
+                          <View style={styles.busChangeTimeCol}>
+                            <Text style={styles.busChangeTimeValue}>{journey.transferArrivalTime || ''}</Text>
+                            <Text style={styles.busChangeTimeLabel}>Get off</Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
 
-                    {/* STEP 2: INTERCHANGE WAIT BANNER */}
-                    <View style={styles.busChangeInterchangeStep}>
-                      <View style={styles.busChangeInterchangeLine} />
-                      <View style={styles.busChangeInterchangeContent}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                          <Clock size={13} color="#B45309" strokeWidth={2.4} />
-                          <Text style={styles.busChangeInterchangeTitle}>
-                            Change Bus at {journey.transferHub} ({journey.transferWaitMins}m wait)
+                    {/* TRANSFER WAIT BLOCK */}
+                    <View style={styles.busChangeTransferWrap}>
+                      <View style={styles.busChangeTransferConnector} />
+                      <View style={styles.busChangeTransferBox}>
+                        <Clock size={12} color="#B54708" strokeWidth={2.4} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.busChangeTransferTitle}>
+                            {journey.transferWaitMins} min transfer at {journey.transferHub}
+                          </Text>
+                          <Text style={styles.busChangeTransferSub}>
+                            Next bus · {journey.connectingFromTime}
                           </Text>
                         </View>
-                        <Text style={styles.busChangeInterchangeSub}>
-                          Bus {journey.trip.routeNumber} se utrein ({journey.transferArrivalTime || ''}) → {journey.transferWaitMins} min shelter par wait karein → Connecting Bus {journey.connectingTrip?.routeNumber || ''} me baithein ({journey.connectingFromTime})
-                        </Text>
                       </View>
+                      <View style={styles.busChangeTransferConnector} />
                     </View>
 
-                    {/* STEP 3: SECOND BUS */}
-                    <View style={styles.busChangeStepItem}>
-                      <View style={[styles.busChangeStepNumberBadge, { backgroundColor: '#059669' }]}>
-                        <Text style={styles.busChangeStepNumberText}>2</Text>
-                      </View>
-                      <View style={styles.busChangeStepBody}>
-                        <View style={styles.busChangeStepTopRow}>
-                          <View style={styles.busChangeRoutePillLeg2}>
-                            <Bus size={11} color="#FFFFFF" />
-                            <Text style={styles.busChangeRoutePillText}>Bus {journey.connectingTrip?.routeNumber || 'Connecting'}</Text>
+                    {/* STEP 2 */}
+                    <View style={styles.busChangeLeg}>
+                      <Text style={styles.busChangeLegNumber}>②</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.busChangeLegRoute}>BUS {journey.connectingTrip?.routeNumber || 'Connecting'}</Text>
+                        <Text style={styles.busChangeLegStops}>
+                          {journey.transferHub} → {journey.toStop.shortName}
+                        </Text>
+                        <View style={styles.busChangeTimeRow}>
+                          <View style={styles.busChangeTimeCol}>
+                            <Text style={styles.busChangeTimeValue}>{journey.connectingFromTime}</Text>
+                            <Text style={styles.busChangeTimeLabel}>Board</Text>
                           </View>
-                          <Text style={[styles.busChangeStepTimeText, { color: '#047857' }]}>{journey.connectingFromTime} → {journey.toTime}</Text>
+                          <View style={styles.busChangeTimeCol}>
+                            <Text style={styles.busChangeTimeValue}>{journey.toTime}</Text>
+                            <Text style={styles.busChangeTimeLabel}>Arrive</Text>
+                          </View>
                         </View>
-                        <Text style={styles.busChangeStepDesc}>
-                          Board at <Text style={styles.busChangeBoldText}>{journey.transferHub}</Text> ({journey.connectingFromTime}) · Final arrival at <Text style={styles.busChangeBoldText}>{journey.toStop.shortName}</Text> ({journey.toTime})
-                        </Text>
                       </View>
                     </View>
 
+                    {/* FASTER ALTERNATIVE (optional, kept compact) */}
                     {journey.optimalProximity?.shortHopBus && (
                       <TouchableOpacity
                         style={styles.busChangeProximityFooter}
@@ -1862,16 +1866,11 @@ export default function LiveBusScreen() {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Zap size={14} color="#059669" strokeWidth={2.4} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.busChangeProximityTitle}>
-                            Faster Alternative: Take Bus {journey.optimalProximity.shortHopBus.busNumber} to {journey.optimalProximity.shortHopBus.dropStationShortName}
-                          </Text>
-                          <Text style={styles.busChangeProximitySub}>
-                            Ride only {journey.optimalProximity.shortHopBus.busRideMins}m instead of {journey.durationMins}m detour · Save {journey.optimalProximity.minutesSaved}m!
-                          </Text>
-                        </View>
-                        <Text style={styles.busChangeProximityBtnText}>Switch ➔</Text>
+                        <Zap size={13} color="#087F5B" strokeWidth={2.4} />
+                        <Text style={styles.busChangeProximityTitle} numberOfLines={1}>
+                          Faster: Bus {journey.optimalProximity.shortHopBus.busNumber} → {journey.optimalProximity.shortHopBus.dropStationShortName} · Save {journey.optimalProximity.minutesSaved}m
+                        </Text>
+                        <Text style={styles.busChangeProximityBtnText}>Switch →</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -6026,155 +6025,133 @@ const styles = StyleSheet.create({
   busChangeGuideCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 14,
     marginVertical: 12,
-    borderWidth: 1.5,
-    borderColor: '#BFDBFE',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   busChangeGuideHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
   busChangeIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EEF1FB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   busChangeGuideTitle: {
-    fontSize: 14.5,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#0F172A',
   },
-  busChangeCountBadge: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  busChangeCountBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#18258F',
+  busChangeCountInline: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
   },
   busChangeGuideSubtitle: {
-    fontSize: 11.5,
-    color: '#64748B',
-    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 1,
   },
-  busChangeStepItem: {
+  busChangeLeg: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  busChangeStepNumberBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#18258F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
+  busChangeLegNumber: {
+    fontFamily: FONT.bold,
+    fontSize: 16,
+    color: '#2438B8',
+    lineHeight: 20,
+    marginTop: 1,
   },
-  busChangeStepNumberText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  busChangeStepBody: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  busChangeStepTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  busChangeRoutePillLeg1: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#18258F',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-  },
-  busChangeRoutePillLeg2: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#059669',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-  },
-  busChangeRoutePillText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  busChangeStepTimeText: {
-    fontSize: 12,
+  busChangeLegRoute: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#2438B8',
+    letterSpacing: 0.3,
+    marginBottom: 2,
   },
-  busChangeStepDesc: {
-    fontSize: 12,
-    color: '#334155',
-    lineHeight: 17,
+  busChangeLegStops: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 10,
   },
-  busChangeBoldText: {
+  busChangeTimeRow: {
+    flexDirection: 'row',
+    gap: 32,
+  },
+  busChangeTimeCol: {
+    gap: 2,
+  },
+  busChangeTimeValue: {
+    fontFamily: FONT.bold,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
   },
-  busChangeInterchangeStep: {
-    paddingLeft: 10,
-    marginVertical: 4,
+  busChangeTimeLabel: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    fontWeight: '400',
+    color: '#9CA3AF',
   },
-  busChangeInterchangeLine: {
-    width: 2,
-    height: 12,
-    backgroundColor: '#CBD5E1',
-    marginLeft: 1,
+  busChangeTransferWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
-  busChangeInterchangeContent: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 10,
-    padding: 10,
+  busChangeTransferConnector: {
+    width: 1.5,
+    height: 10,
+    backgroundColor: '#D1D5DB',
+  },
+  busChangeTransferBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
     borderColor: '#FDE68A',
-    marginLeft: 12,
-    marginTop: -4,
-    marginBottom: 6,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignSelf: 'stretch',
   },
-  busChangeInterchangeTitle: {
+  busChangeTransferTitle: {
+    fontFamily: FONT.semiBold,
     fontSize: 12.5,
-    fontWeight: '800',
-    color: '#92400E',
+    fontWeight: '600',
+    color: '#B54708',
   },
-  busChangeInterchangeSub: {
+  busChangeTransferSub: {
+    fontFamily: FONT.regular,
     fontSize: 11.5,
-    color: '#78350F',
-    lineHeight: 16,
+    fontWeight: '400',
+    color: '#92400E',
+    marginTop: 1,
   },
   busChangeProximityFooter: {
     flexDirection: 'row',
@@ -6183,26 +6160,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0FDF4',
     borderTopWidth: 1,
     borderTopColor: '#DCFCE7',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   busChangeProximityTitle: {
-    fontSize: 12.5,
-    fontWeight: '700',
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
     color: '#065F46',
-  },
-  busChangeProximitySub: {
-    fontSize: 11,
-    color: '#047857',
-    marginTop: 2,
+    flex: 1,
   },
   busChangeProximityBtnText: {
+    fontFamily: FONT.bold,
     fontSize: 12,
-    fontWeight: '800',
-    color: '#059669',
+    fontWeight: '700',
+    color: '#087F5B',
   },
   nearbyAlternativeCard: {
     backgroundColor: '#F8FFFC',
