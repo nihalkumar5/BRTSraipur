@@ -26,16 +26,9 @@ import {
   QrCode,
   CreditCard,
   Banknote,
-  GraduationCap,
-  Sparkles,
   PhoneCall,
   Luggage,
   ShieldCheck,
-  Check,
-  Percent,
-  Zap,
-  Bus,
-  Lock,
 } from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
@@ -328,81 +321,7 @@ export default function FaresScreen() {
           </View>
         </View>
 
-        {/* 4. DIGITAL BUS PASSES & SMART CARDS (PREMIUM LOCKED / COMING SOON) */}
-        <View style={styles.passesSection}>
-          <View style={styles.passesHeaderRow}>
-            <Text style={styles.sectionHeaderLabel}>COMMUTER PASSES & SAVINGS</Text>
-            <View style={styles.lockedBadge}>
-              <Lock size={10} color="#B45309" strokeWidth={2.4} />
-              <Text style={styles.lockedBadgeText}>COMING SOON</Text>
-            </View>
-          </View>
-
-          {/* PREMIUM LOCKED PASS CARD */}
-          <View style={styles.lockedPassCard}>
-            {/* Top Bar with Gold/Indigo Accent Lock */}
-            <View style={styles.lockedCardTopBar}>
-              <View style={styles.lockIconCircle}>
-                <Lock size={16} color={PRIMARY} strokeWidth={2.4} />
-              </View>
-              <View style={styles.lockedCardHeaderInfo}>
-                <View style={styles.lockedCardTitleRow}>
-                  <Text style={styles.lockedCardHeroTitle}>In-App Digital Passes</Text>
-                  <View style={styles.inDevPill}>
-                    <Sparkles size={10} color="#059669" strokeWidth={2.2} />
-                    <Text style={styles.inDevPillText}>Next Update</Text>
-                  </View>
-                </View>
-                <Text style={styles.lockedCardHeroSub}>
-                  Buy, renew & scan QR passes directly inside Tatpar app
-                </Text>
-              </View>
-            </View>
-
-            {/* PREVIEW TILES (FROSTED WITH SUBTLE LOCK ICONS) */}
-            <View style={styles.lockedPreviewGrid}>
-              <View style={styles.lockedPreviewTile}>
-                <View style={styles.lockedTileHeader}>
-                  <GraduationCap size={15} color={PRIMARY} strokeWidth={2.2} />
-                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
-                </View>
-                <Text style={styles.lockedTileTitle}>Student Pass</Text>
-                <Text style={styles.lockedTileDiscount}>50% OFF</Text>
-                <Text style={styles.lockedTileDesc}>Instant student ID verification</Text>
-              </View>
-
-              <View style={styles.lockedPreviewTile}>
-                <View style={styles.lockedTileHeader}>
-                  <Zap size={15} color="#059669" strokeWidth={2.2} />
-                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
-                </View>
-                <Text style={styles.lockedTileTitle}>Monthly Pass</Text>
-                <Text style={styles.lockedTilePrice}>₹800/mo</Text>
-                <Text style={styles.lockedTileDesc}>Unlimited rides across 25 shelters</Text>
-              </View>
-
-              <View style={styles.lockedPreviewTile}>
-                <View style={styles.lockedTileHeader}>
-                  <Sparkles size={15} color="#D97706" strokeWidth={2.2} />
-                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
-                </View>
-                <Text style={styles.lockedTileTitle}>Daily Hop-On</Text>
-                <Text style={styles.lockedTilePrice}>₹50/day</Text>
-                <Text style={styles.lockedTileDesc}>Unlimited 24-hr city travel</Text>
-              </View>
-            </View>
-
-            {/* OFFLINE PASS NOTICE FOOTER */}
-            <View style={styles.offlinePassNotice}>
-              <Info size={14} color={PRIMARY} strokeWidth={2.2} style={{ marginTop: 1 }} />
-              <Text style={styles.offlinePassNoticeText}>
-                <Text style={styles.offlinePassNoticeBold}>Physical passes active now:</Text> Student Passes & Smart Cards can be issued at <Text style={styles.offlinePassNoticeBold}>Telibandha Central Depot</Text> & <Text style={styles.offlinePassNoticeBold}>Railway Station</Text> counters.
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 5. OFFICIAL DISTANCE SLABS TABLE */}
+        {/* 4. OFFICIAL DISTANCE SLABS TABLE */}
         <View style={styles.guideSection}>
           <Text style={styles.sectionHeaderLabel}>OFFICIAL DISTANCE FARE MATRIX</Text>
           <View style={styles.guideCard}>
@@ -437,83 +356,83 @@ export default function FaresScreen() {
           </View>
         </View>
 
-        {/* 6. PASSENGER POLICY & HELPLINE */}
+        {/* 5. PASSENGER RIGHTS & TRAVEL RULES */}
         <View style={styles.policyCard}>
-          <View style={styles.policyHeaderRow}>
-            <ShieldCheck size={16} color={PRIMARY} strokeWidth={2.2} />
-            <Text style={styles.policyTitle}>Passenger Rights & Guidelines</Text>
+          {/* Header */}
+          <View style={styles.policyHeaderBlock}>
+            <View style={styles.policyTitleRow}>
+              <View style={styles.policyIconDot}>
+                <ShieldCheck size={14} color={PRIMARY} strokeWidth={2.4} />
+              </View>
+              <Text style={styles.policyMainTitle}>Passenger rights</Text>
+            </View>
+            <Text style={styles.policySubTitle}>Travel rules & concessions</Text>
           </View>
 
-          <View style={styles.policyHighlights}>
-            <View style={styles.policyRuleItem}>
-              <Text style={styles.policyRuleBullet}>•</Text>
-              <Text style={styles.policyBullet}>
-                <Text style={styles.policyBold}>Children under 5 years:</Text> 100% Free travel across all services.
-              </Text>
+          {/* Clean Vertical Stacked List (No bullets, bold title + muted sub) */}
+          <View style={styles.policyListContainer}>
+            <View style={styles.policyItemBlock}>
+              <Text style={styles.policyItemHeading}>Children under 5</Text>
+              <Text style={styles.policyItemDescription}>Free travel across all services.</Text>
             </View>
 
-            <View style={styles.policyRuleItem}>
-              <Text style={styles.policyRuleBullet}>•</Text>
-              <Text style={styles.policyBullet}>
-                <Text style={styles.policyBold}>Luggage allowance:</Text> Up to 15 kg personal baggage free per passenger.
-              </Text>
+            <View style={styles.policyItemBlock}>
+              <Text style={styles.policyItemHeading}>Luggage allowance</Text>
+              <Text style={styles.policyItemDescription}>Up to 15 kg per passenger.</Text>
             </View>
 
-            <View style={styles.policyRuleItem}>
-              <Text style={styles.policyRuleBullet}>•</Text>
-              <Text style={styles.policyBullet}>
-                <Text style={styles.policyBold}>Senior Citizens & Divyangjan:</Text> Concessionary travel as per Chhattisgarh Govt. transport mandate.
+            <View style={styles.policyItemBlock}>
+              <Text style={styles.policyItemHeading}>Senior citizens & Divyangjan</Text>
+              <Text style={styles.policyItemDescription}>
+                Concessionary fare as per Chhattisgarh Govt. rules.
               </Text>
             </View>
 
             {showFullPolicy && (
-              <View style={styles.policyExpandedSection}>
-                <View style={styles.policyRuleItem}>
-                  <Text style={styles.policyRuleBullet}>•</Text>
-                  <Text style={styles.policyBullet}>
-                    <Text style={styles.policyBold}>AC Electric Fleet:</Text> 100% low-floor air conditioned buses with dedicated priority seats.
+              <>
+                <View style={styles.policyItemBlock}>
+                  <Text style={styles.policyItemHeading}>AC Electric Fleet</Text>
+                  <Text style={styles.policyItemDescription}>
+                    100% low-floor air conditioned buses with reserved priority seats.
                   </Text>
                 </View>
-                <View style={styles.policyRuleItem}>
-                  <Text style={styles.policyRuleBullet}>•</Text>
-                  <Text style={styles.policyBullet}>
-                    <Text style={styles.policyBold}>Ticket validity:</Text> Tickets are valid for 2 hours from time of issue on the designated route.
+
+                <View style={styles.policyItemBlock}>
+                  <Text style={styles.policyItemHeading}>Ticket validity</Text>
+                  <Text style={styles.policyItemDescription}>
+                    Single-journey tickets valid for 2 hours on designated route.
                   </Text>
                 </View>
-              </View>
+              </>
             )}
           </View>
 
+          {/* Proper Text Link */}
           <TouchableOpacity
-            style={styles.policyToggleBtn}
+            style={styles.policyLinkRow}
             onPress={() => setShowFullPolicy(prev => !prev)}
             activeOpacity={0.7}
           >
-            <Text style={styles.policyToggleText}>
-              {showFullPolicy ? 'Show less guidelines' : 'View complete ticketing terms'}
+            <Text style={styles.policyLinkText}>
+              {showFullPolicy ? 'Hide ticketing rules ↑' : 'View all ticketing rules →'}
             </Text>
-            {showFullPolicy ? (
-              <ChevronUp size={13} color={PRIMARY} />
-            ) : (
-              <ChevronRight size={13} color={PRIMARY} />
-            )}
           </TouchableOpacity>
 
-          {/* HELPLINE CTA CALLOUT */}
+          {/* Thin Divider Line */}
+          <View style={styles.policyHelpDivider} />
+
+          {/* Grievance / Need Help Horizontal Row */}
           <TouchableOpacity
-            style={styles.helplineBanner}
+            style={styles.helpActionRow}
             onPress={handleCallHelpline}
-            activeOpacity={0.82}
+            activeOpacity={0.75}
           >
-            <View style={styles.helplineIconWrap}>
-              <PhoneCall size={16} color={PRIMARY} strokeWidth={2.2} />
+            <View style={styles.helpTextCol}>
+              <Text style={styles.helpHeading}>Need help?</Text>
+              <Text style={styles.helpSub}>Toll-free · 1800-233-0405</Text>
             </View>
-            <View style={styles.helplineInfo}>
-              <Text style={styles.helplineTitle}>Transit Inquiries & Grievance</Text>
-              <Text style={styles.helplinePhone}>Toll-Free: 1800-233-0405</Text>
-            </View>
-            <View style={styles.helplineActionBadge}>
-              <Text style={styles.helplineActionText}>Call</Text>
+            <View style={styles.helpCallAction}>
+              <Text style={styles.helpCallText}>Call →</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -828,170 +747,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 
-  /* 4. BUS PASSES & DIGITAL CARDS (LOCKED / COMING SOON) */
-  passesSection: {},
-  passesHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  lockedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  lockedBadgeText: {
-    fontFamily: FONT.bold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#B45309',
-    letterSpacing: 0.5,
-  },
-  lockedPassCard: {
-    backgroundColor: CARD_BG,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: BORDER_COLOR,
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  lockedCardTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  lockIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 1.5,
-    borderColor: '#E0E7FF',
-  },
-  lockedCardHeaderInfo: {
-    flex: 1,
-  },
-  lockedCardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  lockedCardHeroTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 15,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
-  },
-  inDevPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-    gap: 3,
-    borderWidth: 1,
-    borderColor: '#D1FAE5',
-  },
-  inDevPillText: {
-    fontFamily: FONT.bold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#059669',
-  },
-  lockedCardHeroSub: {
-    fontFamily: FONT.regular,
-    fontSize: 12,
-    color: TEXT_SECONDARY,
-    lineHeight: 16,
-  },
-  lockedPreviewGrid: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  lockedPreviewTile: {
-    flex: 1,
-    backgroundColor: '#F8F9FC',
-    borderRadius: 14,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  lockedTileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  lockedTileTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
-    marginBottom: 2,
-  },
-  lockedTileDiscount: {
-    fontFamily: FONT.extraBold,
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#059669',
-    marginBottom: 3,
-    fontVariant: ['tabular-nums'],
-  },
-  lockedTilePrice: {
-    fontFamily: FONT.extraBold,
-    fontSize: 13,
-    fontWeight: '800',
-    color: PRIMARY,
-    marginBottom: 3,
-    fontVariant: ['tabular-nums'],
-  },
-  lockedTileDesc: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
-    color: TEXT_MUTED,
-    lineHeight: 13,
-  },
-  offlinePassNotice: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#F8F9FC',
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#EDF2F7',
-  },
-  offlinePassNoticeText: {
-    fontFamily: FONT.regular,
-    fontSize: 11.5,
-    color: '#475569',
-    lineHeight: 16,
-    flex: 1,
-  },
-  offlinePassNoticeBold: {
-    fontFamily: FONT.semiBold,
-    fontWeight: '600',
-    color: TEXT_PRIMARY,
-  },
-
-  /* 5. FARE GUIDE (DISTANCE SLABS TABLE) */
+  /* 4. FARE GUIDE (DISTANCE SLABS TABLE) */
   guideSection: {},
   guideCard: {
     backgroundColor: CARD_BG,
@@ -1082,11 +838,11 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  /* 6. OFFICIAL POLICY & HELPLINE CARD */
+  /* 5. PASSENGER RIGHTS & HELP CARD */
   policyCard: {
     backgroundColor: CARD_BG,
     borderRadius: 20,
-    padding: 16,
+    padding: 20,
     borderWidth: 1.5,
     borderColor: BORDER_COLOR,
     shadowColor: '#18258F',
@@ -1095,106 +851,96 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  policyHeaderRow: {
+  policyHeaderBlock: {
+    marginBottom: 16,
+  },
+  policyTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 6,
+    gap: 8,
   },
-  policyTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
-  },
-  policyHighlights: {
-    gap: 6,
-  },
-  policyRuleItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-  },
-  policyRuleBullet: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: PRIMARY,
-    fontWeight: '700',
-  },
-  policyBullet: {
-    fontFamily: FONT.regular,
-    fontSize: 12,
-    color: '#475569',
-    lineHeight: 18,
-    flex: 1,
-  },
-  policyBold: {
-    fontFamily: FONT.semiBold,
-    fontWeight: '600',
-    color: TEXT_PRIMARY,
-  },
-  policyExpandedSection: {
-    gap: 6,
-    marginTop: 4,
-  },
-  policyToggleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 3,
-    alignSelf: 'flex-start',
-  },
-  policyToggleText: {
-    fontFamily: FONT.semiBold,
-    fontSize: 12,
-    color: PRIMARY,
-    fontWeight: '600',
-  },
-  helplineBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FC',
-    borderRadius: 14,
-    padding: 12,
-    marginTop: 14,
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-  },
-  helplineIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  policyIconDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
-  helplineInfo: {
-    flex: 1,
-  },
-  helplineTitle: {
+  policyMainTitle: {
     fontFamily: FONT.bold,
-    fontSize: 12,
+    fontSize: 15.5,
     fontWeight: '700',
-    color: TEXT_PRIMARY,
+    color: '#101828',
+    letterSpacing: -0.2,
   },
-  helplinePhone: {
+  policySubTitle: {
     fontFamily: FONT.medium,
-    fontSize: 11.5,
-    color: PRIMARY,
-    marginTop: 1,
+    fontSize: 12.5,
+    color: '#667085',
+    marginTop: 2,
+    paddingLeft: 32,
   },
-  helplineActionBadge: {
-    backgroundColor: PRIMARY,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
+  policyListContainer: {
+    gap: 14,
   },
-  helplineActionText: {
+  policyItemBlock: {},
+  policyItemHeading: {
     fontFamily: FONT.bold,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#101828',
+    marginBottom: 2,
+  },
+  policyItemDescription: {
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    color: '#667085',
+    lineHeight: 18,
+  },
+  policyLinkRow: {
+    marginTop: 14,
+    alignSelf: 'flex-start',
+  },
+  policyLinkText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13,
+    color: PRIMARY,
+    fontWeight: '600',
+  },
+  policyHelpDivider: {
+    height: 1,
+    backgroundColor: '#EDF2F7',
+    marginTop: 18,
+    marginBottom: 14,
+  },
+  helpActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  helpTextCol: {},
+  helpHeading: {
+    fontFamily: FONT.bold,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#101828',
+  },
+  helpSub: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: '#667085',
+    marginTop: 2,
+  },
+  helpCallAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  helpCallText: {
+    fontFamily: FONT.bold,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: PRIMARY,
   },
 
   /* MODAL STATION PICKER */
