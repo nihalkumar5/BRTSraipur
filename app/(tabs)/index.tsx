@@ -1526,7 +1526,7 @@ export default function LiveBusScreen() {
                         {/* RIGHT 3D BUS ILLUSTRATION WITH PROPERLY ALIGNED CITY SKYLINE BEHIND */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
                           <View style={styles.busCardCitySkylineBg}>
-                            <CitySkylineSvg width={165} height={78} color="#18258F" opacity={0.15} />
+                            <CitySkylineSvg width={190} height={90} color="#18258F" opacity={0.18} />
                           </View>
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
@@ -2032,7 +2032,7 @@ export default function LiveBusScreen() {
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
                     <View style={styles.onboardCitySkylineBg}>
-                      <CitySkylineSvg width={160} height={75} color="#18258F" opacity={0.15} />
+                      <CitySkylineSvg width={185} height={88} color="#18258F" opacity={0.18} />
                     </View>
                     <Image
                       source={require('../../assets/images/redbus_3d.png')}
@@ -3575,8 +3575,8 @@ const styles = StyleSheet.create({
   },
   busCardCitySkylineBg: {
     position: 'absolute',
-    bottom: 2,
-    right: -8,
+    bottom: 10,
+    right: -12,
     zIndex: 0,
   },
   busCard3DImage: {
@@ -5121,8 +5121,8 @@ const styles = StyleSheet.create({
   },
   onboardCitySkylineBg: {
     position: 'absolute',
-    bottom: 0,
-    right: -8,
+    bottom: 10,
+    right: -12,
     zIndex: 0,
   },
   onboardBus3DImage: {

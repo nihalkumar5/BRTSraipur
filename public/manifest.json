@@ -1,0 +1,34 @@
+{
+  "short_name": "Tatpar BRTS",
+  "name": "Tatpar BRTS Raipur",
+  "description": "Real-time timetable and transit companion for Nava Raipur Atal Nagar & Raipur City",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FFFFFF",
+  "theme_color": "#18258F",
+  "display": "standalone",
+  "orientation": "portrait"
+}
