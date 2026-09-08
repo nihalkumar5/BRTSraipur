@@ -5078,13 +5078,13 @@ const styles = StyleSheet.create({
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 10,
-    right: 14,
+    top: 14,
+    right: 8,
     zIndex: 1,
   },
   onboardBus3DImage: {
-    width: 95,
-    height: 58,
+    width: 148,
+    height: 92,
   },
   onboardHeroNextStopLabel: {
     fontSize: 10.5,
@@ -5094,6 +5094,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 14,
     marginBottom: 4,
+    maxWidth: '60%',
   },
   onboardHeroNextStopTitle: {
     fontSize: 24,
@@ -5102,6 +5103,7 @@ const styles = StyleSheet.create({
     color: '#0B132B',
     letterSpacing: -0.4,
     marginBottom: 8,
+    maxWidth: '60%',
   },
   onboardHeroEtaRow: {
     flexDirection: 'row',
