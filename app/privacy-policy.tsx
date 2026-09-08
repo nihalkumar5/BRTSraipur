@@ -155,7 +155,7 @@ export default function PrivacyPolicyScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   header: {
     flexDirection: 'row',
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(24, 37, 143, 0.08)',
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   backButton: {
     width: 40,

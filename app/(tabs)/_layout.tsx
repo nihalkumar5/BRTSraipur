@@ -181,7 +181,7 @@ export default function TabLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: '#F7F7F4' },
+        sceneStyle: { backgroundColor: '#F8F6F0' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.82)', // Premium Frosted Glass Capsule
+    backgroundColor: 'rgba(255, 255, 255, 0.65)', // Sleek Translucent Glass Capsule
     borderRadius: 36,
     padding: 6,
     gap: 6,
     borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.95)', // Clean glass rim
+    borderColor: 'rgba(255, 255, 255, 0.90)', // Clean glass rim
     elevation: 12,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 8 },
@@ -252,10 +252,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(243, 245, 251, 0.85)', // Light glass button
+    backgroundColor: 'rgba(255, 255, 255, 0.40)', // Translucent glass button
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.06)',
+    borderColor: 'rgba(24, 37, 143, 0.05)',
   },
 });

@@ -3029,11 +3029,11 @@ export default function LiveBusScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   contentContainer: {
     paddingBottom: 110,
@@ -4676,7 +4676,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -4980,7 +4980,7 @@ const styles = StyleSheet.create({
   timelineFooterNotice: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
     borderRadius: 8,
     padding: 10,
     marginTop: 12,

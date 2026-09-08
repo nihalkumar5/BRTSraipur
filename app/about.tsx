@@ -28,7 +28,7 @@ import { FONT } from '../src/theme/typography';
 const PRIMARY = '#2438B8';
 const DARK_BLUE = '#17247A';
 const LIGHT_BLUE = '#EEF1FF';
-const BG_COLOR = '#F7F8FA';
+const BG_COLOR = '#F8F6F0';
 const CARD_BG = '#FFFFFF';
 const TEXT_PRIMARY = '#101828';
 const TEXT_SECONDARY = '#667085';

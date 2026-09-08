@@ -19,8 +19,8 @@ class MainActivity : ReactActivity() {
     super.onCreate(null)
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        window.navigationBarColor = android.graphics.Color.parseColor("#F7F7F4")
-        window.statusBarColor = android.graphics.Color.parseColor("#F7F7F4")
+        window.navigationBarColor = android.graphics.Color.parseColor("#F8F6F0")
+        window.statusBarColor = android.graphics.Color.parseColor("#F8F6F0")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
           window.insetsController?.setSystemBarsAppearance(
             android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS or

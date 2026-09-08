@@ -40,7 +40,7 @@ import { FONT } from '../../src/theme/typography';
 const PRIMARY = '#18258F';
 const PRIMARY_LIGHT = 'rgba(24, 37, 143, 0.08)';
 const PRIMARY_DARK = '#101A72';
-const BG_COLOR = '#F7F7F4';
+const BG_COLOR = '#F8F6F0';
 const CARD_BG = '#FFFFFF';
 const TEXT_PRIMARY = '#0B132B';
 const TEXT_SECONDARY = '#64748B';
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 14,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: BG_COLOR,
     borderBottomWidth: 1,
     borderBottomColor: BORDER_COLOR,
   },

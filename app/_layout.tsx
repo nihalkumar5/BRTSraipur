@@ -66,7 +66,7 @@ export default function RootLayout() {
       <View style={styles.rootWrapper}>
         <StatusBar
           style={isLoading ? 'light' : 'dark'}
-          backgroundColor={isLoading ? '#18258F' : '#F7F7F4'}
+          backgroundColor={isLoading ? '#18258F' : '#F8F6F0'}
           translucent={false}
         />
         {Platform.OS === 'web' ? (
@@ -127,7 +127,7 @@ export default function RootLayout() {
                   maxWidth: 480,
                   height: '100%',
                   alignSelf: 'center',
-                  backgroundColor: '#F8F9FC',
+                  backgroundColor: '#F8F6F0',
                   boxShadow: '0 0 60px rgba(0, 0, 0, 0.12)',
                 } as any,
               }}
@@ -173,10 +173,10 @@ export default function RootLayout() {
                       div[style*="borderBottomLeftRadius: 36px"],
                       div[style*="border-radius: 36px"],
                       div[style*="borderRadius: 36px"] {
-                        background-color: rgba(255, 255, 255, 0.82) !important;
+                        background-color: rgba(255, 255, 255, 0.65) !important;
                         -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
                         backdrop-filter: blur(28px) saturate(200%) !important;
-                        border: 1.2px solid rgba(255, 255, 255, 0.95) !important;
+                        border: 1.2px solid rgba(255, 255, 255, 0.9) !important;
                         box-shadow: 0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
                       }
                     \`;
@@ -218,10 +218,10 @@ export default function RootLayout() {
                         // 2. Compact frosted glass styling for bottom nav bar
                         const s = window.getComputedStyle(el);
                         if (s.position === 'absolute' && (s.borderRadius === '36px' || s.borderRadius === '32px' || s.borderRadius === '29px')) {
-                          el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.82)', 'important');
+                          el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.65)', 'important');
                           el.style.setProperty('-webkit-backdrop-filter', 'blur(28px) saturate(200%)', 'important');
                           el.style.setProperty('backdrop-filter', 'blur(28px) saturate(200%)', 'important');
-                          el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.95)', 'important');
+                          el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.9)', 'important');
                           el.style.setProperty('box-shadow', '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)', 'important');
                         }
                       }
@@ -267,15 +267,15 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   rootWrapper: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   nativeContainer: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
   webView: {
     flex: 1,
-    backgroundColor: '#F7F7F4',
+    backgroundColor: '#F8F6F0',
   },
 });
 

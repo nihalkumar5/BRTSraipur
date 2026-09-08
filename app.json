@@ -39,12 +39,12 @@
     },
     "androidStatusBar": {
       "barStyle": "dark-content",
-      "backgroundColor": "#F7F7F4",
+      "backgroundColor": "#F8F6F0",
       "translucent": false
     },
     "androidNavigationBar": {
       "barStyle": "dark-content",
-      "backgroundColor": "#F7F7F4"
+      "backgroundColor": "#F8F6F0"
     },
     "web": {
       "bundler": "metro",
