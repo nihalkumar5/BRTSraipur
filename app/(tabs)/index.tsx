@@ -1534,12 +1534,11 @@ export default function LiveBusScreen() {
                           </View>
                         </View>
 
-                        {/* RIGHT: BUS ILLUSTRATION with blended bg circle */}
+                        {/* RIGHT: BUS ILLUSTRATION — subtle, pushed to corner */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
-                          <View style={styles.busCardIllustrationGlow} />
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
-                            style={styles.busCard3DImage}
+                            style={[styles.busCard3DImage, { opacity: 0.75 }]}
                             resizeMode="contain"
                           />
                         </View>
@@ -3591,26 +3590,17 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   busCardRightIllustration: {
-    width: 154,
-    height: 95,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 140,
+    height: 86,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
     flexShrink: 0,
-    position: 'relative',
-  },
-  busCardIllustrationGlow: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -60 }, { translateY: -60 }],
+    marginRight: -6,
+    marginBottom: -4,
   },
   busCard3DImage: {
-    width: 154,
-    height: 95,
+    width: 140,
+    height: 86,
   },
   busCardDivider: {
     height: 1,
