@@ -38,6 +38,7 @@ import { FONT } from '../../src/theme/typography';
 
 // DESIGN SYSTEM TOKENS (CONSISTENT WITH HOME / BUS TRACK PAGE)
 const PRIMARY = '#18258F';
+const PRIMARY_LIGHT = 'rgba(24, 37, 143, 0.08)';
 const PRIMARY_DARK = '#101A72';
 const BG_COLOR = '#F7F7F4';
 const CARD_BG = '#FFFFFF';
@@ -225,47 +226,53 @@ export default function AllStopsScreen() {
           ) : null}
         </View>
 
-        {/* 3. FILTERS (ONLY ONE ACTIVE BLUE, OTHERS SUBTLE GRAY, NO EMOJIS) */}
+        {/* 3. FILTERS (MATCHING SCHEDULE / TIMETABLE TAB CHIPS STYLE) */}
         <View style={styles.filterRow}>
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-            onPress={() => setFilter('all')}
-            activeOpacity={0.7}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
           >
-            <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
-              All
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
+              onPress={() => setFilter('all')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
+                All
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'hub' && styles.filterTabActive]}
-            onPress={() => setFilter('hub')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterTabText, filter === 'hub' && styles.filterTabTextActive]}>
-              Interchange
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterTab, filter === 'hub' && styles.filterTabActive]}
+              onPress={() => setFilter('hub')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterTabText, filter === 'hub' && styles.filterTabTextActive]}>
+                Interchange
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'hospital' && styles.filterTabActive]}
-            onPress={() => setFilter('hospital')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterTabText, filter === 'hospital' && styles.filterTabTextActive]}>
-              Hospitals
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterTab, filter === 'hospital' && styles.filterTabActive]}
+              onPress={() => setFilter('hospital')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterTabText, filter === 'hospital' && styles.filterTabTextActive]}>
+                Hospitals
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'campus' && styles.filterTabActive]}
-            onPress={() => setFilter('campus')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterTabText, filter === 'campus' && styles.filterTabTextActive]}>
-              Campuses
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterTab, filter === 'campus' && styles.filterTabActive]}
+              onPress={() => setFilter('campus')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterTabText, filter === 'campus' && styles.filterTabTextActive]}>
+                Campuses
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
 
@@ -576,30 +583,37 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterRow: {
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  filterContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 2,
+    paddingVertical: 2,
   },
   filterTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
+    paddingHorizontal: 13,
+    paddingVertical: 6.5,
+    borderRadius: 18,
+    backgroundColor: CARD_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
   },
   filterTabActive: {
-    backgroundColor: PRIMARY,
+    backgroundColor: PRIMARY_LIGHT,
+    borderColor: PRIMARY,
   },
   filterTabText: {
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '500',
     color: TEXT_SECONDARY,
   },
   filterTabTextActive: {
-    fontFamily: FONT.semiBold,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: PRIMARY,
   },
 
   /* STATION DIRECTORY ITEMS */
