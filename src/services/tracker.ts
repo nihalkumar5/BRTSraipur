@@ -502,15 +502,45 @@ export function findNearbyDirectAlternatives(
     }
   }
 
-  // Prioritize active trips running today, then fastest total commute to destination area
+  // Prioritize active trips running today, reachable now, and closest drop-off to destination
   alternatives.sort((a, b) => {
     if (a.isToday && !b.isToday) return -1;
     if (!a.isToday && b.isToday) return 1;
     if (a.isReachableNow && !b.isReachableNow) return -1;
     if (!a.isReachableNow && b.isReachableNow) return 1;
-    const aTotalTime = a.minutesUntilDeparture + a.durationMins + (a.routeTimeDeltaMins ?? (a.distanceKm * 8));
-    const bTotalTime = b.minutesUntilDeparture + b.durationMins + (b.routeTimeDeltaMins ?? (b.distanceKm * 8));
+
+    // For alternative drop-offs near destination (nearby_destination):
+    if (a.type === 'nearby_destination' && b.type === 'nearby_destination') {
+      const aStops = a.stopsAway ?? Math.ceil(a.distanceKm / 1.2);
+      const bStops = b.stopsAway ?? Math.ceil(b.distanceKm / 1.2);
+
+      // Same bus trip or virtually same departure (within 25 mins):
+      // The stop CLOSER to the destination (fewer stops away / smaller distance) MUST WIN!
+      if (Math.abs(a.depMins - b.depMins) <= 25) {
+        if (aStops !== bStops) return aStops - bStops;
+        if (a.distanceKm !== b.distanceKm) return a.distanceKm - b.distanceKm;
+      }
+
+      // Strong preference for closer stops (fewer stops away) unless departure is much later (> 35 mins)
+      if (aStops !== bStops) {
+        const depDiff = a.minutesUntilDeparture - b.minutesUntilDeparture;
+        if (aStops < bStops && depDiff <= 35) return -1;
+        if (bStops < aStops && -depDiff <= 35) return 1;
+      }
+    }
+
+    // Realistic commute calculation: last-mile is pedestrian/local transit (~10 min/km or 10 min/stop), NOT bus chart speed!
+    const aLastMile = a.type === 'nearby_destination'
+      ? (a.stopsAway ? a.stopsAway * 10 : Math.round(a.distanceKm * 10))
+      : a.walkingMins;
+    const bLastMile = b.type === 'nearby_destination'
+      ? (b.stopsAway ? b.stopsAway * 10 : Math.round(b.distanceKm * 10))
+      : b.walkingMins;
+
+    const aTotalTime = a.minutesUntilDeparture + a.durationMins + aLastMile;
+    const bTotalTime = b.minutesUntilDeparture + b.durationMins + bLastMile;
     if (aTotalTime !== bTotalTime) return aTotalTime - bTotalTime;
+
     return a.distanceKm - b.distanceKm;
   });
 
