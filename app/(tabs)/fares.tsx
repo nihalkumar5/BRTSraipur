@@ -35,6 +35,7 @@ import {
   Percent,
   Zap,
   Bus,
+  Lock,
 } from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
@@ -58,7 +59,6 @@ export default function FaresScreen() {
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
   const [toStop, setToStop] = useState<string>('HNLU (National Law University)');
   const [showFullPolicy, setShowFullPolicy] = useState(false);
-  const [activePassTab, setActivePassTab] = useState<'monthly' | 'student' | 'daily'>('student');
 
   // Modal station picker
   const [modalVisible, setModalVisible] = useState(false);
@@ -328,170 +328,77 @@ export default function FaresScreen() {
           </View>
         </View>
 
-        {/* 4. BUS PASSES & CONCESSIONS (HIGH COMMUTER VALUE) */}
+        {/* 4. DIGITAL BUS PASSES & SMART CARDS (PREMIUM LOCKED / COMING SOON) */}
         <View style={styles.passesSection}>
           <View style={styles.passesHeaderRow}>
             <Text style={styles.sectionHeaderLabel}>COMMUTER PASSES & SAVINGS</Text>
-            <View style={styles.discountBadge}>
-              <Percent size={11} color="#059669" strokeWidth={2.4} />
-              <Text style={styles.discountBadgeText}>Save up to 50%</Text>
+            <View style={styles.lockedBadge}>
+              <Lock size={10} color="#B45309" strokeWidth={2.4} />
+              <Text style={styles.lockedBadgeText}>COMING SOON</Text>
             </View>
           </View>
 
-          {/* PASS SELECTION TABS */}
-          <View style={styles.passTabsRow}>
-            <TouchableOpacity
-              style={[styles.passTabBtn, activePassTab === 'student' && styles.passTabBtnActive]}
-              onPress={() => setActivePassTab('student')}
-              activeOpacity={0.7}
-            >
-              <GraduationCap
-                size={13}
-                color={activePassTab === 'student' ? PRIMARY : TEXT_SECONDARY}
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.passTabText,
-                  activePassTab === 'student' && styles.passTabTextActive,
-                ]}
-              >
-                Student
+          {/* PREMIUM LOCKED PASS CARD */}
+          <View style={styles.lockedPassCard}>
+            {/* Top Bar with Gold/Indigo Accent Lock */}
+            <View style={styles.lockedCardTopBar}>
+              <View style={styles.lockIconCircle}>
+                <Lock size={16} color={PRIMARY} strokeWidth={2.4} />
+              </View>
+              <View style={styles.lockedCardHeaderInfo}>
+                <View style={styles.lockedCardTitleRow}>
+                  <Text style={styles.lockedCardHeroTitle}>In-App Digital Passes</Text>
+                  <View style={styles.inDevPill}>
+                    <Sparkles size={10} color="#059669" strokeWidth={2.2} />
+                    <Text style={styles.inDevPillText}>Next Update</Text>
+                  </View>
+                </View>
+                <Text style={styles.lockedCardHeroSub}>
+                  Buy, renew & scan QR passes directly inside Tatpar app
+                </Text>
+              </View>
+            </View>
+
+            {/* PREVIEW TILES (FROSTED WITH SUBTLE LOCK ICONS) */}
+            <View style={styles.lockedPreviewGrid}>
+              <View style={styles.lockedPreviewTile}>
+                <View style={styles.lockedTileHeader}>
+                  <GraduationCap size={15} color={PRIMARY} strokeWidth={2.2} />
+                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
+                </View>
+                <Text style={styles.lockedTileTitle}>Student Pass</Text>
+                <Text style={styles.lockedTileDiscount}>50% OFF</Text>
+                <Text style={styles.lockedTileDesc}>Instant student ID verification</Text>
+              </View>
+
+              <View style={styles.lockedPreviewTile}>
+                <View style={styles.lockedTileHeader}>
+                  <Zap size={15} color="#059669" strokeWidth={2.2} />
+                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
+                </View>
+                <Text style={styles.lockedTileTitle}>Monthly Pass</Text>
+                <Text style={styles.lockedTilePrice}>₹800/mo</Text>
+                <Text style={styles.lockedTileDesc}>Unlimited rides across 25 shelters</Text>
+              </View>
+
+              <View style={styles.lockedPreviewTile}>
+                <View style={styles.lockedTileHeader}>
+                  <Sparkles size={15} color="#D97706" strokeWidth={2.2} />
+                  <Lock size={11} color={TEXT_MUTED} strokeWidth={2} />
+                </View>
+                <Text style={styles.lockedTileTitle}>Daily Hop-On</Text>
+                <Text style={styles.lockedTilePrice}>₹50/day</Text>
+                <Text style={styles.lockedTileDesc}>Unlimited 24-hr city travel</Text>
+              </View>
+            </View>
+
+            {/* OFFLINE PASS NOTICE FOOTER */}
+            <View style={styles.offlinePassNotice}>
+              <Info size={14} color={PRIMARY} strokeWidth={2.2} style={{ marginTop: 1 }} />
+              <Text style={styles.offlinePassNoticeText}>
+                <Text style={styles.offlinePassNoticeBold}>Physical passes active now:</Text> Student Passes & Smart Cards can be issued at <Text style={styles.offlinePassNoticeBold}>Telibandha Central Depot</Text> & <Text style={styles.offlinePassNoticeBold}>Railway Station</Text> counters.
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.passTabBtn, activePassTab === 'monthly' && styles.passTabBtnActive]}
-              onPress={() => setActivePassTab('monthly')}
-              activeOpacity={0.7}
-            >
-              <Sparkles
-                size={13}
-                color={activePassTab === 'monthly' ? PRIMARY : TEXT_SECONDARY}
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.passTabText,
-                  activePassTab === 'monthly' && styles.passTabTextActive,
-                ]}
-              >
-                Monthly All-Route
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.passTabBtn, activePassTab === 'daily' && styles.passTabBtnActive]}
-              onPress={() => setActivePassTab('daily')}
-              activeOpacity={0.7}
-            >
-              <Zap
-                size={13}
-                color={activePassTab === 'daily' ? PRIMARY : TEXT_SECONDARY}
-                strokeWidth={2}
-              />
-              <Text
-                style={[
-                  styles.passTabText,
-                  activePassTab === 'daily' && styles.passTabTextActive,
-                ]}
-              >
-                Daily Pass
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* ACTIVE PASS DETAILS CARD */}
-          <View style={styles.passDetailsCard}>
-            {activePassTab === 'student' && (
-              <>
-                <View style={styles.passCardTop}>
-                  <View>
-                    <Text style={styles.passHeroTitle}>Student Concession Pass</Text>
-                    <Text style={styles.passHeroSub}>For School, College & University Students</Text>
-                  </View>
-                  <View style={styles.passPriceTag}>
-                    <Text style={styles.passDiscountBig}>50%</Text>
-                    <Text style={styles.passDiscountLabel}>OFF</Text>
-                  </View>
-                </View>
-                <View style={styles.passDivider} />
-                <View style={styles.passPerksList}>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Valid on all AC Express & Feeder buses</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Issued at Telibandha & Railway Station counters</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Requires valid Student ID card & Aadhaar copy</Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            {activePassTab === 'monthly' && (
-              <>
-                <View style={styles.passCardTop}>
-                  <View>
-                    <Text style={styles.passHeroTitle}>Monthly All-Network Pass</Text>
-                    <Text style={styles.passHeroSub}>Unlimited rides across all 25 shelters</Text>
-                  </View>
-                  <View style={styles.passPriceTag}>
-                    <Text style={styles.passPriceBig}>₹800</Text>
-                    <Text style={styles.passDiscountLabel}>/ month</Text>
-                  </View>
-                </View>
-                <View style={styles.passDivider} />
-                <View style={styles.passPerksList}>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Unlimited daily rides on all BRTS & Feeder lines</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Save over ₹600/month compared to daily tickets</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Direct Smart Card recharge available on counters</Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            {activePassTab === 'daily' && (
-              <>
-                <View style={styles.passCardTop}>
-                  <View>
-                    <Text style={styles.passHeroTitle}>Daily Tourist & Hop-On Pass</Text>
-                    <Text style={styles.passHeroSub}>Ideal for visitors, meetings & day trips</Text>
-                  </View>
-                  <View style={styles.passPriceTag}>
-                    <Text style={styles.passPriceBig}>₹50</Text>
-                    <Text style={styles.passDiscountLabel}>/ 24 hrs</Text>
-                  </View>
-                </View>
-                <View style={styles.passDivider} />
-                <View style={styles.passPerksList}>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Unlimited boarding on any bus for the entire calendar day</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Can be purchased directly from the on-board bus conductor</Text>
-                  </View>
-                  <View style={styles.passPerkItem}>
-                    <Check size={14} color="#059669" strokeWidth={2.4} />
-                    <Text style={styles.passPerkText}>Best for touring Jungle Safari, Purkhouti Muktangan & Mantralaya</Text>
-                  </View>
-                </View>
-              </>
-            )}
+            </View>
           </View>
         </View>
 
@@ -921,7 +828,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 
-  /* 4. BUS PASSES & CONCESSIONS */
+  /* 4. BUS PASSES & DIGITAL CARDS (LOCKED / COMING SOON) */
   passesSection: {},
   passesHeaderRow: {
     flexDirection: 'row',
@@ -929,58 +836,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  discountBadge: {
+  lockedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FEF3C7',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    gap: 3,
-  },
-  discountBadgeText: {
-    fontFamily: FONT.bold,
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#059669',
-  },
-  passTabsRow: {
-    flexDirection: 'row',
-    backgroundColor: '#EDF2F7',
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 10,
     gap: 4,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
-  passTabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    borderRadius: 9,
-    gap: 5,
-  },
-  passTabBtnActive: {
-    backgroundColor: CARD_BG,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  passTabText: {
-    fontFamily: FONT.medium,
-    fontSize: 11.5,
-    fontWeight: '500',
-    color: TEXT_SECONDARY,
-  },
-  passTabTextActive: {
+  lockedBadgeText: {
     fontFamily: FONT.bold,
-    color: PRIMARY,
+    fontSize: 10,
     fontWeight: '700',
+    color: '#B45309',
+    letterSpacing: 0.5,
   },
-  passDetailsCard: {
+  lockedPassCard: {
     backgroundColor: CARD_BG,
     borderRadius: 20,
     padding: 16,
@@ -992,65 +866,129 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  passCardTop: {
+  lockedCardTopBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 14,
   },
-  passHeroTitle: {
+  lockIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#E0E7FF',
+  },
+  lockedCardHeaderInfo: {
+    flex: 1,
+  },
+  lockedCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  lockedCardHeroTitle: {
     fontFamily: FONT.bold,
     fontSize: 15,
     fontWeight: '700',
     color: TEXT_PRIMARY,
   },
-  passHeroSub: {
-    fontFamily: FONT.medium,
-    fontSize: 12,
-    color: TEXT_SECONDARY,
-    marginTop: 2,
+  inDevPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    gap: 3,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
   },
-  passPriceTag: {
-    alignItems: 'flex-end',
-  },
-  passDiscountBig: {
-    fontFamily: FONT.extraBold,
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#059669',
-    fontVariant: ['tabular-nums'],
-  },
-  passPriceBig: {
-    fontFamily: FONT.extraBold,
-    fontSize: 22,
-    fontWeight: '800',
-    color: PRIMARY,
-    fontVariant: ['tabular-nums'],
-  },
-  passDiscountLabel: {
+  inDevPillText: {
     fontFamily: FONT.bold,
     fontSize: 10,
     fontWeight: '700',
+    color: '#059669',
+  },
+  lockedCardHeroSub: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
     color: TEXT_SECONDARY,
-    textTransform: 'uppercase',
+    lineHeight: 16,
   },
-  passDivider: {
-    height: 1,
-    backgroundColor: BORDER_DIVIDER,
-    marginVertical: 12,
-  },
-  passPerksList: {
-    gap: 8,
-  },
-  passPerkItem: {
+  lockedPreviewGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
+    marginBottom: 12,
   },
-  passPerkText: {
-    fontFamily: FONT.medium,
-    fontSize: 12.5,
-    color: TEXT_PRIMARY,
+  lockedPreviewTile: {
     flex: 1,
+    backgroundColor: '#F8F9FC',
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  lockedTileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  lockedTileTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    marginBottom: 2,
+  },
+  lockedTileDiscount: {
+    fontFamily: FONT.extraBold,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#059669',
+    marginBottom: 3,
+    fontVariant: ['tabular-nums'],
+  },
+  lockedTilePrice: {
+    fontFamily: FONT.extraBold,
+    fontSize: 13,
+    fontWeight: '800',
+    color: PRIMARY,
+    marginBottom: 3,
+    fontVariant: ['tabular-nums'],
+  },
+  lockedTileDesc: {
+    fontFamily: FONT.regular,
+    fontSize: 10,
+    color: TEXT_MUTED,
+    lineHeight: 13,
+  },
+  offlinePassNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F8F9FC',
+    borderRadius: 12,
+    padding: 10,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#EDF2F7',
+  },
+  offlinePassNoticeText: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    color: '#475569',
+    lineHeight: 16,
+    flex: 1,
+  },
+  offlinePassNoticeBold: {
+    fontFamily: FONT.semiBold,
+    fontWeight: '600',
+    color: TEXT_PRIMARY,
   },
 
   /* 5. FARE GUIDE (DISTANCE SLABS TABLE) */
