@@ -1783,7 +1783,7 @@ export default function LiveBusScreen() {
                     {/* HEADER */}
                     <View style={styles.busChangeGuideHeader}>
                       <View style={styles.busChangeIconBox}>
-                        <ArrowUpDown size={15} color="rgba(255,255,255,0.9)" strokeWidth={2.4} />
+                        <ArrowUpDown size={15} color="#2438B8" strokeWidth={2.4} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -6023,16 +6023,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   busChangeGuideCard: {
-    backgroundColor: '#18258F',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginVertical: 12,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
     overflow: 'hidden',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   busChangeGuideHeader: {
     flexDirection: 'row',
@@ -6042,13 +6043,13 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.12)',
+    borderBottomColor: '#F1F5F9',
   },
   busChangeIconBox: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: '#EEF1FB',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -6056,18 +6057,18 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   busChangeCountInline: {
     fontFamily: FONT.medium,
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.6)',
+    color: '#6B7280',
   },
   busChangeGuideSubtitle: {
     fontFamily: FONT.regular,
     fontSize: 12,
-    color: 'rgba(255,255,255,0.65)',
+    color: '#6B7280',
     marginTop: 1,
   },
   busChangeLeg: {
@@ -6080,7 +6081,7 @@ const styles = StyleSheet.create({
   busChangeLegNumber: {
     fontFamily: FONT.bold,
     fontSize: 16,
-    color: 'rgba(255,255,255,0.5)',
+    color: '#2438B8',
     lineHeight: 20,
     marginTop: 1,
   },
@@ -6088,15 +6089,15 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.75)',
-    letterSpacing: 0.5,
+    color: '#2438B8',
+    letterSpacing: 0.3,
     marginBottom: 2,
   },
   busChangeLegStops: {
     fontFamily: FONT.medium,
     fontSize: 13,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: '#374151',
     marginBottom: 10,
   },
   busChangeTimeRow: {
@@ -6110,13 +6111,13 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   busChangeTimeLabel: {
     fontFamily: FONT.regular,
     fontSize: 11,
     fontWeight: '400',
-    color: 'rgba(255,255,255,0.5)',
+    color: '#9CA3AF',
   },
   busChangeTransferWrap: {
     alignItems: 'center',
@@ -6125,15 +6126,15 @@ const styles = StyleSheet.create({
   busChangeTransferConnector: {
     width: 1.5,
     height: 10,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#D1D5DB',
   },
   busChangeTransferBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
+    borderColor: '#FDE68A',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -6143,22 +6144,22 @@ const styles = StyleSheet.create({
     fontFamily: FONT.semiBold,
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#FCD34D',
+    color: '#B54708',
   },
   busChangeTransferSub: {
     fontFamily: FONT.regular,
     fontSize: 11.5,
     fontWeight: '400',
-    color: 'rgba(255,255,255,0.7)',
+    color: '#92400E',
     marginTop: 1,
   },
   busChangeProximityFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#F0FDF4',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.12)',
+    borderTopColor: '#DCFCE7',
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
@@ -6166,14 +6167,14 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
+    color: '#065F46',
     flex: 1,
   },
   busChangeProximityBtnText: {
     fontFamily: FONT.bold,
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#087F5B',
   },
   nearbyAlternativeCard: {
     backgroundColor: '#F8FFFC',
