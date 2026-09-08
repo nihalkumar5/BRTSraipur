@@ -36,16 +36,16 @@ import {
 import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
-// DESIGN SYSTEM TOKENS (CONSISTENT WITH BUS TICKETS PAGE)
-const PRIMARY = '#2438B8';
-const PRIMARY_DARK = '#17247A';
-const BG_COLOR = '#F7F8FA';
+// DESIGN SYSTEM TOKENS (CONSISTENT WITH HOME / BUS TRACK PAGE)
+const PRIMARY = '#18258F';
+const PRIMARY_DARK = '#101A72';
+const BG_COLOR = '#F7F7F4';
 const CARD_BG = '#FFFFFF';
-const TEXT_PRIMARY = '#101828';
-const TEXT_SECONDARY = '#667085';
-const TEXT_MUTED = '#98A2B3';
-const BORDER_COLOR = '#E4E7EC';
-const LIVE_GREEN = '#12B76A';
+const TEXT_PRIMARY = '#0B132B';
+const TEXT_SECONDARY = '#64748B';
+const TEXT_MUTED = '#94A3B8';
+const BORDER_COLOR = '#EDF2F7';
+const LIVE_GREEN = '#10B981';
 
 export default function AllStopsScreen() {
   const router = useRouter();
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 14,
-    backgroundColor: CARD_BG,
+    backgroundColor: '#F7F7F4',
     borderBottomWidth: 1,
     borderBottomColor: BORDER_COLOR,
   },
@@ -553,9 +553,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 12,
     marginBottom: 12,
   },
@@ -606,10 +606,15 @@ const styles = StyleSheet.create({
   },
   stationCard: {
     backgroundColor: CARD_BG,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
     padding: 16,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
   stationTopRow: {
     flexDirection: 'row',

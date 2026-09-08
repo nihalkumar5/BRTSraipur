@@ -25,16 +25,16 @@ import { schedules, getCurrentMinutesOfDay } from '../../src/services/tracker';
 import { Trip } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
-// DESIGN SYSTEM TOKENS (UNIFIED WITH BUS TICKETS & STATIONS)
-const PRIMARY = '#2438B8';
-const PRIMARY_LIGHT = 'rgba(36, 56, 184, 0.08)';
-const BG_COLOR = '#F7F8FA';
+// DESIGN SYSTEM TOKENS (UNIFIED WITH HOME / BUS TRACK)
+const PRIMARY = '#18258F';
+const PRIMARY_LIGHT = 'rgba(24, 37, 143, 0.08)';
+const BG_COLOR = '#F7F7F4';
 const CARD_BG = '#FFFFFF';
-const TEXT_PRIMARY = '#101828';
-const TEXT_SECONDARY = '#667085';
-const TEXT_MUTED = '#98A2B3';
-const BORDER_COLOR = '#EAECF0';
-const BORDER_SUBTLE = '#E4E7EC';
+const TEXT_PRIMARY = '#0B132B';
+const TEXT_SECONDARY = '#64748B';
+const TEXT_MUTED = '#94A3B8';
+const BORDER_COLOR = '#EDF2F7';
+const BORDER_SUBTLE = '#EDF2F7';
 
 export default function TimetableScreen() {
   const [dayType, setDayType] = useState<'weekday' | 'weekend'>('weekday');
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: CARD_BG,
+    backgroundColor: '#F7F7F4',
     borderBottomWidth: 1,
     borderBottomColor: BORDER_COLOR,
   },

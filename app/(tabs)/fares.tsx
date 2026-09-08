@@ -20,16 +20,16 @@ import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
 // DESIGN SYSTEM TOKENS (SHARED GLOBALLY ACROSS ALL SCREENS)
-const PRIMARY = '#2438B8';
-const PRIMARY_LIGHT = 'rgba(36, 56, 184, 0.08)';
-const BG_COLOR = '#F7F8FA';
+const PRIMARY = '#18258F';
+const PRIMARY_LIGHT = 'rgba(24, 37, 143, 0.08)';
+const BG_COLOR = '#F7F7F4';
 const CARD_BG = '#FFFFFF';
-const TEXT_PRIMARY = '#101828';
-const TEXT_SECONDARY = '#667085';
-const TEXT_MUTED = '#98A2B3';
-const BORDER_COLOR = '#E4E7EC';
-const BORDER_DIVIDER = '#EAECF0';
-const SUCCESS_DOT = '#12B76A';
+const TEXT_PRIMARY = '#0B132B';
+const TEXT_SECONDARY = '#64748B';
+const TEXT_MUTED = '#94A3B8';
+const BORDER_COLOR = '#EDF2F7';
+const BORDER_DIVIDER = '#EDF2F7';
+const SUCCESS_DOT = '#10B981';
 const DEST_DOT = '#F97066';
 
 export default function FaresScreen() {
