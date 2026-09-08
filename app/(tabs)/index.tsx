@@ -379,6 +379,10 @@ export default function LiveBusScreen() {
   const [reminderBanner, setReminderBanner] = useState<string | null>(null);
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
 
+  useEffect(() => {
+    setReminderBanner(null);
+  }, [fromStation, toStation]);
+
   // Time simulation
   const [currentTimeMins, setCurrentTimeMins] = useState<number>(() => getCurrentMinutesOfDay());
   const [isLiveClock, setIsLiveClock] = useState(true);

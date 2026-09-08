@@ -6,6 +6,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import * as Notifications from 'expo-notifications';
 import { requestNotificationPermissions } from '../src/services/notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    priority: Notifications.AndroidNotificationPriority.HIGH,
+  }),
+});
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -422,23 +431,32 @@ export default function RootLayout() {
                     lastExitPressRef.current = 0; // Reset exit timer, user navigated back within app
                   } else if (data.type === 'CAN_GO_BACK') {
                     setCanGoBackWeb(Boolean(data.canGoBack));
+                  } else if (data.type === 'REQUEST_NOTIFICATION_PERMISSION') {
+                    await requestNotificationPermissions();
                   } else if (data.type === 'SCHEDULE_BUS_NOTIFICATION') {
                     const { routeBadge, fromStop, toStop, departureTime, arrivalTime, triggerSeconds, minutesBefore } = data.payload || {};
                     await requestNotificationPermissions();
-                    await Notifications.scheduleNotificationAsync({
-                      content: {
-                        title: `🚍 ${routeBadge} departing in ${minutesBefore} mins!`,
-                        body: `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`,
-                        sound: 'default',
-                        color: '#18258F',
-                        priority: Notifications.AndroidNotificationPriority.HIGH,
-                      },
-                      trigger: {
-                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-                        seconds: Math.max(1, Number(triggerSeconds) || 1),
-                        channelId: 'default',
-                      },
-                    });
+                    try {
+                      await Notifications.scheduleNotificationAsync({
+                        content: {
+                          title: `🚍 ${routeBadge} departing in ${minutesBefore} mins!`,
+                          body: `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`,
+                          sound: 'default',
+                          color: '#18258F',
+                          priority: Notifications.AndroidNotificationPriority.HIGH,
+                        },
+                        trigger: {
+                          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                          seconds: Math.max(1, Number(triggerSeconds) || 1),
+                          channelId: 'default',
+                        },
+                      });
+                      if (Platform.OS === 'android') {
+                        ToastAndroid.show(`🔔 Reminder set for ${departureTime}`, ToastAndroid.SHORT);
+                      }
+                    } catch (schedErr) {
+                      console.warn('Error in scheduleNotificationAsync:', schedErr);
+                    }
                   } else if (data.type === 'CANCEL_NOTIFICATION') {
                     if (data.payload?.notificationId) {
                       await Notifications.cancelScheduledNotificationAsync(data.payload.notificationId);

@@ -47,10 +47,22 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     }
   }
 
+  if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+    try {
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({ type: 'REQUEST_NOTIFICATION_PERMISSION' })
+      );
+    } catch (e) {}
+  }
+
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      const perm = await Notification.requestPermission();
-      return perm === 'granted';
+      try {
+        const perm = await Notification.requestPermission();
+        return perm === 'granted';
+      } catch (e) {
+        return false;
+      }
     }
     return true;
   }
@@ -92,22 +104,31 @@ export async function scheduleBusNotification(
 
   const now = new Date();
   const currentMins = now.getHours() * 60 + now.getMinutes();
-  
-  let targetMins = departureMins - minutesBefore;
+
   let targetDate = new Date();
   targetDate.setSeconds(0);
   targetDate.setMilliseconds(0);
 
-  if (targetMins < currentMins) {
-    // Bus is tomorrow
+  // If departureMins is earlier than currentMins, the bus is departing tomorrow (e.g. next morning)
+  const isTomorrow = departureMins < currentMins;
+  if (isTomorrow) {
     targetDate.setDate(targetDate.getDate() + 1);
   }
 
+  const targetMins = departureMins - minutesBefore;
   const hours = Math.floor(((targetMins % 1440) + 1440) % 1440 / 60);
   const minutes = ((targetMins % 1440) + 1440) % 1440 % 60;
   targetDate.setHours(hours, minutes, 0, 0);
 
-  const triggerSeconds = Math.max(1, Math.round((targetDate.getTime() - Date.now()) / 1000));
+  let triggerSeconds = Math.round((targetDate.getTime() - Date.now()) / 1000);
+  if (!isTomorrow && triggerSeconds <= 0) {
+    // If bus is today but the reminder threshold is right now or already passed:
+    // Alert immediately in 3 seconds!
+    triggerSeconds = 3;
+  } else {
+    triggerSeconds = Math.max(1, triggerSeconds);
+  }
+
   const period = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 || 12;
   const triggerTimeString = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
@@ -115,6 +136,29 @@ export async function scheduleBusNotification(
   let notifId: string | undefined;
 
   try {
+    // 1. If running inside React Native Android/iOS WebView host (The Mobile App)
+    if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+      try {
+        (window as any).ReactNativeWebView.postMessage(
+          JSON.stringify({
+            type: 'SCHEDULE_BUS_NOTIFICATION',
+            payload: {
+              routeBadge,
+              fromStop,
+              toStop,
+              departureTime,
+              arrivalTime,
+              triggerSeconds,
+              minutesBefore,
+            },
+          })
+        );
+      } catch (e) {
+        console.warn('Could not postMessage to ReactNativeWebView:', e);
+      }
+    }
+
+    // 2. Pure native React Native environment
     if (Platform.OS !== 'web') {
       notifId = await Notifications.scheduleNotificationAsync({
         content: {
@@ -130,36 +174,23 @@ export async function scheduleBusNotification(
           channelId: 'default',
         },
       });
-      // If running inside React Native Android/iOS WebView host
-      if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
-        try {
-          (window as any).ReactNativeWebView.postMessage(
-            JSON.stringify({
-              type: 'SCHEDULE_BUS_NOTIFICATION',
-              payload: {
-                routeBadge,
-                fromStop,
-                toStop,
-                departureTime,
-                arrivalTime,
-                triggerSeconds,
-                minutesBefore,
-              },
-            })
-          );
-        } catch (e) {}
-      } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        // Pure Web notification support
+    }
+
+    // 3. Pure Desktop/Mobile Web browser (PWA)
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && !(window as any).ReactNativeWebView?.postMessage) {
+      if ('Notification' in window && Notification.permission === 'granted') {
         setTimeout(() => {
-          new Notification(`🚍 ${routeBadge} departing in ${minutesBefore} mins!`, {
-            body: `Board at ${fromStop} by ${departureTime}. ETA at ${toStop}: ${arrivalTime}.`,
-            icon: '/assets/images/icon.png',
-          });
-        }, Math.min(triggerSeconds * 1000, 10000)); // Cap for web demo
+          try {
+            new Notification(`🚍 ${routeBadge} departing in ${minutesBefore} mins!`, {
+              body: `Board at ${fromStop} by ${departureTime}. ETA at ${toStop}: ${arrivalTime}.`,
+              icon: '/assets/images/icon.png',
+            });
+          } catch (e) {}
+        }, Math.min(triggerSeconds * 1000, 10000));
       }
     }
   } catch (err) {
-    console.warn('Could not schedule native notification:', err);
+    console.warn('Could not schedule notification:', err);
   }
 
   const reminder: ScheduledReminder = {
