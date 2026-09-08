@@ -199,6 +199,7 @@ export default function FaresScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
@@ -465,6 +466,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BG_COLOR,
   },
+  scrollView: {
+    flex: 1,
+    backgroundColor: BG_COLOR,
+  },
   container: {
     padding: 16,
     gap: 16,
@@ -507,15 +512,15 @@ const styles = StyleSheet.create({
   calcSection: {},
   calcCard: {
     backgroundColor: CARD_BG,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1.5,
+    shadowRadius: 12,
+    elevation: 2,
   },
   stationField: {
     paddingVertical: 2,
@@ -607,15 +612,15 @@ const styles = StyleSheet.create({
   guideSection: {},
   guideCard: {
     backgroundColor: CARD_BG,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
     overflow: 'hidden',
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
   guideRow: {
     flexDirection: 'row',
@@ -647,15 +652,15 @@ const styles = StyleSheet.create({
   /* 4. OFFICIAL POLICY CARD */
   policyCard: {
     backgroundColor: CARD_BG,
-    borderRadius: 16,
-    padding: 15,
-    borderWidth: 1,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
   policyHeaderRow: {
     flexDirection: 'row',

@@ -271,6 +271,7 @@ export default function AllStopsScreen() {
 
       {/* 4. STATION LIST ITEMS (CLEAN DIRECTORY ROWS WITH ZERO CHROMATIC CLUTTER) */}
       <FlatList
+        style={styles.flatList}
         data={filtered}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -503,6 +504,10 @@ export default function AllStopsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+    backgroundColor: BG_COLOR,
+  },
+  flatList: {
     flex: 1,
     backgroundColor: BG_COLOR,
   },

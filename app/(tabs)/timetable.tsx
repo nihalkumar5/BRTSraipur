@@ -308,6 +308,7 @@ export default function TimetableScreen() {
 
       {/* 2. TIMETABLE CONTENT */}
       <FlatList
+        style={styles.flatList}
         data={regularTrips}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -496,6 +497,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BG_COLOR,
   },
+  flatList: {
+    flex: 1,
+    backgroundColor: BG_COLOR,
+  },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -567,17 +572,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: CARD_BG,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowRadius: 12,
+    elevation: 2,
   },
   heroRouteInfoCol: {
     flex: 1,
@@ -670,18 +675,18 @@ const styles = StyleSheet.create({
   },
   nextDepCard: {
     backgroundColor: CARD_BG,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(36, 56, 184, 0.22)',
+    borderColor: 'rgba(24, 37, 143, 0.22)',
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 8px 24px rgba(36, 56, 184, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03)',
+          boxShadow: '0 8px 24px rgba(24, 37, 143, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03)',
         } as any)
       : {}),
   },
@@ -825,16 +830,16 @@ const styles = StyleSheet.create({
   /* UNIFIED DEPARTURE TABLE CONTAINER */
   unifiedTableContainer: {
     backgroundColor: CARD_BG,
-    borderRadius: 16,
-    marginBottom: 8,
-    borderWidth: 1,
+    borderRadius: 20,
+    marginBottom: 10,
+    borderWidth: 1.5,
     borderColor: BORDER_COLOR,
     overflow: 'hidden',
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
   departureRow: {
     paddingVertical: 13,
