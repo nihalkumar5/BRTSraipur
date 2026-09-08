@@ -1705,67 +1705,72 @@ export default function LiveBusScreen() {
                   </View>
                 </TouchableOpacity>
 
-                {/* NEARBY DIRECT ROUTE PRO-TIP / FASTER ALTERNATIVE */}
+                {/* AVOID TRANSFER — SMART RECOMMENDATION */}
                 {journey.isTransfer && journey.nearbyDirectAlternatives && journey.nearbyDirectAlternatives.length > 0 && (
                   <View style={styles.nearbyAlternativeCard}>
+                    {/* Header */}
                     <View style={styles.nearbyAltHeaderRow}>
                       <View style={styles.nearbyAltIconWrap}>
-                        <Navigation size={16} color="#047857" strokeWidth={2.4} />
+                        <Navigation size={13} color="#087F5B" strokeWidth={2.4} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <Text style={styles.nearbyAltTitle}>Direct Bus Available Nearby</Text>
-                          <View style={styles.nearbyAltSavePill}>
-                            <Text style={styles.nearbyAltSavePillText}>Avoid Transfer</Text>
-                          </View>
-                        </View>
+                        <Text style={styles.nearbyAltTitle}>AVOID THE TRANSFER</Text>
                         <Text style={styles.nearbyAltSub}>
                           {journey.nearbyDirectAlternatives[0].type === 'nearby_origin'
-                            ? `Paas ke station se direct bus pakdein aur transfer se bachein:`
-                            : `Destination ke paas direct bus se utrein:`}
+                            ? 'A direct bus is available a short walk away.'
+                            : 'A direct bus drops you closer to your destination.'}
                         </Text>
                       </View>
                     </View>
 
-                        {journey.nearbyDirectAlternatives.slice(0, 2).map((alt, idx) => (
-                      <View key={`alt-${idx}`} style={styles.nearbyAltItemRow}>
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <Text style={styles.nearbyAltStationName}>{alt.suggestedStop.shortName}</Text>
-                            <Text style={styles.nearbyAltDistText}>
-                              ({alt.stopsAway
-                                ? `${alt.stopsAway} stop${alt.stopsAway > 1 ? 's' : ''} on route · ~${alt.routeTimeDeltaMins}m`
-                                : `${alt.distanceFormatted} away · ~${alt.walkingMins}m walk`})
-                            </Text>
-                            {alt.isReachableNow && (
-                              <View style={styles.reachableNowPill}>
-                                <Text style={styles.reachableNowPillText}>Reachable</Text>
-                              </View>
+                    {/* Recommendation rows */}
+                    {journey.nearbyDirectAlternatives.slice(0, 2).map((alt, idx) => (
+                      <View key={`alt-${idx}`}>
+                        {idx > 0 && <View style={styles.nearbyAltRowDivider} />}
+                        <View style={styles.nearbyAltItemRow}>
+                          {/* Left: info */}
+                          <View style={{ flex: 1, marginRight: 10 }}>
+                            {/* Row 1: Destination + walk time */}
+                            <View style={styles.nearbyAltTopLine}>
+                              <Text style={styles.nearbyAltStationName} numberOfLines={1}>{alt.suggestedStop.shortName}</Text>
+                              <Text style={styles.nearbyAltWalkBadge}>
+                                {alt.stopsAway
+                                  ? `${alt.stopsAway} stop${alt.stopsAway > 1 ? 's' : ''} away`
+                                  : `${alt.walkingMins} min walk`}
+                              </Text>
+                            </View>
+                            {/* Row 2: Bus + leaves in */}
+                            {alt.isToday ? (
+                              <Text style={styles.nearbyAltBusLine} numberOfLines={1}>
+                                {`BRT ${alt.routeNumber} · leaves in ${alt.minutesUntilDeparture} min`}
+                              </Text>
+                            ) : (
+                              <Text style={styles.nearbyAltBusLine} numberOfLines={1}>
+                                {`Service ended · First bus tomorrow at ${alt.departureTime}`}
+                              </Text>
                             )}
+                            {/* Row 3: Fare */}
+                            <Text style={styles.nearbyAltFareLine}>{`₹${alt.fare}`}</Text>
                           </View>
-                          <Text style={styles.nearbyAltTripDesc}>
-                            {alt.isToday
-                              ? `Bus ${alt.routeNumber} at ${alt.departureTime} (in ${alt.minutesUntilDeparture}m · ~${alt.walkingMins}m walk) · ₹${alt.fare}${alt.previousDepartureTime ? ` · (Prev was ${alt.previousDepartureTime})` : ''}`
-                              : `Service ended today · First bus tomorrow at ${alt.departureTime} · ₹${alt.fare}`}
-                          </Text>
+                          {/* Right: CTA */}
+                          {alt.isToday && (
+                            <TouchableOpacity
+                              style={styles.nearbyAltSwitchBtn}
+                              onPress={() => {
+                                if (alt.type === 'nearby_origin') {
+                                  setFromStation(alt.suggestedStop.shortName);
+                                } else {
+                                  setToStation(alt.suggestedStop.shortName);
+                                }
+                                setSelectedTripId(null);
+                                triggerCardBounce();
+                              }}
+                              activeOpacity={0.8}
+                            >
+                              <Text style={styles.nearbyAltSwitchBtnText}>Board →</Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
-                        <TouchableOpacity
-                          style={styles.nearbyAltSwitchBtn}
-                          onPress={() => {
-                            if (alt.type === 'nearby_origin') {
-                              setFromStation(alt.suggestedStop.shortName);
-                            } else {
-                              setToStation(alt.suggestedStop.shortName);
-                            }
-                            setSelectedTripId(null);
-                            triggerCardBounce();
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={styles.nearbyAltSwitchBtnText}>
-                            {alt.type === 'nearby_origin' ? 'Board here' : 'Drop here'} ➔
-                          </Text>
-                        </TouchableOpacity>
                       </View>
                     ))}
                   </View>
@@ -6200,93 +6205,107 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   nearbyAlternativeCard: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F8FFFC',
     borderRadius: 16,
-    padding: 14,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
     marginVertical: 10,
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   nearbyAltHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1FAE5',
+    marginBottom: 12,
   },
   nearbyAltIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#D1FAE5',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 1,
   },
   nearbyAltTitle: {
-    fontSize: 13.5,
+    fontFamily: FONT.bold,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#065F46',
-  },
-  nearbyAltSavePill: {
-    backgroundColor: '#047857',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  nearbyAltSavePillText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
+    color: '#087F5B',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   nearbyAltSub: {
-    fontSize: 11.5,
-    color: '#047857',
-    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: 12.5,
+    fontWeight: '400',
+    color: '#374151',
+    marginTop: 3,
+  },
+  nearbyAltRowDivider: {
+    height: 1,
+    backgroundColor: '#E7F5EE',
+    marginVertical: 10,
   },
   nearbyAltItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: '#D1FAE5',
+  },
+  nearbyAltTopLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 3,
   },
   nearbyAltStationName: {
-    fontSize: 13.5,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#0F172A',
+    flex: 1,
+    flexShrink: 1,
   },
-  nearbyAltDistText: {
+  nearbyAltWalkBadge: {
+    fontFamily: FONT.semiBold,
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#059669',
+    color: '#087F5B',
+    flexShrink: 0,
   },
-  nearbyAltTripDesc: {
-    fontSize: 11.5,
+  nearbyAltBusLine: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    fontWeight: '500',
     color: '#475569',
-    marginTop: 2,
+    marginBottom: 2,
+  },
+  nearbyAltFareLine: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1E293B',
   },
   nearbyAltSwitchBtn: {
-    backgroundColor: '#047857',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: '#18258F',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   nearbyAltSwitchBtnText: {
-    fontSize: 11.5,
-    fontWeight: '800',
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   reachableNowPill: {
