@@ -12,14 +12,35 @@ import {
   Animated,
   Easing,
   BackHandler,
+  Linking,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowUpDown, Info, Search, X, ArrowLeft, ChevronRight, ChevronUp } from 'lucide-react-native';
+import {
+  ArrowUpDown,
+  Info,
+  Search,
+  X,
+  ArrowLeft,
+  ChevronRight,
+  ChevronUp,
+  QrCode,
+  CreditCard,
+  Banknote,
+  GraduationCap,
+  Sparkles,
+  PhoneCall,
+  Luggage,
+  ShieldCheck,
+  Check,
+  Percent,
+  Zap,
+  Bus,
+} from 'lucide-react-native';
 import { stops, getFare } from '../../src/services/tracker';
 import { Stop } from '../../src/types';
 import { FONT } from '../../src/theme/typography';
 
-// DESIGN SYSTEM TOKENS (SHARED GLOBALLY ACROSS ALL SCREENS)
+// DESIGN SYSTEM TOKENS (UNIFIED GLOBALLY)
 const PRIMARY = '#18258F';
 const PRIMARY_LIGHT = 'rgba(24, 37, 143, 0.08)';
 const BG_COLOR = '#F7F7F4';
@@ -37,6 +58,7 @@ export default function FaresScreen() {
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
   const [toStop, setToStop] = useState<string>('HNLU (National Law University)');
   const [showFullPolicy, setShowFullPolicy] = useState(false);
+  const [activePassTab, setActivePassTab] = useState<'monthly' | 'student' | 'daily'>('student');
 
   // Modal station picker
   const [modalVisible, setModalVisible] = useState(false);
@@ -186,15 +208,18 @@ export default function FaresScreen() {
   const fromDisplay = stops.find(s => s.name === fromStop)?.shortName || fromStop.split('(')[0].trim();
   const toDisplay = stops.find(s => s.name === toStop)?.shortName || toStop.split('(')[0].trim();
 
-  // Standard official route fares
-  const fareGuideRows = [
-    { route: 'Within Nava Raipur', price: '₹5–₹10' },
-    { route: 'Telibandha → Nava Raipur', price: '₹20–₹25' },
-    { route: 'Railway Stn → Mantralaya', price: '₹30' },
-    { route: 'Railway Stn → HNLU Gate', price: '₹35' },
-    { route: 'Railway Stn → HNLU', price: '₹40' },
-    { route: 'Railway Stn → Muktangan', price: '₹40' },
+  // Official distance slabs
+  const distanceSlabs = [
+    { range: '0 – 3 km', fare: '₹5', note: 'Local feeder & sector loops', example: 'Sector 24 → CBD' },
+    { range: '3 – 8 km', fare: '₹10', note: 'Within Nava Raipur zone', example: 'Indravati → HNLU' },
+    { range: '8 – 15 km', fare: '₹20', note: 'City connector corridors', example: 'Telibandha → Serikhedi' },
+    { range: '15 – 25 km', fare: '₹30', note: 'Major express journeys', example: 'Railway Stn → Mantralaya' },
+    { range: '25+ km', fare: '₹40', note: 'Full end-to-end corridor', example: 'Railway Stn → HNLU / Muktangan' },
   ];
+
+  const handleCallHelpline = () => {
+    Linking.openURL('tel:18002330405').catch(() => {});
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -205,13 +230,13 @@ export default function FaresScreen() {
       >
         {/* 1. HEADER */}
         <View style={styles.header}>
-          <Text style={styles.title}>Fares</Text>
-          <Text style={styles.subtitle}>Simple, official bus fares.</Text>
+          <Text style={styles.title}>Fares & Passes</Text>
+          <Text style={styles.subtitle}>Official Tatpar BRTS rates, passes & concessions</Text>
         </View>
 
         {/* 2. FARE CALCULATOR (HERO COMPONENT) */}
         <View style={styles.calcSection}>
-          <Text style={styles.sectionHeaderLabel}>CHECK YOUR FARE</Text>
+          <Text style={styles.sectionHeaderLabel}>CALCULATE TICKET FARE</Text>
           <View style={styles.calcCard}>
             {/* FROM FIELD */}
             <TouchableOpacity
@@ -268,57 +293,286 @@ export default function FaresScreen() {
               <Text style={styles.fareRouteText} numberOfLines={1}>
                 {fromDisplay} → {toDisplay}
               </Text>
-              <Text style={styles.fareTypeSub}>One way · Adult</Text>
+              <Text style={styles.fareTypeSub}>One way · Single Passenger</Text>
             </Animated.View>
           </View>
         </View>
 
-        {/* 3. FARE GUIDE (CLEAN ROW-BASED TABLE) */}
+        {/* 3. ACCEPTED PAYMENT MODES */}
+        <View style={styles.paymentSection}>
+          <Text style={styles.sectionHeaderLabel}>ACCEPTED PAYMENT MODES</Text>
+          <View style={styles.paymentGrid}>
+            <View style={styles.paymentModeCard}>
+              <View style={[styles.paymentIconCircle, { backgroundColor: '#EEF2FF' }]}>
+                <QrCode size={18} color={PRIMARY} strokeWidth={2.2} />
+              </View>
+              <Text style={styles.paymentModeTitle}>UPI / QR</Text>
+              <Text style={styles.paymentModeDesc}>PhonePe, GPay, Paytm on conductor ETM</Text>
+            </View>
+
+            <View style={styles.paymentModeCard}>
+              <View style={[styles.paymentIconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <CreditCard size={18} color="#059669" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.paymentModeTitle}>Smart Card</Text>
+              <Text style={styles.paymentModeDesc}>Tap & Go card with 10% auto-savings</Text>
+            </View>
+
+            <View style={styles.paymentModeCard}>
+              <View style={[styles.paymentIconCircle, { backgroundColor: '#FFFBEB' }]}>
+                <Banknote size={18} color="#D97706" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.paymentModeTitle}>Cash Ticket</Text>
+              <Text style={styles.paymentModeDesc}>Exact ₹5, ₹10, ₹20 change preferred</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 4. BUS PASSES & CONCESSIONS (HIGH COMMUTER VALUE) */}
+        <View style={styles.passesSection}>
+          <View style={styles.passesHeaderRow}>
+            <Text style={styles.sectionHeaderLabel}>COMMUTER PASSES & SAVINGS</Text>
+            <View style={styles.discountBadge}>
+              <Percent size={11} color="#059669" strokeWidth={2.4} />
+              <Text style={styles.discountBadgeText}>Save up to 50%</Text>
+            </View>
+          </View>
+
+          {/* PASS SELECTION TABS */}
+          <View style={styles.passTabsRow}>
+            <TouchableOpacity
+              style={[styles.passTabBtn, activePassTab === 'student' && styles.passTabBtnActive]}
+              onPress={() => setActivePassTab('student')}
+              activeOpacity={0.7}
+            >
+              <GraduationCap
+                size={13}
+                color={activePassTab === 'student' ? PRIMARY : TEXT_SECONDARY}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.passTabText,
+                  activePassTab === 'student' && styles.passTabTextActive,
+                ]}
+              >
+                Student
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.passTabBtn, activePassTab === 'monthly' && styles.passTabBtnActive]}
+              onPress={() => setActivePassTab('monthly')}
+              activeOpacity={0.7}
+            >
+              <Sparkles
+                size={13}
+                color={activePassTab === 'monthly' ? PRIMARY : TEXT_SECONDARY}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.passTabText,
+                  activePassTab === 'monthly' && styles.passTabTextActive,
+                ]}
+              >
+                Monthly All-Route
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.passTabBtn, activePassTab === 'daily' && styles.passTabBtnActive]}
+              onPress={() => setActivePassTab('daily')}
+              activeOpacity={0.7}
+            >
+              <Zap
+                size={13}
+                color={activePassTab === 'daily' ? PRIMARY : TEXT_SECONDARY}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.passTabText,
+                  activePassTab === 'daily' && styles.passTabTextActive,
+                ]}
+              >
+                Daily Pass
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* ACTIVE PASS DETAILS CARD */}
+          <View style={styles.passDetailsCard}>
+            {activePassTab === 'student' && (
+              <>
+                <View style={styles.passCardTop}>
+                  <View>
+                    <Text style={styles.passHeroTitle}>Student Concession Pass</Text>
+                    <Text style={styles.passHeroSub}>For School, College & University Students</Text>
+                  </View>
+                  <View style={styles.passPriceTag}>
+                    <Text style={styles.passDiscountBig}>50%</Text>
+                    <Text style={styles.passDiscountLabel}>OFF</Text>
+                  </View>
+                </View>
+                <View style={styles.passDivider} />
+                <View style={styles.passPerksList}>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Valid on all AC Express & Feeder buses</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Issued at Telibandha & Railway Station counters</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Requires valid Student ID card & Aadhaar copy</Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {activePassTab === 'monthly' && (
+              <>
+                <View style={styles.passCardTop}>
+                  <View>
+                    <Text style={styles.passHeroTitle}>Monthly All-Network Pass</Text>
+                    <Text style={styles.passHeroSub}>Unlimited rides across all 25 shelters</Text>
+                  </View>
+                  <View style={styles.passPriceTag}>
+                    <Text style={styles.passPriceBig}>₹800</Text>
+                    <Text style={styles.passDiscountLabel}>/ month</Text>
+                  </View>
+                </View>
+                <View style={styles.passDivider} />
+                <View style={styles.passPerksList}>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Unlimited daily rides on all BRTS & Feeder lines</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Save over ₹600/month compared to daily tickets</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Direct Smart Card recharge available on counters</Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {activePassTab === 'daily' && (
+              <>
+                <View style={styles.passCardTop}>
+                  <View>
+                    <Text style={styles.passHeroTitle}>Daily Tourist & Hop-On Pass</Text>
+                    <Text style={styles.passHeroSub}>Ideal for visitors, meetings & day trips</Text>
+                  </View>
+                  <View style={styles.passPriceTag}>
+                    <Text style={styles.passPriceBig}>₹50</Text>
+                    <Text style={styles.passDiscountLabel}>/ 24 hrs</Text>
+                  </View>
+                </View>
+                <View style={styles.passDivider} />
+                <View style={styles.passPerksList}>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Unlimited boarding on any bus for the entire calendar day</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Can be purchased directly from the on-board bus conductor</Text>
+                  </View>
+                  <View style={styles.passPerkItem}>
+                    <Check size={14} color="#059669" strokeWidth={2.4} />
+                    <Text style={styles.passPerkText}>Best for touring Jungle Safari, Purkhouti Muktangan & Mantralaya</Text>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* 5. OFFICIAL DISTANCE SLABS TABLE */}
         <View style={styles.guideSection}>
-          <Text style={styles.sectionHeaderLabel}>FARE GUIDE</Text>
+          <Text style={styles.sectionHeaderLabel}>OFFICIAL DISTANCE FARE MATRIX</Text>
           <View style={styles.guideCard}>
-            {fareGuideRows.map((row, index) => {
-              const isLast = index === fareGuideRows.length - 1;
+            <View style={styles.guideTableHeader}>
+              <Text style={styles.guideThCol1}>DISTANCE SLAB</Text>
+              <Text style={styles.guideThCol2}>ROUTE COVERAGE</Text>
+              <Text style={styles.guideThCol3}>FARE</Text>
+            </View>
+
+            {distanceSlabs.map((slab, index) => {
+              const isLast = index === distanceSlabs.length - 1;
               return (
                 <View
-                  key={row.route}
+                  key={slab.range}
                   style={[styles.guideRow, !isLast && styles.guideRowBorder]}
                 >
-                  <Text style={styles.guideRouteText}>{row.route}</Text>
-                  <Text style={styles.guidePriceText}>{row.price}</Text>
+                  <View style={styles.slabRangeCol}>
+                    <Text style={styles.slabRangeText}>{slab.range}</Text>
+                    <Text style={styles.slabNoteText}>{slab.note}</Text>
+                  </View>
+                  <View style={styles.slabExampleCol}>
+                    <Text style={styles.slabExampleText} numberOfLines={1}>
+                      {slab.example}
+                    </Text>
+                  </View>
+                  <View style={styles.slabPriceCol}>
+                    <Text style={styles.slabPriceText}>{slab.fare}</Text>
+                  </View>
                 </View>
               );
             })}
           </View>
         </View>
 
-        {/* 4. OFFICIAL POLICY (COMPACT EXPANDABLE SECTION) */}
+        {/* 6. PASSENGER POLICY & HELPLINE */}
         <View style={styles.policyCard}>
           <View style={styles.policyHeaderRow}>
-            <Info size={14} color={PRIMARY} strokeWidth={2.2} />
-            <Text style={styles.policyTitle}>Official ticketing policy</Text>
+            <ShieldCheck size={16} color={PRIMARY} strokeWidth={2.2} />
+            <Text style={styles.policyTitle}>Passenger Rights & Guidelines</Text>
           </View>
 
           <View style={styles.policyHighlights}>
-            <Text style={styles.policyBullet}>• Under 5 years · Free travel</Text>
-            <Text style={styles.policyBullet}>
-              • QR / Smart Card · Valid across all 25 shelters
-            </Text>
+            <View style={styles.policyRuleItem}>
+              <Text style={styles.policyRuleBullet}>•</Text>
+              <Text style={styles.policyBullet}>
+                <Text style={styles.policyBold}>Children under 5 years:</Text> 100% Free travel across all services.
+              </Text>
+            </View>
+
+            <View style={styles.policyRuleItem}>
+              <Text style={styles.policyRuleBullet}>•</Text>
+              <Text style={styles.policyBullet}>
+                <Text style={styles.policyBold}>Luggage allowance:</Text> Up to 15 kg personal baggage free per passenger.
+              </Text>
+            </View>
+
+            <View style={styles.policyRuleItem}>
+              <Text style={styles.policyRuleBullet}>•</Text>
+              <Text style={styles.policyBullet}>
+                <Text style={styles.policyBold}>Senior Citizens & Divyangjan:</Text> Concessionary travel as per Chhattisgarh Govt. transport mandate.
+              </Text>
+            </View>
 
             {showFullPolicy && (
               <View style={styles.policyExpandedSection}>
-                <Text style={styles.policyBullet}>
-                  • Student pass · 50% concession on monthly passes
-                </Text>
-                <Text style={styles.policyBullet}>
-                  • Senior citizens & divyang · Concessionary travel as per CG rules
-                </Text>
-                <Text style={styles.policyBullet}>
-                  • Luggage · Up to 15 kg personal luggage allowed free
-                </Text>
-                <Text style={styles.policyBullet}>
-                  • AC Express buses · Standard government approved distance slabs
-                </Text>
+                <View style={styles.policyRuleItem}>
+                  <Text style={styles.policyRuleBullet}>•</Text>
+                  <Text style={styles.policyBullet}>
+                    <Text style={styles.policyBold}>AC Electric Fleet:</Text> 100% low-floor air conditioned buses with dedicated priority seats.
+                  </Text>
+                </View>
+                <View style={styles.policyRuleItem}>
+                  <Text style={styles.policyRuleBullet}>•</Text>
+                  <Text style={styles.policyBullet}>
+                    <Text style={styles.policyBold}>Ticket validity:</Text> Tickets are valid for 2 hours from time of issue on the designated route.
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -329,7 +583,7 @@ export default function FaresScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.policyToggleText}>
-              {showFullPolicy ? 'Hide full policy' : 'View full policy'}
+              {showFullPolicy ? 'Show less guidelines' : 'View complete ticketing terms'}
             </Text>
             {showFullPolicy ? (
               <ChevronUp size={13} color={PRIMARY} />
@@ -337,10 +591,28 @@ export default function FaresScreen() {
               <ChevronRight size={13} color={PRIMARY} />
             )}
           </TouchableOpacity>
+
+          {/* HELPLINE CTA CALLOUT */}
+          <TouchableOpacity
+            style={styles.helplineBanner}
+            onPress={handleCallHelpline}
+            activeOpacity={0.82}
+          >
+            <View style={styles.helplineIconWrap}>
+              <PhoneCall size={16} color={PRIMARY} strokeWidth={2.2} />
+            </View>
+            <View style={styles.helplineInfo}>
+              <Text style={styles.helplineTitle}>Transit Inquiries & Grievance</Text>
+              <Text style={styles.helplinePhone}>Toll-Free: 1800-233-0405</Text>
+            </View>
+            <View style={styles.helplineActionBadge}>
+              <Text style={styles.helplineActionText}>Call</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* --- STATION SEARCH PICKER MODAL (RED-BUS STYLE) --- */}
+      {/* --- STATION SEARCH PICKER MODAL --- */}
       <Modal
         visible={modalVisible}
         animationType="none"
@@ -567,7 +839,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F8F9FC',
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     alignItems: 'center',
@@ -587,7 +859,7 @@ const styles = StyleSheet.create({
   },
   farePriceHero: {
     fontFamily: FONT.extraBold,
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: '800',
     color: PRIMARY,
     letterSpacing: -0.6,
@@ -608,7 +880,180 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* 3. FARE GUIDE (CLEAN LIST TABLE) */
+  /* 3. PAYMENT MODES SECTION */
+  paymentSection: {},
+  paymentGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  paymentModeCard: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: BORDER_COLOR,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  paymentIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  paymentModeTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    marginBottom: 3,
+  },
+  paymentModeDesc: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
+    lineHeight: 15,
+  },
+
+  /* 4. BUS PASSES & CONCESSIONS */
+  passesSection: {},
+  passesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  discountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 3,
+  },
+  discountBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  passTabsRow: {
+    flexDirection: 'row',
+    backgroundColor: '#EDF2F7',
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 10,
+    gap: 4,
+  },
+  passTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    borderRadius: 9,
+    gap: 5,
+  },
+  passTabBtnActive: {
+    backgroundColor: CARD_BG,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  passTabText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: TEXT_SECONDARY,
+  },
+  passTabTextActive: {
+    fontFamily: FONT.bold,
+    color: PRIMARY,
+    fontWeight: '700',
+  },
+  passDetailsCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: BORDER_COLOR,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  passCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  passHeroTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+  },
+  passHeroSub: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 2,
+  },
+  passPriceTag: {
+    alignItems: 'flex-end',
+  },
+  passDiscountBig: {
+    fontFamily: FONT.extraBold,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#059669',
+    fontVariant: ['tabular-nums'],
+  },
+  passPriceBig: {
+    fontFamily: FONT.extraBold,
+    fontSize: 22,
+    fontWeight: '800',
+    color: PRIMARY,
+    fontVariant: ['tabular-nums'],
+  },
+  passDiscountLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    textTransform: 'uppercase',
+  },
+  passDivider: {
+    height: 1,
+    backgroundColor: BORDER_DIVIDER,
+    marginVertical: 12,
+  },
+  passPerksList: {
+    gap: 8,
+  },
+  passPerkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  passPerkText: {
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: TEXT_PRIMARY,
+    flex: 1,
+  },
+
+  /* 5. FARE GUIDE (DISTANCE SLABS TABLE) */
   guideSection: {},
   guideCard: {
     backgroundColor: CARD_BG,
@@ -622,26 +1067,76 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
+  guideTableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#F8F9FC',
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER_DIVIDER,
+  },
+  guideThCol1: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    width: '38%',
+  },
+  guideThCol2: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    flex: 1,
+  },
+  guideThCol3: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: TEXT_SECONDARY,
+    textAlign: 'right',
+    width: 45,
+  },
   guideRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 13,
+    paddingVertical: 12,
     paddingHorizontal: 16,
   },
   guideRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: BORDER_DIVIDER,
   },
-  guideRouteText: {
-    fontFamily: FONT.medium,
-    fontSize: 13.5,
-    color: TEXT_PRIMARY,
-    fontWeight: '500',
-    flex: 1,
-    marginRight: 8,
+  slabRangeCol: {
+    width: '38%',
+    paddingRight: 6,
   },
-  guidePriceText: {
+  slabRangeText: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+  },
+  slabNoteText: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
+    marginTop: 1,
+  },
+  slabExampleCol: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  slabExampleText: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    color: '#475569',
+  },
+  slabPriceCol: {
+    width: 45,
+    alignItems: 'flex-end',
+  },
+  slabPriceText: {
     fontFamily: FONT.bold,
     fontSize: 14.5,
     fontWeight: '700',
@@ -649,7 +1144,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  /* 4. OFFICIAL POLICY CARD */
+  /* 6. OFFICIAL POLICY & HELPLINE CARD */
   policyCard: {
     backgroundColor: CARD_BG,
     borderRadius: 20,
@@ -665,27 +1160,43 @@ const styles = StyleSheet.create({
   policyHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
     gap: 6,
   },
   policyTitle: {
     fontFamily: FONT.bold,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: TEXT_PRIMARY,
   },
   policyHighlights: {
-    gap: 4,
-    paddingLeft: 2,
+    gap: 6,
+  },
+  policyRuleItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  policyRuleBullet: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: PRIMARY,
+    fontWeight: '700',
   },
   policyBullet: {
     fontFamily: FONT.regular,
     fontSize: 12,
     color: '#475569',
     lineHeight: 18,
+    flex: 1,
+  },
+  policyBold: {
+    fontFamily: FONT.semiBold,
+    fontWeight: '600',
+    color: TEXT_PRIMARY,
   },
   policyExpandedSection: {
-    gap: 4,
+    gap: 6,
     marginTop: 4,
   },
   policyToggleBtn: {
@@ -700,6 +1211,52 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: PRIMARY,
     fontWeight: '600',
+  },
+  helplineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FC',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+  },
+  helplineIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  helplineInfo: {
+    flex: 1,
+  },
+  helplineTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+  },
+  helplinePhone: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: PRIMARY,
+    marginTop: 1,
+  },
+  helplineActionBadge: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  helplineActionText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 
   /* MODAL STATION PICKER */
