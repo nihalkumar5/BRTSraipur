@@ -2104,26 +2104,26 @@ export default function LiveBusScreen() {
 
               {/* 2. REMAINING TIME & FARE DUAL CARDS */}
               <View style={styles.metricsGridRow}>
-                {/* CARD 1: ESTIMATED REMAINING TIME */}
+                {/* CARD 1: ESTIMATED REMAINING TIME (SIGNATURE BLUE THEMED) */}
                 <View style={[styles.metricCard, styles.metricCardRemaining]}>
                   <View style={styles.metricCardHeader}>
                     <View style={styles.metricLabelGroup}>
-                      <Clock size={13} color="#18258F" strokeWidth={2.4} />
-                      <Text style={styles.metricCardLabel}>EST. TIME</Text>
+                      <Clock size={13} color="#93C5FD" strokeWidth={2.4} />
+                      <Text style={[styles.metricCardLabel, styles.metricCardLabelRemaining]}>EST. TIME</Text>
                     </View>
-                    <View style={[styles.metricBadgeRemaining, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                      <Text style={[styles.metricBadgeTextRemaining, { color: '#065F46' }]}>LIVE</Text>
+                    <View style={[styles.metricBadgeRemaining, { backgroundColor: 'rgba(16, 185, 129, 0.22)', borderColor: '#10B981' }]}>
+                      <Text style={[styles.metricBadgeTextRemaining, { color: '#34D399' }]}>LIVE</Text>
                     </View>
                   </View>
-                  <Text style={styles.metricCardValue}>
+                  <Text style={[styles.metricCardValue, styles.metricCardValueRemaining]}>
                     {isBeforeDeparture
                       ? journey.durationMins
                       : isJourneyCompleted
                         ? 0
                         : Math.max(1, journey.arrivalMins - currentTimeMins)}{' '}
-                    <Text style={styles.metricUnitText}>min</Text>
+                    <Text style={[styles.metricUnitText, styles.metricUnitTextRemaining]}>min</Text>
                   </Text>
-                  <Text style={styles.metricCardSub} numberOfLines={1}>
+                  <Text style={[styles.metricCardSub, styles.metricCardSubRemaining]} numberOfLines={1}>
                     to {journey.toStop.shortName || journey.toStop.name}
                   </Text>
                 </View>
@@ -4448,8 +4448,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricCardRemaining: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E7EC',
+    backgroundColor: '#18258F',
+    borderColor: '#18258F',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  metricCardLabelRemaining: {
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
+  metricCardValueRemaining: {
+    color: '#FFFFFF',
+  },
+  metricUnitTextRemaining: {
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
+  metricCardSubRemaining: {
+    color: 'rgba(255, 255, 255, 0.70)',
   },
   metricCardFare: {
     backgroundColor: '#FFFFFF',
