@@ -10,8 +10,9 @@
 # react-native-reanimated
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
-
-# Add any project specific keep options here:
+-keep class expo.modules.** { *; }
+-keep class com.reactnativecommunity.webview.** { *; }
+-dontwarn expo.modules.**
 
 # Keep line numbers and source file names for crash de-obfuscation in Google Play Console
 -keepattributes SourceFile,LineNumberTable

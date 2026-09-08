@@ -140,7 +140,6 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
-            keepDebugSymbols += ['**/*.so']
         }
     }
     androidResources {
