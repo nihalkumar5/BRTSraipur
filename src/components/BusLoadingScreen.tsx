@@ -16,10 +16,7 @@ import Svg, {
   LinearGradient,
   Stop,
   Defs,
-  G,
 } from 'react-native-svg';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 interface BusLoadingScreenProps {
   onFinish?: () => void;
@@ -44,7 +41,6 @@ export default function BusLoadingScreen({
   const windScrollAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(1)).current;
-  const glowPulseAnim = useRef(new Animated.Value(0.35)).current;
 
   const [statusText, setStatusText] = useState('Connecting routes & live stations...');
 
@@ -126,26 +122,7 @@ export default function BusLoadingScreen({
     );
     windLoop.start();
 
-    // 6. Ambient background glow pulse
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowPulseAnim, {
-          toValue: 0.55,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: isNative,
-        }),
-        Animated.timing(glowPulseAnim, {
-          toValue: 0.3,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: isNative,
-        }),
-      ])
-    );
-    glowLoop.start();
-
-    // 7. Linear progress
+    // 6. Linear progress fill
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: duration - 350,
@@ -153,7 +130,7 @@ export default function BusLoadingScreen({
       useNativeDriver: false,
     }).start();
 
-    // 8. Dynamic status text sequence
+    // 7. Dynamic status text sequence
     const t1 = setTimeout(() => {
       setStatusText('Syncing Raipur BRTS GPS telemetry...');
     }, 850);
@@ -162,7 +139,7 @@ export default function BusLoadingScreen({
       setStatusText('Ready for your journey ✨');
     }, 1650);
 
-    // 9. Smooth exit fade
+    // 8. Smooth exit fade
     const exitTimer = setTimeout(() => {
       Animated.timing(contentFadeAnim, {
         toValue: 0,
@@ -175,7 +152,6 @@ export default function BusLoadingScreen({
         wheelLoop.stop();
         roadLoop.stop();
         windLoop.stop();
-        glowLoop.stop();
         if (onFinish) onFinish();
       });
     }, duration);
@@ -189,7 +165,6 @@ export default function BusLoadingScreen({
       wheelLoop.stop();
       roadLoop.stop();
       windLoop.stop();
-      glowLoop.stop();
     };
   }, [duration, onFinish, isNative]);
 
@@ -222,9 +197,6 @@ export default function BusLoadingScreen({
   return (
     <View style={styles.container} pointerEvents="none">
       <Animated.View style={[styles.contentWrapper, { opacity: contentFadeAnim }]}>
-        {/* Soft atmospheric blue glow */}
-        <Animated.View style={[styles.glowBackdrop, { opacity: glowPulseAnim }]} />
-
         {/* --- MOVING BUS STAGE --- */}
         <View style={styles.stageContainer}>
           {/* Animated Speed Wind Streaks */}
@@ -241,7 +213,7 @@ export default function BusLoadingScreen({
             <View style={[styles.windStreak, { width: 65, top: 62, opacity: 0.5 }]} />
           </Animated.View>
 
-          {/* Floating Aesthetic Bus Unit with Suspension & Tilt */}
+          {/* Floating Aesthetic RED Bus Unit with Suspension & Tilt */}
           <Animated.View
             style={[
               styles.busWrapper,
@@ -259,23 +231,28 @@ export default function BusLoadingScreen({
             {/* Front Headlight Light Beam illuminating ahead */}
             <View style={styles.headlightCone} />
 
-            {/* Modern Electric BRTS Bus Side Profile SVG */}
+            {/* Modern RED Electric BRTS Bus Side Profile SVG */}
             <Svg width={230} height={84} viewBox="0 0 230 84" fill="none">
               <Defs>
-                <LinearGradient id="busBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <Stop offset="0%" stopColor="#FFFFFF" />
-                  <Stop offset="55%" stopColor="#F1F5F9" />
-                  <Stop offset="100%" stopColor="#E2E8F0" />
+                {/* Vibrant Red Body Gradient */}
+                <LinearGradient id="redBusBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <Stop offset="0%" stopColor="#F43F5E" />
+                  <Stop offset="25%" stopColor="#E11D48" />
+                  <Stop offset="75%" stopColor="#BE123C" />
+                  <Stop offset="100%" stopColor="#881337" />
                 </LinearGradient>
+                {/* Tinted Panoramic Windows */}
                 <LinearGradient id="busWindowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <Stop offset="0%" stopColor="#0F172A" />
                   <Stop offset="100%" stopColor="#1E293B" />
                 </LinearGradient>
-                <LinearGradient id="stripeBlueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <Stop offset="0%" stopColor="#18258F" />
-                  <Stop offset="70%" stopColor="#2563EB" />
-                  <Stop offset="100%" stopColor="#38BDF8" />
+                {/* White Racing Stripe */}
+                <LinearGradient id="stripeWhiteGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <Stop offset="0%" stopColor="#FFFFFF" />
+                  <Stop offset="80%" stopColor="#F8FAFC" />
+                  <Stop offset="100%" stopColor="#E2E8F0" />
                 </LinearGradient>
+                {/* LED Banner Display */}
                 <LinearGradient id="ledBannerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                   <Stop offset="0%" stopColor="#1E1B4B" />
                   <Stop offset="100%" stopColor="#0F172A" />
@@ -283,12 +260,12 @@ export default function BusLoadingScreen({
               </Defs>
 
               {/* Roof AC Pod & Aero fairing */}
-              <Rect x={70} y={6} width={76} height={7} rx={3.5} fill="#CBD5E1" />
-              <Rect x={75} y={8} width={20} height={3} rx={1.5} fill="#94A3B8" />
-              <Rect x={100} y={8} width={20} height={3} rx={1.5} fill="#94A3B8" />
-              <Rect x={125} y={8} width={16} height={3} rx={1.5} fill="#94A3B8" />
+              <Rect x={70} y={6} width={76} height={7} rx={3.5} fill="#881337" />
+              <Rect x={75} y={8} width={20} height={3} rx={1.5} fill="#4C0519" />
+              <Rect x={100} y={8} width={20} height={3} rx={1.5} fill="#4C0519" />
+              <Rect x={125} y={8} width={16} height={3} rx={1.5} fill="#4C0519" />
 
-              {/* Main Bus Aerodynamic Body */}
+              {/* Main Bus Aerodynamic Red Body */}
               <Path
                 d="M 16 22
                    C 16 16, 22 12, 28 12
@@ -300,7 +277,7 @@ export default function BusLoadingScreen({
                    C 14 66, 12 63, 12 58
                    L 12 28
                    C 12 24, 14 22, 16 22 Z"
-                fill="url(#busBodyGrad)"
+                fill="url(#redBusBodyGrad)"
               />
 
               {/* Front Aerodynamic Windshield */}
@@ -328,25 +305,26 @@ export default function BusLoadingScreen({
               <Rect x={110} y={18} width={76} height={6} rx={2} fill="url(#ledBannerGrad)" />
               <Rect x={114} y={20} width={68} height={2} rx={1} fill="#F59E0B" />
 
-              {/* Signature Raipur BRTS Speed Wave Striping */}
+              {/* Signature Pure White Livery Striping */}
               <Path
                 d="M 12 44
                    L 225 44
                    L 226 50
                    L 12 50 Z"
-                fill="url(#stripeBlueGrad)"
+                fill="url(#stripeWhiteGrad)"
               />
+              {/* Golden Speed Accent Belt */}
               <Path
                 d="M 12 51
                    L 226 51
                    L 226 53
                    L 12 53 Z"
-                fill="#10B981"
+                fill="#F59E0B"
               />
 
-              {/* Clean Electric Green Transit Emblem */}
-              <Circle cx={105} cy={47} r={2.5} fill="#FFFFFF" />
-              <Circle cx={105} cy={47} r={1.2} fill="#10B981" />
+              {/* Raipur BRTS Star Badge */}
+              <Circle cx={105} cy={47} r={2.5} fill="#E11D48" />
+              <Circle cx={105} cy={47} r={1.2} fill="#FFFFFF" />
 
               {/* Front Crystal LED Headlight */}
               <Path
@@ -357,7 +335,7 @@ export default function BusLoadingScreen({
                 fill="#FEF08A"
               />
               {/* Rear Ruby LED Taillight */}
-              <Rect x={12} y={46} width={3} height={10} rx={1} fill="#EF4444" />
+              <Rect x={12} y={46} width={3} height={10} rx={1} fill="#FDA4AF" />
 
               {/* Wheel Well Arches */}
               <Path d="M 40 66 A 15 15 0 0 1 70 66 Z" fill="#0F172A" />
@@ -425,7 +403,7 @@ export default function BusLoadingScreen({
         <View style={styles.textSection}>
           <Text style={styles.brandTitle}>Tatpar BRTS</Text>
           <Text style={styles.brandSubtitle}>RAIPUR · NAVA RAIPUR EXPRESS</Text>
-          <Text style={styles.initiativeText}>High-Frequency Electric Bus Corridor</Text>
+          <Text style={styles.initiativeText}>High-Frequency Transit Corridor</Text>
 
           {/* Clean sleek progress bar */}
           <View style={styles.progressContainer}>
@@ -464,7 +442,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: '#0E164D', // Deep modern midnight navy
+    backgroundColor: '#1E2D99', // Full solid Royal Blue screen (same as previous circle, no circle outline)
     zIndex: 99999,
     elevation: 99999,
     justifyContent: 'center',
@@ -475,13 +453,6 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  glowBackdrop: {
-    position: 'absolute',
-    width: Math.min(SCREEN_WIDTH * 0.9, 380),
-    height: Math.min(SCREEN_WIDTH * 0.9, 380),
-    borderRadius: 190,
-    backgroundColor: '#1E2D99',
   },
 
   /* --- MOVING BUS STAGE --- */
@@ -528,7 +499,7 @@ const styles = StyleSheet.create({
     bottom: 24,
     width: 32,
     height: 14,
-    backgroundColor: 'rgba(253, 224, 71, 0.12)',
+    backgroundColor: 'rgba(253, 224, 71, 0.15)',
     borderRadius: 10,
     transform: [{ skewX: '-35deg' }],
   },
@@ -553,7 +524,7 @@ const styles = StyleSheet.create({
   roadSurface: {
     width: '100%',
     height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
     borderRadius: 1.5,
   },
   roadStripeTrack: {
@@ -570,9 +541,9 @@ const styles = StyleSheet.create({
   roadDash: {
     width: 20,
     height: 2.5,
-    backgroundColor: '#60A5FA',
+    backgroundColor: '#93C5FD',
     borderRadius: 1.5,
-    opacity: 0.85,
+    opacity: 0.9,
   },
 
   /* --- BRANDING & STATUS --- */
@@ -591,7 +562,7 @@ const styles = StyleSheet.create({
   brandSubtitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#93C5FD',
+    color: '#BFDBFE',
     letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginBottom: 6,
@@ -599,7 +570,7 @@ const styles = StyleSheet.create({
   initiativeText: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(224, 231, 255, 0.75)',
+    color: 'rgba(224, 231, 255, 0.85)',
     letterSpacing: 0.3,
     marginBottom: 24,
   },
@@ -609,19 +580,19 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     height: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#FFFFFF',
     borderRadius: 2,
   },
   statusText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#E0E7FF',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
 
@@ -634,7 +605,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 11,
     fontWeight: '500',
-    color: 'rgba(199, 210, 254, 0.65)',
+    color: 'rgba(255, 255, 255, 0.65)',
     letterSpacing: 0.5,
   },
 });
