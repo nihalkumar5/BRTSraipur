@@ -1816,7 +1816,13 @@ export default function LiveBusScreen() {
                 {/* VIEW COMPLETE TIMETABLE FOOTER CTA */}
                 <TouchableOpacity
                   style={styles.cleanTimetableFooterCta}
-                  onPress={() => router.push('/timetable' as any)}
+                  onPress={() => {
+                    try {
+                      router.navigate('/timetable' as any);
+                    } catch (e) {
+                      router.navigate('/(tabs)/timetable' as any);
+                    }
+                  }}
                   activeOpacity={0.75}
                 >
                   <View style={styles.cleanTimetableFooterLeft}>
