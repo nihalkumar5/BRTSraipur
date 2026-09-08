@@ -1534,11 +1534,11 @@ export default function LiveBusScreen() {
                           </View>
                         </View>
 
-                        {/* RIGHT: BUS ILLUSTRATION — subtle, pushed to corner */}
+                        {/* RIGHT: BUS ILLUSTRATION — modern white/silver bus */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
                           <Image
-                            source={require('../../assets/images/redbus_3d.png')}
-                            style={[styles.busCard3DImage, { opacity: 0.75 }]}
+                            source={require('../../assets/images/whitebus_3d.png')}
+                            style={styles.busCard3DImage}
                             resizeMode="contain"
                           />
                         </View>
