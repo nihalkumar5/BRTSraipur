@@ -1526,7 +1526,7 @@ export default function LiveBusScreen() {
                         {/* RIGHT 3D BUS ILLUSTRATION WITH PROPERLY ALIGNED CITY SKYLINE BEHIND */}
                         <View style={styles.busCardRightIllustration} pointerEvents="none">
                           <View style={styles.busCardCitySkylineBg}>
-                            <CitySkylineSvg width={200} height={92} color="#18258F" opacity={0.16} />
+                            <CitySkylineSvg width={165} height={78} color="#18258F" opacity={0.15} />
                           </View>
                           <Image
                             source={require('../../assets/images/redbus_3d.png')}
@@ -2032,7 +2032,7 @@ export default function LiveBusScreen() {
                   </View>
                   <View style={styles.onboardIllustrationWrapper} pointerEvents="none">
                     <View style={styles.onboardCitySkylineBg}>
-                      <CitySkylineSvg width={195} height={90} color="#18258F" opacity={0.16} />
+                      <CitySkylineSvg width={160} height={75} color="#18258F" opacity={0.15} />
                     </View>
                     <Image
                       source={require('../../assets/images/redbus_3d.png')}
@@ -3565,22 +3565,23 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   busCardRightIllustration: {
-    width: 154,
-    height: 95,
+    width: 130,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
     position: 'relative',
+    marginTop: 6,
   },
   busCardCitySkylineBg: {
     position: 'absolute',
     bottom: 2,
-    right: -10,
+    right: -8,
     zIndex: 0,
   },
   busCard3DImage: {
-    width: 154,
-    height: 95,
+    width: 125,
+    height: 76,
     zIndex: 1,
   },
   busCardDivider: {
@@ -5110,23 +5111,23 @@ const styles = StyleSheet.create({
   },
   onboardIllustrationWrapper: {
     position: 'absolute',
-    top: 10,
-    right: 4,
+    top: 28,
+    right: 12,
     zIndex: 1,
-    width: 154,
-    height: 95,
+    width: 125,
+    height: 76,
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
   },
   onboardCitySkylineBg: {
     position: 'absolute',
     bottom: 0,
-    right: -10,
+    right: -8,
     zIndex: 0,
   },
   onboardBus3DImage: {
-    width: 148,
-    height: 92,
+    width: 120,
+    height: 74,
     zIndex: 1,
   },
   onboardHeroNextStopLabel: {
