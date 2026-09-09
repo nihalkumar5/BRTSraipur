@@ -20,8 +20,18 @@ This document contains all the copy, metadata, Data Safety responses, and store 
 ## 2. Full Description (Google Play Console)
 
 ```text
-⚠️ DISCLAIMER:
-This app is an independent transit companion and guide developed for daily commuters. It is NOT an official application of, endorsed by, or affiliated with the Government of Chhattisgarh, Raipur Urban Public Transport Society (RUPTS), Raipur Municipal Corporation, or any government entity. All timetable, route corridors, and fare details are compiled from publicly available commuter information for passenger convenience.
+⚠️ DISCLAIMER & SOURCE OF INFORMATION:
+
+1. Non-Government Entity Disclaimer:
+This application is an independent public transit guide and utility developed for commuters. It is NOT an official application of, endorsed by, or affiliated with the Government of Chhattisgarh, Raipur Urban Public Transport Society (RUPTS), Raipur Municipal Corporation (RMC), Nava Raipur Atal Nagar Development Authority (NRDA), or any government department or authority.
+
+2. Source of Public / Government Information:
+All transit route corridors, bus stop directory, scheduled timetables, and distance-based fare slab details are compiled from publicly available transit information published on official government and municipal websites:
+• Raipur District Administration: https://raipur.gov.in
+• Chhattisgarh State Official Portal: https://chhattisgarh.gov.in
+• Transport Department, Chhattisgarh: https://cgtransport.gov.in
+• Raipur Municipal Corporation (Nagar Nigam): https://nagarnigamraipur.nic.in
+• Smart Cities Mission Portal: https://smartcities.gov.in
 
 ---
 
@@ -41,7 +51,7 @@ Designed for daily commuters, students, office employees, and visitors, this gui
 • Identify boarding shelters, major interchange nodes (Telibandha, Serikhedi, Naya Raipur Entry gate), and nearby landmarks.
 
 3. 💰 Fare Calculator:
-• View official distance-based fare slabs (₹10, ₹15, ₹20, ₹25, ₹30, ₹35, ₹40).
+• View standard distance-based fare slabs (₹10, ₹15, ₹20, ₹25, ₹30, ₹35, ₹40).
 • Plan your travel budget before boarding.
 
 4. 🔔 Smart Commuter Reminders:
@@ -63,7 +73,7 @@ Designed for daily commuters, students, office employees, and visitors, this gui
 • Corridor 3: Raipur Railway Station ⇄ HNLU / Uparwara / Sector 27
 • Airport Feeder: City Link ⇄ Swami Vivekananda Airport (Mana)
 
-📞 CIVIC & PASSENGER HELPLINES:
+📞 PUBLIC CIVIC HELPLINES:
 Quick access to public emergency helplines:
 • Emergency Response Support System: 112
 • Raipur Municipal Corporation (RMC): 1800-233-1234

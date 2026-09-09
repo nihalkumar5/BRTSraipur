@@ -132,23 +132,43 @@ export default function AboutScreen() {
           </View>
         </View>
 
-        {/* 4. OFFICIAL LINKS */}
+        {/* 4. SOURCES OF INFORMATION & LEGAL */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>OFFICIAL LINKS</Text>
+          <Text style={styles.sectionHeading}>SOURCE OF INFORMATION & LEGAL</Text>
           <View style={styles.groupedCard}>
-            {/* WEB PORTAL */}
+            {/* DISTRICT ADMIN PORTAL */}
             <TouchableOpacity
               style={styles.menuRow}
-              onPress={() => handleWebsite('https://tatpar-brts-raipur.vercel.app')}
+              onPress={() => handleWebsite('https://raipur.gov.in')}
               activeOpacity={0.7}
             >
-              <View style={[styles.menuIconBox, { backgroundColor: '#F0F5FF' }]}>
-                <Globe size={18} color={PRIMARY} strokeWidth={2} />
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0FDF4' }]}>
+                <Globe size={18} color="#166534" strokeWidth={2} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text style={styles.menuTitle}>Tatpar BRTS Web Portal</Text>
+                <Text style={styles.menuTitle}>Raipur District Portal</Text>
                 <Text style={styles.menuSubtitle} numberOfLines={1}>
-                  https://tatpar-brts-raipur.vercel.app
+                  Official public source: raipur.gov.in
+                </Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* STATE GOVT PORTAL */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleWebsite('https://chhattisgarh.gov.in')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0FDF4' }]}>
+                <Globe size={18} color="#166534" strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Chhattisgarh State Portal</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  Official public source: chhattisgarh.gov.in
                 </Text>
               </View>
               <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
@@ -186,9 +206,9 @@ export default function AboutScreen() {
                 <FileText size={18} color={PRIMARY} strokeWidth={2} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text style={styles.menuTitle}>Terms of Service</Text>
+                <Text style={styles.menuTitle}>Terms & Government Disclaimer</Text>
                 <Text style={styles.menuSubtitle} numberOfLines={1}>
-                  Usage guidelines, disclaimers & fair use
+                  Non-affiliation notice, usage guidelines & disclaimers
                 </Text>
               </View>
               <ChevronRight size={18} color={TEXT_MUTED} strokeWidth={2} />
