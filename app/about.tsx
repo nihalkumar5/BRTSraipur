@@ -136,6 +136,26 @@ export default function AboutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>SOURCE OF INFORMATION & LEGAL</Text>
           <View style={styles.groupedCard}>
+            {/* TATPAR OFFICIAL PORTAL */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => handleWebsite('https://www.tatparbus.in')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconBox, { backgroundColor: '#F0FDF4' }]}>
+                <Globe size={18} color="#166534" strokeWidth={2} />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Tatpar BRTS Official Portal</Text>
+                <Text style={styles.menuSubtitle} numberOfLines={1}>
+                  Official public source: tatparbus.in
+                </Text>
+              </View>
+              <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
             {/* DISTRICT ADMIN PORTAL */}
             <TouchableOpacity
               style={styles.menuRow}

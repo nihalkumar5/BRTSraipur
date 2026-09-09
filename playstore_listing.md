@@ -26,7 +26,8 @@ This document contains all the copy, metadata, Data Safety responses, and store 
 This application is an independent public transit guide and utility developed for commuters. It is NOT an official application of, endorsed by, or affiliated with the Government of Chhattisgarh, Raipur Urban Public Transport Society (RUPTS), Raipur Municipal Corporation (RMC), Nava Raipur Atal Nagar Development Authority (NRDA), or any government department or authority.
 
 2. Source of Public / Government Information:
-All transit route corridors, bus stop directory, scheduled timetables, and distance-based fare slab details are compiled from publicly available transit information published on official government and municipal websites:
+All transit route corridors, bus stop directory, scheduled timetables, and distance-based fare slab details are compiled from publicly available transit information published on official transit and state websites:
+• Tatpar BRTS Official Transit Portal: https://www.tatparbus.in
 • Raipur District Administration: https://raipur.gov.in
 • Chhattisgarh State Official Portal: https://chhattisgarh.gov.in
 • Transport Department, Chhattisgarh: https://cgtransport.gov.in
