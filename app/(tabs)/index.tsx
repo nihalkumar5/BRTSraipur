@@ -1797,18 +1797,18 @@ export default function LiveBusScreen() {
                   <View style={styles.smartGuardTextBox}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={styles.smartGuardTitle}>
-                        {activeTripAlert ? 'Trip Alarm Active ✓' : 'Trip Guard & Stop Alarm'}
+                        {activeTripAlert ? 'Trip Alarm Active' : 'Trip Alarm'}
                       </Text>
                       {activeTripAlert && (
                         <View style={styles.armedBadge}>
-                          <Text style={styles.armedBadgeText}>ARMED</Text>
+                          <Text style={styles.armedBadgeText}>ACTIVE</Text>
                         </View>
                       )}
                     </View>
                     <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
                       {activeTripAlert
                         ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
-                        : 'Get alerted before departure & before destination stop'}
+                        : 'Departure reminder & destination stop alarm'}
                     </Text>
                   </View>
                   <View
@@ -1823,7 +1823,7 @@ export default function LiveBusScreen() {
                         activeTripAlert && styles.smartGuardBtnTextActive,
                       ]}
                     >
-                      {activeTripAlert ? 'Manage 🎛️' : 'Set Alarm 🔔'}
+                      {activeTripAlert ? 'Manage' : 'Set Alarm'}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -2295,18 +2295,18 @@ export default function LiveBusScreen() {
                 <View style={styles.smartGuardTextBox}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={styles.smartGuardTitle}>
-                      {activeTripAlert ? 'Trip Alarm Active ✓' : 'Trip Guard & Stop Alarm'}
+                      {activeTripAlert ? 'Trip Alarm Active' : 'Trip Alarm'}
                     </Text>
                     {activeTripAlert && (
                       <View style={styles.armedBadge}>
-                        <Text style={styles.armedBadgeText}>ARMED</Text>
+                        <Text style={styles.armedBadgeText}>ACTIVE</Text>
                       </View>
                     )}
                   </View>
                   <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
                     {activeTripAlert
                       ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
-                      : 'Get alerted before departure & before destination stop'}
+                      : 'Departure reminder & destination stop alarm'}
                   </Text>
                 </View>
                 <View
@@ -2321,7 +2321,7 @@ export default function LiveBusScreen() {
                       activeTripAlert && styles.smartGuardBtnTextActive,
                     ]}
                   >
-                    {activeTripAlert ? 'Manage 🎛️' : 'Set Alarm 🔔'}
+                    {activeTripAlert ? 'Manage' : 'Set Alarm'}
                   </Text>
                 </View>
               </TouchableOpacity>
