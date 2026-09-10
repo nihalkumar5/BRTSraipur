@@ -1170,7 +1170,9 @@ export default function LiveBusScreen() {
                   <View style={styles.recentSearchesSection}>
                     <View style={styles.recentSectionHeaderRow}>
                       <View style={styles.recentHeaderLeft}>
-                        <Clock size={14} color="#18258F" strokeWidth={2.4} />
+                        <View style={styles.recentIconSmallBox}>
+                          <Clock size={12} color="#18258F" strokeWidth={2.4} />
+                        </View>
                         <Text style={styles.recentSectionTitle}>Recent Searches</Text>
                       </View>
                       <TouchableOpacity
@@ -1198,12 +1200,11 @@ export default function LiveBusScreen() {
                             onPress={() => applyRecentSearch(item.from, item.to)}
                             activeOpacity={0.75}
                           >
-                            <Clock size={12} color="#18258F" strokeWidth={2.2} />
-                            <Text style={styles.recentChipText} numberOfLines={1}>
+                            <Text style={styles.recentChipFromText} numberOfLines={1}>
                               {fromDisp}
                             </Text>
-                            <ArrowRight size={10} color="#94A3B8" strokeWidth={2.4} style={{ marginHorizontal: 3 }} />
-                            <Text style={styles.recentChipText} numberOfLines={1}>
+                            <ArrowRight size={11} color="#94A3B8" strokeWidth={2.4} style={{ marginHorizontal: 6 }} />
+                            <Text style={styles.recentChipToText} numberOfLines={1}>
                               {toDisp}
                             </Text>
                           </TouchableOpacity>
@@ -3359,25 +3360,34 @@ const styles = StyleSheet.create({
   },
   /* RECENT SEARCHES */
   recentSearchesSection: {
-    marginBottom: 20,
+    marginBottom: 22,
+    marginTop: 2,
   },
   recentSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
     paddingHorizontal: 2,
   },
   recentHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
+  },
+  recentIconSmallBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    backgroundColor: 'rgba(24, 37, 143, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   recentSectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#334155',
     letterSpacing: -0.1,
   },
   recentClearBtn: {
@@ -3388,38 +3398,45 @@ const styles = StyleSheet.create({
     fontFamily: FONT.semiBold,
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#94A3B8',
   },
   recentChipsScrollContent: {
-    gap: 8,
-    paddingRight: 8,
+    gap: 10,
+    paddingRight: 10,
     paddingVertical: 2,
   },
   recentChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderWidth: 1.2,
     borderColor: '#E2E8F0',
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
-    elevation: 1,
+    elevation: 1.5,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 2px 8px rgba(24, 37, 143, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
         } as any)
       : {}),
   },
-  recentChipText: {
-    fontFamily: FONT.semiBold,
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#1E293B',
+  recentChipFromText: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    maxWidth: 120,
+  },
+  recentChipToText: {
+    fontFamily: FONT.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#18258F',
     maxWidth: 120,
   },
 
