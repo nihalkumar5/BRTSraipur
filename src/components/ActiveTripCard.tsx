@@ -31,11 +31,11 @@ export default function ActiveTripCard({
         <TouchableOpacity
           style={styles.dismissBtn}
           onPress={onDismiss}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           activeOpacity={0.7}
           accessibilityLabel="Dismiss trip alarm"
         >
-          <X size={14} color="#64748B" />
+          <X size={13} color="#FFFFFF" opacity={0.85} />
         </TouchableOpacity>
       </View>
 
@@ -59,7 +59,7 @@ export default function ActiveTripCard({
           onPress={onOpenSettings}
           activeOpacity={0.75}
         >
-          <SlidersHorizontal size={12} color="#18258F" style={{ marginRight: 4 }} />
+          <SlidersHorizontal size={11} color="#FFFFFF" style={{ marginRight: 4 }} />
           <Text style={styles.editText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -68,17 +68,17 @@ export default function ActiveTripCard({
       <View style={styles.tagsRow}>
         {alert.minutesBeforeDeparture !== null && (
           <View style={styles.tag}>
-            <Bell size={10} color="#18258F" style={{ marginRight: 4 }} />
+            <Bell size={10} color="#93C5FD" style={{ marginRight: 4 }} />
             <Text style={styles.tagText}>
-              {alert.minutesBeforeDeparture}m before departure
+              {alert.minutesBeforeDeparture}m departure alert
             </Text>
           </View>
         )}
 
         {alert.wakeUpAlarmEnabled && (
           <View style={styles.tag}>
-            <MapPin size={10} color="#059669" style={{ marginRight: 4 }} />
-            <Text style={[styles.tagText, { color: '#065F46' }]}>
+            <MapPin size={10} color="#6EE7B7" style={{ marginRight: 4 }} />
+            <Text style={styles.tagText}>
               Stop alarm at {alert.toStop}
             </Text>
           </View>
@@ -90,17 +90,21 @@ export default function ActiveTripCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: '#18258F',
+    marginHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 10,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 3,
   },
   topBar: {
     flexDirection: 'row',
@@ -109,7 +113,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
   },
   statusLeft: {
     flexDirection: 'row',
@@ -119,18 +123,23 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: '#34D399',
     marginRight: 6,
   },
   statusTitle: {
     fontFamily: FONT.bold,
     fontSize: 10,
     fontWeight: '700',
-    color: '#059669',
-    letterSpacing: 0.4,
+    color: '#A7F3D0',
+    letterSpacing: 0.5,
   },
   dismissBtn: {
-    padding: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mainRow: {
     flexDirection: 'row',
@@ -138,54 +147,55 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badgeBox: {
-    backgroundColor: '#18258F',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 3.5,
+    paddingHorizontal: 7.5,
     borderRadius: 6,
     marginRight: 10,
   },
   badgeText: {
     fontFamily: FONT.bold,
     fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#18258F',
   },
   routeDetails: {
     flex: 1,
   },
   routeStops: {
     fontFamily: FONT.bold,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#FFFFFF',
     marginBottom: 1,
+    letterSpacing: -0.2,
   },
   timeText: {
     fontFamily: FONT.regular,
     fontSize: 11.5,
-    color: '#64748B',
+    color: '#BFDBFE',
   },
   timeHighlight: {
     fontFamily: FONT.bold,
     fontWeight: '700',
-    color: '#18258F',
+    color: '#FFFFFF',
   },
   editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 5,
-    paddingHorizontal: 9,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    paddingVertical: 4.5,
+    paddingHorizontal: 8.5,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     marginLeft: 6,
   },
   editText: {
     fontFamily: FONT.bold,
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#18258F',
+    color: '#FFFFFF',
   },
   tagsRow: {
     flexDirection: 'row',
@@ -195,16 +205,16 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingVertical: 3,
-    paddingHorizontal: 7,
+    paddingHorizontal: 7.5,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   tagText: {
     fontFamily: FONT.medium,
     fontSize: 11,
-    color: '#18258F',
+    color: '#F1F5F9',
   },
 });
