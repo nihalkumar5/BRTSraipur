@@ -24,10 +24,8 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import BusLoadingScreen from '../src/components/BusLoadingScreen';
-import { useDarkMode } from '../src/services/theme';
 
 export default function RootLayout() {
-  const [isDark] = useDarkMode();
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
@@ -160,8 +158,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <View style={styles.rootWrapper}>
         <StatusBar
-          style={isDark ? 'light' : (isLoading ? 'light' : 'dark')}
-          backgroundColor={isDark ? '#0B0F19' : (isLoading ? '#1E2D99' : '#F8F6F0')}
+          style={isLoading ? 'light' : 'dark'}
+          backgroundColor={isLoading ? '#1E2D99' : '#F8F6F0'}
           translucent={false}
         />
         {Platform.OS === 'web' ? (
@@ -342,10 +340,8 @@ export default function RootLayout() {
                   maxWidth: 480,
                   height: '100%',
                   alignSelf: 'center',
-                  backgroundColor: isDark ? '#0B0F19' : '#F8F6F0',
-                  boxShadow: isDark
-                    ? '0 0 60px rgba(0, 0, 0, 0.6)'
-                    : '0 0 60px rgba(0, 0, 0, 0.12)',
+                  backgroundColor: '#F8F6F0',
+                  boxShadow: '0 0 60px rgba(0, 0, 0, 0.12)',
                 } as any,
               }}
             >
@@ -435,25 +431,15 @@ export default function RootLayout() {
                         pointer-events: none !important;
                       }
                       /* Compact frosted glass footer pill dock */
-                      html:not(.dark-theme) div[style*="border-bottom-left-radius: 36px"],
-                      html:not(.dark-theme) div[style*="borderBottomLeftRadius: 36px"],
-                      html:not(.dark-theme) div[style*="border-radius: 36px"],
-                      html:not(.dark-theme) div[style*="borderRadius: 36px"] {
+                      div[style*="border-bottom-left-radius: 36px"],
+                      div[style*="borderBottomLeftRadius: 36px"],
+                      div[style*="border-radius: 36px"],
+                      div[style*="borderRadius: 36px"] {
                         background-color: rgba(255, 255, 255, 0.65) !important;
                         -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
                         backdrop-filter: blur(28px) saturate(200%) !important;
                         border: 1.2px solid rgba(255, 255, 255, 0.9) !important;
                         box-shadow: 0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
-                      }
-                      html.dark-theme div[style*="border-bottom-left-radius: 36px"],
-                      html.dark-theme div[style*="borderBottomLeftRadius: 36px"],
-                      html.dark-theme div[style*="border-radius: 36px"],
-                      html.dark-theme div[style*="borderRadius: 36px"] {
-                        background-color: rgba(21, 29, 47, 0.85) !important;
-                        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-                        backdrop-filter: blur(28px) saturate(200%) !important;
-                        border: 1.2px solid rgba(255, 255, 255, 0.12) !important;
-                        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
                       }
                     \`;
                     const target = document.head || document.documentElement || document.body;
@@ -528,18 +514,11 @@ export default function RootLayout() {
                         // 2. Compact frosted glass styling for bottom nav bar
                         const s = window.getComputedStyle(el);
                         if (s.position === 'absolute' && (s.borderRadius === '36px' || s.borderRadius === '32px' || s.borderRadius === '29px')) {
-                          const isDarkTheme = document.documentElement.classList.contains('dark-theme');
-                          if (isDarkTheme) {
-                            el.style.setProperty('background-color', 'rgba(21, 29, 47, 0.85)', 'important');
-                            el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.12)', 'important');
-                            el.style.setProperty('box-shadow', '0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1)', 'important');
-                          } else {
-                            el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.65)', 'important');
-                            el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.9)', 'important');
-                            el.style.setProperty('box-shadow', '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)', 'important');
-                          }
+                          el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.65)', 'important');
                           el.style.setProperty('-webkit-backdrop-filter', 'blur(28px) saturate(200%)', 'important');
                           el.style.setProperty('backdrop-filter', 'blur(28px) saturate(200%)', 'important');
+                          el.style.setProperty('border', '1.2px solid rgba(255, 255, 255, 0.9)', 'important');
+                          el.style.setProperty('box-shadow', '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)', 'important');
                         }
                       }
                     } catch (e) {}
