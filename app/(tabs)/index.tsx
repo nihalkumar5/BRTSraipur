@@ -349,6 +349,57 @@ export default function LiveBusScreen() {
     setSelectedTripId(null);
   }, [fromStation, toStation]);
 
+  // RECENT SEARCHES STATE & PERSISTENCE
+  interface RecentSearchItem {
+    from: string;
+    to: string;
+  }
+
+  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const saved = window.localStorage.getItem('tatpar_recent_searches');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed.slice(0, 5);
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  // Auto-save searches when both fromStation and toStation are selected
+  useEffect(() => {
+    if (fromStation && toStation && fromStation !== toStation) {
+      setRecentSearches(prev => {
+        const filtered = prev.filter(item => !(item.from === fromStation && item.to === toStation));
+        const updated = [{ from: fromStation, to: toStation }, ...filtered].slice(0, 5);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            window.localStorage.setItem('tatpar_recent_searches', JSON.stringify(updated));
+          } catch (e) {}
+        }
+        return updated;
+      });
+    }
+  }, [fromStation, toStation]);
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.removeItem('tatpar_recent_searches');
+      } catch (e) {}
+    }
+  };
+
+  const applyRecentSearch = (from: string, to: string) => {
+    setFromStation(from);
+    setToStation(to);
+    setSelectedTripId(null);
+    triggerCardBounce();
+  };
+
   // Station search modal
   const [modalVisible, setModalVisible] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.location?.search?.includes('sheet=open')) {
@@ -1114,6 +1165,54 @@ export default function LiveBusScreen() {
             {!fromStation || !toStation ? (
               /* STATE 1: UNSELECTED PROMPT */
               <View style={styles.unselectedSection}>
+                {/* RECENT SEARCHES CHIPS (IF ANY) */}
+                {recentSearches.length > 0 && (
+                  <View style={styles.recentSearchesSection}>
+                    <View style={styles.recentSectionHeaderRow}>
+                      <View style={styles.recentHeaderLeft}>
+                        <Clock size={14} color="#18258F" strokeWidth={2.4} />
+                        <Text style={styles.recentSectionTitle}>Recent Searches</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={clearRecentSearches}
+                        style={styles.recentClearBtn}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.recentClearText}>Clear</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.recentChipsScrollContent}
+                    >
+                      {recentSearches.map((item, idx) => {
+                        const fromDisp = stops.find(s => s.name === item.from)?.shortName || item.from;
+                        const toDisp = stops.find(s => s.name === item.to)?.shortName || item.to;
+                        return (
+                          <TouchableOpacity
+                            key={`recent_${item.from}_${item.to}_${idx}`}
+                            style={styles.recentChip}
+                            onPress={() => applyRecentSearch(item.from, item.to)}
+                            activeOpacity={0.75}
+                          >
+                            <Clock size={12} color="#18258F" strokeWidth={2.2} />
+                            <Text style={styles.recentChipText} numberOfLines={1}>
+                              {fromDisp}
+                            </Text>
+                            <ArrowRight size={10} color="#94A3B8" strokeWidth={2.4} style={{ marginHorizontal: 3 }} />
+                            <Text style={styles.recentChipText} numberOfLines={1}>
+                              {toDisp}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+
                 <View style={styles.popularSectionHeaderRow}>
                   <Text style={styles.popularSectionTitle}>Popular Routes</Text>
                   <TouchableOpacity
@@ -3258,6 +3357,72 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
   },
+  /* RECENT SEARCHES */
+  recentSearchesSection: {
+    marginBottom: 20,
+  },
+  recentSectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  recentHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recentSectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.1,
+  },
+  recentClearBtn: {
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+  },
+  recentClearText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  recentChipsScrollContent: {
+    gap: 8,
+    paddingRight: 8,
+    paddingVertical: 2,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+        } as any)
+      : {}),
+  },
+  recentChipText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#1E293B',
+    maxWidth: 120,
+  },
+
   /* POPULAR ROUTES (MATCHING USER UPLOADED DESIGN) */
   popularSectionHeaderRow: {
     flexDirection: 'row',
