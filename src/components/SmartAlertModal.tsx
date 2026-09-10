@@ -16,6 +16,7 @@ import {
   Check,
 } from 'lucide-react-native';
 import { SmartTripAlert, triggerTactileVibration } from '../services/notifications';
+import { useDarkMode } from '../services/theme';
 import { FONT } from '../theme/typography';
 
 interface SmartAlertModalProps {
@@ -56,6 +57,7 @@ export default function SmartAlertModal({
   onSave,
   onCancelAlert,
 }: SmartAlertModalProps) {
+  const [isDark] = useDarkMode();
   const [minutesBefore, setMinutesBefore] = useState<number | null>(10);
   const [wakeUpEnabled, setWakeUpEnabled] = useState<boolean>(true);
 
@@ -106,48 +108,48 @@ export default function SmartAlertModal({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.sheetContainer}>
+            <View style={[styles.sheetContainer, isDark && styles.sheetContainerDark]}>
               {/* Sheet Drag Handle */}
-              <View style={styles.grabHandle} />
+              <View style={[styles.grabHandle, isDark && styles.grabHandleDark]} />
 
               {/* Header */}
               <View style={styles.headerRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.headerTitle}>Trip Alarm</Text>
-                  <Text style={styles.headerSubtitle} numberOfLines={1}>
+                  <Text style={[styles.headerTitle, isDark && styles.textDark]}>Trip Alarm</Text>
+                  <Text style={[styles.headerSubtitle, isDark && styles.subtextDark]} numberOfLines={1}>
                     Route {routeBadge} · {fromStop} → {toStop}
                   </Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.closeBtn}
+                  style={[styles.closeBtn, isDark && styles.closeBtnDark]}
                   onPress={onClose}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   activeOpacity={0.7}
                 >
-                  <X size={18} color="#64748B" />
+                  <X size={18} color={isDark ? '#94A3B8' : '#64748B'} />
                 </TouchableOpacity>
               </View>
 
               {/* Minimal Schedule Bar */}
-              <View style={styles.scheduleBar}>
+              <View style={[styles.scheduleBar, isDark && styles.scheduleBarDark]}>
                 <View style={styles.scheduleItem}>
-                  <Clock size={13} color="#18258F" style={{ marginRight: 5 }} />
-                  <Text style={styles.scheduleLabel}>Departure</Text>
-                  <Text style={styles.scheduleValue}>{departureTime}</Text>
+                  <Clock size={13} color={isDark ? '#93C5FD' : '#18258F'} style={{ marginRight: 5 }} />
+                  <Text style={[styles.scheduleLabel, isDark && styles.subtextDark]}>Departure</Text>
+                  <Text style={[styles.scheduleValue, isDark && styles.textDark]}>{departureTime}</Text>
                 </View>
-                <View style={styles.scheduleDivider} />
+                <View style={[styles.scheduleDivider, isDark && styles.scheduleDividerDark]} />
                 <View style={styles.scheduleItem}>
-                  <MapPin size={13} color="#059669" style={{ marginRight: 5 }} />
-                  <Text style={styles.scheduleLabel}>Arrival</Text>
-                  <Text style={styles.scheduleValue}>{arrivalTime}</Text>
+                  <MapPin size={13} color="#10B981" style={{ marginRight: 5 }} />
+                  <Text style={[styles.scheduleLabel, isDark && styles.subtextDark]}>Arrival</Text>
+                  <Text style={[styles.scheduleValue, isDark && styles.textDark]}>{arrivalTime}</Text>
                 </View>
               </View>
 
               {/* Section 1: Departure Reminder */}
               <View style={styles.section}>
                 <View style={styles.sectionTitleRow}>
-                  <Text style={styles.sectionTitle}>Departure Reminder</Text>
-                  <Text style={styles.sectionHelper}>
+                  <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Departure Reminder</Text>
+                  <Text style={[styles.sectionHelper, isDark && styles.subtextDark]}>
                     Before bus leaves {fromStop}
                   </Text>
                 </View>
@@ -160,6 +162,7 @@ export default function SmartAlertModal({
                         key={opt.label}
                         style={[
                           styles.chip,
+                          isDark && styles.chipDark,
                           isSelected && styles.chipActive,
                         ]}
                         onPress={() => handleSelectMinutes(opt.value)}
@@ -171,6 +174,7 @@ export default function SmartAlertModal({
                         <Text
                           style={[
                             styles.chipText,
+                            isDark && styles.chipTextDark,
                             isSelected && styles.chipTextActive,
                           ]}
                         >
@@ -182,13 +186,13 @@ export default function SmartAlertModal({
                 </View>
               </View>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, isDark && styles.dividerDark]} />
 
               {/* Section 2: Destination Stop Alarm */}
               <View style={styles.switchRow}>
                 <View style={{ flex: 1, paddingRight: 16 }}>
-                  <Text style={styles.switchTitle}>Destination Stop Alarm</Text>
-                  <Text style={styles.switchSubtitle}>
+                  <Text style={[styles.switchTitle, isDark && styles.textDark]}>Destination Stop Alarm</Text>
+                  <Text style={[styles.switchSubtitle, isDark && styles.subtextDark]}>
                     Vibrates 1 stop before {toStop} (~{arrivalTime})
                   </Text>
                 </View>
@@ -197,7 +201,9 @@ export default function SmartAlertModal({
                 <TouchableOpacity
                   style={[
                     styles.switchTrack,
-                    wakeUpEnabled ? styles.switchTrackOn : styles.switchTrackOff,
+                    wakeUpEnabled
+                      ? styles.switchTrackOn
+                      : (isDark ? styles.switchTrackOffDark : styles.switchTrackOff),
                   ]}
                   onPress={handleToggleWakeUp}
                   activeOpacity={0.85}
@@ -465,5 +471,44 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 13,
     color: '#EF4444',
+  },
+  sheetContainerDark: {
+    backgroundColor: '#151D2F',
+    borderColor: '#24324D',
+    shadowColor: '#000000',
+    shadowOpacity: 0.5,
+  },
+  grabHandleDark: {
+    backgroundColor: '#334155',
+  },
+  textDark: {
+    color: '#F8FAFC',
+  },
+  subtextDark: {
+    color: '#94A3B8',
+  },
+  closeBtnDark: {
+    backgroundColor: '#1E293B',
+    borderColor: '#2E3D5C',
+  },
+  scheduleBarDark: {
+    backgroundColor: '#1E293B',
+    borderColor: '#2E3D5C',
+  },
+  scheduleDividerDark: {
+    backgroundColor: '#334155',
+  },
+  chipDark: {
+    backgroundColor: '#1E293B',
+    borderColor: '#2E3D5C',
+  },
+  chipTextDark: {
+    color: '#94A3B8',
+  },
+  dividerDark: {
+    backgroundColor: '#24324D',
+  },
+  switchTrackOffDark: {
+    backgroundColor: '#334155',
   },
 });

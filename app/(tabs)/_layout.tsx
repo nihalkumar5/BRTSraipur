@@ -13,6 +13,7 @@ import { Tabs } from 'expo-router';
 import { Home, MapPin, Calendar, IndianRupee } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDarkMode } from '../../src/services/theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -21,6 +22,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = Math.max(16, insets.bottom + 6);
+  const [isDark] = useDarkMode();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -68,11 +70,14 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       <View
         style={[
           styles.tabBarContainer,
+          isDark && styles.tabBarContainerDark,
           Platform.OS === 'web'
             ? ({
                 backdropFilter: 'blur(28px) saturate(200%)',
                 WebkitBackdropFilter: 'blur(28px) saturate(200%)',
-                boxShadow: '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
+                boxShadow: isDark
+                  ? '0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+                  : '0 16px 40px rgba(24, 37, 143, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9)',
               } as any)
             : {},
         ]}
@@ -110,7 +115,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               : 'Fares';
 
           const renderIcon = () => {
-            const iconColor = isFocused ? '#FFFFFF' : '#556080';
+            const iconColor = isFocused ? '#FFFFFF' : isDark ? '#94A3B8' : '#556080';
             const strokeWidth = isFocused ? 2.3 : 1.9;
             const size = 18;
 
@@ -153,11 +158,14 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               onPress={onPress}
               style={[
                 styles.inactiveTabCircle,
+                isDark && styles.inactiveTabCircleDark,
                 Platform.OS === 'web'
                   ? ({
                       backdropFilter: 'blur(12px)',
                       WebkitBackdropFilter: 'blur(12px)',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
+                      boxShadow: isDark
+                        ? 'none'
+                        : '0 2px 6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
                     } as any)
                   : {},
               ]}
@@ -176,12 +184,13 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const [isDark] = useDarkMode();
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: '#F8F6F0' },
+        sceneStyle: { backgroundColor: isDark ? '#0B0F19' : '#F8F6F0' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
@@ -214,6 +223,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
+  },
+  tabBarContainerDark: {
+    backgroundColor: 'rgba(21, 29, 47, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#000000',
+    shadowOpacity: 0.5,
   },
   activeTabPill: {
     flexDirection: 'row',
@@ -257,5 +272,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(24, 37, 143, 0.05)',
+  },
+  inactiveTabCircleDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
 });
