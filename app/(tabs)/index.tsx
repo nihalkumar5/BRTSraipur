@@ -434,7 +434,6 @@ export default function LiveBusScreen() {
   const [departuresExpanded, setDeparturesExpanded] = useState(false);
 
   // Notification & Smart Alert state
-  const [reminderBanner, setReminderBanner] = useState<string | null>(null);
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
   const [activeTripAlert, setActiveTripAlert] = useState<SmartTripAlert | null>(() => getActiveTripAlert());
   const [smartAlertModalVisible, setSmartAlertModalVisible] = useState<boolean>(false);
@@ -446,10 +445,6 @@ export default function LiveBusScreen() {
       setActiveReminders(getActiveReminders());
     }
   }, []);
-
-  useEffect(() => {
-    setReminderBanner(null);
-  }, [fromStation, toStation]);
 
   // Time simulation
   const [currentTimeMins, setCurrentTimeMins] = useState<number>(() => getCurrentMinutesOfDay());
@@ -965,12 +960,6 @@ export default function LiveBusScreen() {
 
       setActiveTripAlert(alert);
       setActiveReminders(getActiveReminders());
-
-      const details: string[] = [];
-      if (config.minutesBeforeDeparture) details.push(`${config.minutesBeforeDeparture}m departure alert`);
-      if (config.wakeUpAlarmEnabled) details.push('wake-up stop alarm');
-      const summary = details.length > 0 ? details.join(' & ') : 'alerts';
-      setReminderBanner(`✓ Trip Guard active! Armed with ${summary} for ${targetDepTime}.`);
     } catch (e) {
       console.error('Error saving smart alert:', e);
     }
@@ -980,7 +969,6 @@ export default function LiveBusScreen() {
     await cancelSmartTripAlert();
     setActiveTripAlert(null);
     setActiveReminders([]);
-    setReminderBanner(null);
   };
 
   const handleScheduleNotifications = () => {
@@ -1141,16 +1129,6 @@ export default function LiveBusScreen() {
           </View>
         </View>
 
-        {/* NOTIFICATION CONFIRMATION BANNER */}
-        {reminderBanner ? (
-          <View style={styles.bannerContainer}>
-            <BellRing size={18} color="#15803D" style={{ marginRight: 8 }} />
-            <Text style={styles.bannerText}>{reminderBanner}</Text>
-            <TouchableOpacity onPress={() => setReminderBanner(null)} style={{ padding: 4 }}>
-              <X size={14} color="#15803D" />
-            </TouchableOpacity>
-          </View>
-        ) : null}
 
         {/* ACTIVE COMMUTE / TRIP ALARM CARD PINNED AT TOP OF HOME */}
         {activeTripAlert && (
