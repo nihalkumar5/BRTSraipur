@@ -387,7 +387,7 @@ export default function AboutScreen() {
             {/* CHHATTISGARH STATE PORTAL */}
             <TouchableOpacity
               style={styles.linkRow}
-              onPress={() => handleWebsite('https://chhattisgarh.gov.in')}
+              onPress={() => handleWebsite('https://cgstate.gov.in/')}
               activeOpacity={0.7}
             >
               <View style={[styles.linkIconBox, { backgroundColor: '#ECFDF5' }]}>
@@ -395,7 +395,7 @@ export default function AboutScreen() {
               </View>
               <View style={styles.linkInfoCol}>
                 <Text style={styles.linkTitle}>Chhattisgarh State Portal</Text>
-                <Text style={styles.linkSubtitle}>State government updates: chhattisgarh.gov.in</Text>
+                <Text style={styles.linkSubtitle}>Official public portal: cgstate.gov.in</Text>
               </View>
               <ExternalLink size={16} color={TEXT_MUTED} strokeWidth={2} />
             </TouchableOpacity>

@@ -29,7 +29,7 @@ This application is an independent public transit guide and utility developed fo
 All transit route corridors, bus stop directory, scheduled timetables, and distance-based fare slab details are compiled from publicly available transit information published on official transit and state websites:
 • Tatpar BRTS Official Transit Portal: https://www.tatparbus.in
 • Raipur District Administration: https://raipur.gov.in
-• Chhattisgarh State Official Portal: https://chhattisgarh.gov.in
+• Chhattisgarh State Official Portal: https://cgstate.gov.in/
 • Transport Department, Chhattisgarh: https://cgtransport.gov.in
 • Raipur Municipal Corporation (Nagar Nigam): https://nagarnigamraipur.nic.in
 • Smart Cities Mission Portal: https://smartcities.gov.in
