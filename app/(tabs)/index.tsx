@@ -1130,8 +1130,8 @@ export default function LiveBusScreen() {
         </View>
 
 
-        {/* ACTIVE COMMUTE / TRIP ALARM CARD PINNED AT TOP OF HOME */}
-        {activeTripAlert && (
+        {/* ACTIVE COMMUTE / TRIP ALARM CARD PINNED AT TOP OF HOME (Only when not viewing journey details) */}
+        {activeTripAlert && !journey && (
           <ActiveTripCard
             alert={activeTripAlert}
             onOpenSettings={() => setSmartAlertModalVisible(true)}
@@ -1774,9 +1774,7 @@ export default function LiveBusScreen() {
                   </View>
                   <View style={styles.smartGuardTextBox}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.smartGuardTitle}>
-                        {activeTripAlert ? 'Trip Alarm Active' : 'Trip Alarm'}
-                      </Text>
+                      <Text style={styles.smartGuardTitle}>Trip Alarm</Text>
                       {activeTripAlert && (
                         <View style={styles.armedBadge}>
                           <Text style={styles.armedBadgeText}>ACTIVE</Text>
@@ -2272,9 +2270,7 @@ export default function LiveBusScreen() {
                 </View>
                 <View style={styles.smartGuardTextBox}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.smartGuardTitle}>
-                      {activeTripAlert ? 'Trip Alarm Active' : 'Trip Alarm'}
-                    </Text>
+                    <Text style={styles.smartGuardTitle}>Trip Alarm</Text>
                     {activeTripAlert && (
                       <View style={styles.armedBadge}>
                         <Text style={styles.armedBadgeText}>ACTIVE</Text>
