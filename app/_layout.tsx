@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Platform, StyleSheet, BackHandler, ToastAndroid } from 'react-native';
+import { View, Platform, StyleSheet, BackHandler, ToastAndroid, Vibration } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import * as Notifications from 'expo-notifications';
@@ -12,7 +12,7 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
-    priority: Notifications.AndroidNotificationPriority.HIGH,
+    priority: Notifications.AndroidNotificationPriority.MAX,
   }),
 });
 import {
@@ -433,31 +433,53 @@ export default function RootLayout() {
                     setCanGoBackWeb(Boolean(data.canGoBack));
                   } else if (data.type === 'REQUEST_NOTIFICATION_PERMISSION') {
                     await requestNotificationPermissions();
+                  } else if (data.type === 'TRIGGER_VIBRATION') {
+                    try {
+                      const pattern = data.payload?.pattern || [0, 400, 150, 400];
+                      Vibration.vibrate(pattern);
+                    } catch (e) {}
                   } else if (data.type === 'SCHEDULE_BUS_NOTIFICATION') {
-                    const { routeBadge, fromStop, toStop, departureTime, arrivalTime, triggerSeconds, minutesBefore } = data.payload || {};
+                    const { routeBadge, fromStop, toStop, departureTime, arrivalTime, triggerSeconds, minutesBefore, isWakeUpAlarm } = data.payload || {};
                     await requestNotificationPermissions();
                     try {
+                      const channelId = isWakeUpAlarm ? 'stop_wake_alarm' : 'default';
+                      const title = isWakeUpAlarm
+                        ? `🔔 WAKE UP: Next stop is ${toStop}!`
+                        : `🚍 ${routeBadge} departs in ${minutesBefore} mins!`;
+                      const body = isWakeUpAlarm
+                        ? `Arriving in ~4 mins (${arrivalTime}). Please prepare to de-board!`
+                        : `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`;
+
                       await Notifications.scheduleNotificationAsync({
                         content: {
-                          title: `🚍 ${routeBadge} departing in ${minutesBefore} mins!`,
-                          body: `Board at ${fromStop} by ${departureTime}. Estimated arrival at ${toStop}: ${arrivalTime}.`,
+                          title,
+                          body,
                           sound: 'default',
-                          color: '#18258F',
-                          priority: Notifications.AndroidNotificationPriority.HIGH,
+                          color: isWakeUpAlarm ? '#EA580C' : '#18258F',
+                          priority: Notifications.AndroidNotificationPriority.MAX,
                         },
                         trigger: {
                           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
                           seconds: Math.max(1, Number(triggerSeconds) || 1),
-                          channelId: 'default',
+                          channelId,
                         },
                       });
                       if (Platform.OS === 'android') {
-                        ToastAndroid.show(`🔔 Reminder set for ${departureTime}`, ToastAndroid.SHORT);
+                        const toastMsg = isWakeUpAlarm
+                          ? `🔔 Wake-up alarm armed for ${toStop}`
+                          : `🔔 Reminder set for ${departureTime}`;
+                        ToastAndroid.show(toastMsg, ToastAndroid.SHORT);
                       }
                     } catch (schedErr) {
                       console.warn('Error in scheduleNotificationAsync:', schedErr);
                     }
                   } else if (data.type === 'CANCEL_NOTIFICATION') {
+                    if (data.payload?.departureNotifId) {
+                      await Notifications.cancelScheduledNotificationAsync(data.payload.departureNotifId);
+                    }
+                    if (data.payload?.wakeUpNotifId) {
+                      await Notifications.cancelScheduledNotificationAsync(data.payload.wakeUpNotifId);
+                    }
                     if (data.payload?.notificationId) {
                       await Notifications.cancelScheduledNotificationAsync(data.payload.notificationId);
                     }

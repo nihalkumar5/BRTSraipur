@@ -58,7 +58,14 @@ import {
   scheduleBusNotification,
   ScheduledReminder,
   getActiveReminders,
+  SmartTripAlert,
+  getActiveTripAlert,
+  scheduleSmartTripAlert,
+  cancelSmartTripAlert,
+  triggerTactileVibration,
 } from '../../src/services/notifications';
+import SmartAlertModal from '../../src/components/SmartAlertModal';
+import ActiveTripCard from '../../src/components/ActiveTripCard';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 import { FONT, typography } from '../../src/theme/typography';
 import { CitySkylineSvg } from '../../src/components/CitySkylineSvg';
@@ -426,9 +433,19 @@ export default function LiveBusScreen() {
   const [showAllOnboardStops, setShowAllOnboardStops] = useState(false);
   const [departuresExpanded, setDeparturesExpanded] = useState(false);
 
-  // Notification state
+  // Notification & Smart Alert state
   const [reminderBanner, setReminderBanner] = useState<string | null>(null);
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
+  const [activeTripAlert, setActiveTripAlert] = useState<SmartTripAlert | null>(() => getActiveTripAlert());
+  const [smartAlertModalVisible, setSmartAlertModalVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    const alert = getActiveTripAlert();
+    setActiveTripAlert(alert);
+    if (alert) {
+      setActiveReminders(getActiveReminders());
+    }
+  }, []);
 
   useEffect(() => {
     setReminderBanner(null);
@@ -839,6 +856,11 @@ export default function LiveBusScreen() {
 
   // Comprehensive Back navigation handler (closes modals/sheets/inspectors only)
   const handleBack = useCallback(() => {
+    // -1. If smart alert modal is open, close it
+    if (smartAlertModalVisible) {
+      setSmartAlertModalVisible(false);
+      return true;
+    }
     // 0. If route details modal is open, close it
     if (routeDetailsModalVisible) {
       setRouteDetailsModalVisible(false);
@@ -865,9 +887,9 @@ export default function LiveBusScreen() {
       return true;
     }
     return false;
-  }, [routeDetailsModalVisible, departuresExpanded, modalVisible, allPopularModalVisible, selectedTripId]);
+  }, [smartAlertModalVisible, routeDetailsModalVisible, departuresExpanded, modalVisible, allPopularModalVisible, selectedTripId]);
 
-  const isBackable = routeDetailsModalVisible || departuresExpanded || modalVisible || allPopularModalVisible || !!selectedTripId;
+  const isBackable = smartAlertModalVisible || routeDetailsModalVisible || departuresExpanded || modalVisible || allPopularModalVisible || !!selectedTripId;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -912,37 +934,57 @@ export default function LiveBusScreen() {
     };
   }, [isBackable, handleBack]);
 
-  // Handle scheduling 30 min and 15 min notifications
-  const handleScheduleNotifications = async () => {
-    if (!journey) return;
+  // Handle saving Smart Trip Alert (Departure reminder + Wake-up stop alarm)
+  const handleSaveSmartAlert = async (config: {
+    minutesBeforeDeparture: number | null;
+    wakeUpAlarmEnabled: boolean;
+  }) => {
+    const targetRouteBadge = journey?.routeBadge || activeTripAlert?.routeBadge;
+    const targetFrom = journey?.fromStop?.shortName || journey?.fromStop?.name || activeTripAlert?.fromStop;
+    const targetTo = journey?.toStop?.shortName || journey?.toStop?.name || activeTripAlert?.toStop;
+    const targetDepTime = journey?.fromTime || activeTripAlert?.departureTime;
+    const targetArrTime = journey?.toTime || activeTripAlert?.arrivalTime;
+    const targetDepMins = journey?.departureMins ?? activeTripAlert?.departureMins ?? 0;
+    const targetArrMins = journey?.arrivalMins ?? (journey ? journey.departureMins + journey.durationMins : (activeTripAlert?.arrivalMins ?? 0));
+
+    if (!targetRouteBadge || !targetFrom || !targetTo || !targetDepTime || !targetArrTime) return;
 
     try {
-      const rem30 = await scheduleBusNotification({
-        routeBadge: journey.routeBadge,
-        fromStop: journey.fromStop.shortName,
-        toStop: journey.toStop.shortName,
-        departureTime: journey.fromTime,
-        arrivalTime: journey.toTime,
-        departureMins: journey.departureMins,
-        minutesBefore: 30,
+      const alert = await scheduleSmartTripAlert({
+        routeBadge: targetRouteBadge,
+        routeName: journey?.trip?.serviceName || journey?.trip?.route || activeTripAlert?.routeName,
+        fromStop: targetFrom,
+        toStop: targetTo,
+        departureTime: targetDepTime,
+        arrivalTime: targetArrTime,
+        departureMins: targetDepMins,
+        arrivalMins: targetArrMins,
+        minutesBeforeDeparture: config.minutesBeforeDeparture,
+        wakeUpAlarmEnabled: config.wakeUpAlarmEnabled,
       });
 
-      const rem15 = await scheduleBusNotification({
-        routeBadge: journey.routeBadge,
-        fromStop: journey.fromStop.shortName,
-        toStop: journey.toStop.shortName,
-        departureTime: journey.fromTime,
-        arrivalTime: journey.toTime,
-        departureMins: journey.departureMins,
-        minutesBefore: 15,
-      });
-
+      setActiveTripAlert(alert);
       setActiveReminders(getActiveReminders());
-      const msg = `✓ Reminders set! You will be alerted at ${rem30?.triggerTime || '30m prior'} and ${rem15?.triggerTime || '15m prior'} before departure (${journey.fromTime}).`;
-      setReminderBanner(msg);
+
+      const details: string[] = [];
+      if (config.minutesBeforeDeparture) details.push(`${config.minutesBeforeDeparture}m departure alert`);
+      if (config.wakeUpAlarmEnabled) details.push('wake-up stop alarm');
+      const summary = details.length > 0 ? details.join(' & ') : 'alerts';
+      setReminderBanner(`✓ Trip Guard active! Armed with ${summary} for ${targetDepTime}.`);
     } catch (e) {
-  console.error(e);
+      console.error('Error saving smart alert:', e);
     }
+  };
+
+  const handleCancelSmartAlert = async () => {
+    await cancelSmartTripAlert();
+    setActiveTripAlert(null);
+    setActiveReminders([]);
+    setReminderBanner(null);
+  };
+
+  const handleScheduleNotifications = () => {
+    setSmartAlertModalVisible(true);
   };
 
   return (
@@ -1089,6 +1131,15 @@ export default function LiveBusScreen() {
             </TouchableOpacity>
           </View>
         ) : null}
+
+        {/* ACTIVE COMMUTE / TRIP ALARM CARD PINNED AT TOP OF HOME */}
+        {activeTripAlert && (
+          <ActiveTripCard
+            alert={activeTripAlert}
+            onOpenSettings={() => setSmartAlertModalVisible(true)}
+            onDismiss={handleCancelSmartAlert}
+          />
+        )}
 
         {/* ========================================================================= */}
         {/*               1. BUS TICKETS — PLAN YOUR RIDE (CALM / EDITORIAL)           */}
@@ -1702,42 +1753,57 @@ export default function LiveBusScreen() {
                   </View>
                 </View>
 
-                {/* COMPACT DEPARTURE REMINDER */}
+                {/* SMART TRIP GUARD & STOP ALARM */}
                 <TouchableOpacity
-                  style={styles.compactReminderCard}
-                  onPress={handleScheduleNotifications}
-                  activeOpacity={0.8}
+                  style={[
+                    styles.smartGuardCard,
+                    activeTripAlert && styles.smartGuardCardActive,
+                  ]}
+                  onPress={() => setSmartAlertModalVisible(true)}
+                  activeOpacity={0.85}
                 >
-                  <View style={styles.compactReminderIconBox}>
-                    {activeReminders.length > 0 ? (
-                      <BellRing size={17} color="#F04438" strokeWidth={2.2} />
+                  <View
+                    style={[
+                      styles.smartGuardIconBox,
+                      activeTripAlert && styles.smartGuardIconBoxActive,
+                    ]}
+                  >
+                    {activeTripAlert ? (
+                      <BellRing size={18} color="#15803D" strokeWidth={2.4} />
                     ) : (
-                      <Bell size={17} color="#F04438" strokeWidth={2.2} />
+                      <BellRing size={18} color="#18258F" strokeWidth={2.2} />
                     )}
                   </View>
-                  <View style={styles.compactReminderTextBox}>
-                    <Text style={styles.compactReminderTitle}>
-                      {activeReminders.length > 0 ? 'Reminder set' : 'Departure reminder'}
-                    </Text>
-                    <Text style={styles.compactReminderSubtitle} numberOfLines={1}>
-                      {activeReminders.length > 0
-                        ? `You'll be notified 30 min before · ${journey.fromTime}`
-                        : 'Get notified before your bus leaves'}
+                  <View style={styles.smartGuardTextBox}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={styles.smartGuardTitle}>
+                        {activeTripAlert ? 'Trip Alarm Active ✓' : 'Trip Guard & Stop Alarm'}
+                      </Text>
+                      {activeTripAlert && (
+                        <View style={styles.armedBadge}>
+                          <Text style={styles.armedBadgeText}>ARMED</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
+                      {activeTripAlert
+                        ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
+                        : 'Get alerted before departure & before destination stop'}
                     </Text>
                   </View>
                   <View
                     style={[
-                      styles.compactReminderBtn,
-                      activeReminders.length > 0 && styles.compactReminderBtnActive,
+                      styles.smartGuardBtn,
+                      activeTripAlert && styles.smartGuardBtnActive,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.compactReminderBtnText,
-                        activeReminders.length > 0 && styles.compactReminderBtnTextActive,
+                        styles.smartGuardBtnText,
+                        activeTripAlert && styles.smartGuardBtnTextActive,
                       ]}
                     >
-                      {activeReminders.length > 0 ? 'Enabled ✓' : 'Set reminder'}
+                      {activeTripAlert ? 'Manage 🎛️' : 'Set Alarm 🔔'}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -2185,42 +2251,57 @@ export default function LiveBusScreen() {
                 </View>
               </View>
 
-              {/* 3. DROP-OFF REMINDER CARD */}
+              {/* SMART TRIP GUARD & STOP ALARM */}
               <TouchableOpacity
-                style={styles.compactReminderCard}
-                onPress={handleScheduleNotifications}
-                activeOpacity={0.8}
+                style={[
+                  styles.smartGuardCard,
+                  activeTripAlert && styles.smartGuardCardActive,
+                ]}
+                onPress={() => setSmartAlertModalVisible(true)}
+                activeOpacity={0.85}
               >
-                <View style={styles.compactReminderIconBox}>
-                  {activeReminders.length > 0 ? (
-                    <BellRing size={17} color="#F04438" strokeWidth={2.2} />
+                <View
+                  style={[
+                    styles.smartGuardIconBox,
+                    activeTripAlert && styles.smartGuardIconBoxActive,
+                  ]}
+                >
+                  {activeTripAlert ? (
+                    <BellRing size={18} color="#15803D" strokeWidth={2.4} />
                   ) : (
-                    <Bell size={17} color="#F04438" strokeWidth={2.2} />
+                    <BellRing size={18} color="#18258F" strokeWidth={2.2} />
                   )}
                 </View>
-                <View style={styles.compactReminderTextBox}>
-                  <Text style={styles.compactReminderTitle}>
-                    {activeReminders.length > 0 ? 'Reminder set' : 'Drop-off reminder'}
-                  </Text>
-                  <Text style={styles.compactReminderSubtitle} numberOfLines={1}>
-                    {activeReminders.length > 0
-                      ? `Alert set: 1 stop before ${journey.toStop.shortName || journey.toStop.name}`
-                      : `Alert me 1 stop before ${journey.toStop.shortName || journey.toStop.name}`}
+                <View style={styles.smartGuardTextBox}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.smartGuardTitle}>
+                      {activeTripAlert ? 'Trip Alarm Active ✓' : 'Trip Guard & Stop Alarm'}
+                    </Text>
+                    {activeTripAlert && (
+                      <View style={styles.armedBadge}>
+                        <Text style={styles.armedBadgeText}>ARMED</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
+                    {activeTripAlert
+                      ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
+                      : 'Get alerted before departure & before destination stop'}
                   </Text>
                 </View>
                 <View
                   style={[
-                    styles.compactReminderBtn,
-                    activeReminders.length > 0 && styles.compactReminderBtnActive,
+                    styles.smartGuardBtn,
+                    activeTripAlert && styles.smartGuardBtnActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.compactReminderBtnText,
-                      activeReminders.length > 0 && styles.compactReminderBtnTextActive,
+                      styles.smartGuardBtnText,
+                      activeTripAlert && styles.smartGuardBtnTextActive,
                     ]}
                   >
-                    {activeReminders.length > 0 ? 'Enabled ✓' : 'Set reminder'}
+                    {activeTripAlert ? 'Manage 🎛️' : 'Set Alarm 🔔'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -2428,6 +2509,21 @@ export default function LiveBusScreen() {
 
 
       </ScrollView>
+
+      {/* SMART ALERT & WAKE-UP STOP ALARM MODAL */}
+      <SmartAlertModal
+        visible={smartAlertModalVisible}
+        onClose={() => setSmartAlertModalVisible(false)}
+        routeBadge={journey?.routeBadge || activeTripAlert?.routeBadge || ''}
+        routeName={journey?.trip?.serviceName || journey?.trip?.route || activeTripAlert?.routeName}
+        fromStop={journey?.fromStop?.shortName || journey?.fromStop?.name || activeTripAlert?.fromStop || ''}
+        toStop={journey?.toStop?.shortName || journey?.toStop?.name || activeTripAlert?.toStop || ''}
+        departureTime={journey?.fromTime || activeTripAlert?.departureTime || ''}
+        arrivalTime={journey?.toTime || activeTripAlert?.arrivalTime || ''}
+        currentAlert={activeTripAlert}
+        onSave={handleSaveSmartAlert}
+        onCancelAlert={handleCancelSmartAlert}
+      />
 
       <Modal
         visible={modalVisible}
@@ -4130,7 +4226,104 @@ const styles = StyleSheet.create({
     color: '#18258F',
   },
 
-  /* COMPACT DEPARTURE & DROP-OFF REMINDER */
+  /* SMART TRIP GUARD & STOP ALARM */
+  smartGuardCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  smartGuardCardActive: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#C7D2FE',
+    borderWidth: 1.5,
+  },
+  smartGuardIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  smartGuardIconBoxActive: {
+    backgroundColor: '#DCFCE7',
+  },
+  smartGuardTextBox: {
+    flex: 1,
+    marginRight: 10,
+  },
+  smartGuardTitle: {
+    fontFamily: FONT.semiBold,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  armedBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 0.8,
+    borderColor: '#86EFAC',
+  },
+  armedBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: 0.4,
+  },
+  smartGuardSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 11.5,
+    fontWeight: '400',
+    color: '#64748B',
+    marginTop: 2,
+  },
+  smartGuardBtn: {
+    backgroundColor: '#18258F',
+    paddingHorizontal: 12,
+    height: 35,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  smartGuardBtnActive: {
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  smartGuardBtnText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  smartGuardBtnTextActive: {
+    fontFamily: FONT.bold,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+
+  /* COMPACT DEPARTURE & DROP-OFF REMINDER (FALLBACK) */
   compactReminderCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
