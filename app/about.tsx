@@ -102,7 +102,7 @@ export default function AboutScreen() {
           <View style={styles.appIconBox}>
             <Bus size={26} color={PRIMARY} strokeWidth={2} />
           </View>
-          <Text style={styles.appName}>Tatpar BRTS Raipur</Text>
+          <Text style={styles.appName}>Raipur BRTS Guide</Text>
           <Text style={styles.appTagline}>
             Smart commuter companion for Raipur & Nava Raipur Atal Nagar
           </Text>
@@ -391,11 +391,11 @@ export default function AboutScreen() {
 
         {/* 7. CALM MINIMAL FOOTER */}
         <View style={styles.footer}>
-          <Text style={styles.footerBrand}>Tatpar BRTS Raipur</Text>
+          <Text style={styles.footerBrand}>Raipur BRTS Guide</Text>
           <Text style={styles.footerText}>
             Open civic transit initiative for Raipur & Nava Raipur Atal Nagar.
           </Text>
-          <Text style={styles.footerCopy}>© 2026 Tatpar BRTS Raipur</Text>
+          <Text style={styles.footerCopy}>© 2026 Raipur BRTS Guide</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
