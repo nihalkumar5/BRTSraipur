@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { BellOff, AlertTriangle } from 'lucide-react-native';
 import { FONT } from '../theme/typography';
-import { useDarkMode } from '../services/theme';
 import { triggerTactileVibration } from '../services/notifications';
 
 interface CancelAlarmModalProps {
@@ -30,8 +29,6 @@ export default function CancelAlarmModal({
   fromStop,
   toStop,
 }: CancelAlarmModalProps) {
-  const [isDark] = useDarkMode();
-
   const handleKeep = () => {
     triggerTactileVibration([0, 20]);
     onClose();
@@ -53,17 +50,17 @@ export default function CancelAlarmModal({
       <TouchableWithoutFeedback onPress={handleKeep}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.dialogContainer, isDark && styles.dialogDark]}>
+            <View style={styles.dialogContainer}>
               {/* Icon */}
-              <View style={[styles.iconBox, isDark && styles.iconBoxDark]}>
-                <BellOff size={22} color={isDark ? '#F87171' : '#DC2626'} strokeWidth={2.2} />
+              <View style={styles.iconBox}>
+                <BellOff size={22} color="#DC2626" strokeWidth={2.2} />
               </View>
 
               {/* Title & Subtitle */}
-              <Text style={[styles.dialogTitle, isDark && styles.textDark]}>
+              <Text style={styles.dialogTitle}>
                 Turn Off Trip Alarm?
               </Text>
-              <Text style={[styles.dialogMessage, isDark && styles.subTextDark]}>
+              <Text style={styles.dialogMessage}>
                 This will cancel your departure alert and destination wake-up alarm
                 {routeBadge ? ` for Route ${routeBadge}` : ''}
                 {fromStop && toStop ? ` (${fromStop} → ${toStop})` : ''}.
@@ -72,11 +69,11 @@ export default function CancelAlarmModal({
               {/* Action Buttons */}
               <View style={styles.actionsRow}>
                 <TouchableOpacity
-                  style={[styles.btnKeep, isDark && styles.btnKeepDark]}
+                  style={styles.btnKeep}
                   onPress={handleKeep}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.btnKeepText, isDark && styles.btnKeepTextDark]}>
+                  <Text style={styles.btnKeepText}>
                     Keep Alarm
                   </Text>
                 </TouchableOpacity>
@@ -122,12 +119,6 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 8,
   },
-  dialogDark: {
-    backgroundColor: '#151D2F',
-    borderColor: '#24324D',
-    shadowColor: '#000000',
-    shadowOpacity: 0.4,
-  },
   iconBox: {
     width: 48,
     height: 48,
@@ -136,9 +127,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  iconBoxDark: {
-    backgroundColor: 'rgba(239, 68, 68, 0.18)',
   },
   dialogTitle: {
     fontFamily: FONT.bold,
@@ -149,9 +137,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: 8,
   },
-  textDark: {
-    color: '#F8FAFC',
-  },
   dialogMessage: {
     fontFamily: FONT.regular,
     fontSize: 13,
@@ -160,9 +145,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginBottom: 22,
     paddingHorizontal: 6,
-  },
-  subTextDark: {
-    color: '#94A3B8',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -180,18 +162,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  btnKeepDark: {
-    backgroundColor: '#1E293B',
-    borderColor: '#334155',
-  },
   btnKeepText: {
     fontFamily: FONT.bold,
     fontSize: 13.5,
     fontWeight: '600',
     color: '#334155',
-  },
-  btnKeepTextDark: {
-    color: '#E2E8F0',
   },
   btnCancel: {
     flex: 1,

@@ -21,11 +21,8 @@ import {
   MapPin,
   ChevronRight,
   ExternalLink,
-  Moon,
-  Sun,
 } from 'lucide-react-native';
 import { FONT } from '../src/theme/typography';
-import { useDarkMode } from '../src/services/theme';
 
 // DESIGN SYSTEM TOKENS
 const PRIMARY = '#2438B8';
@@ -44,7 +41,6 @@ const EMERGENCY_RED = '#D92D20';
 
 export default function AboutScreen() {
   const router = useRouter();
-  const [isDarkMode, setIsDarkMode] = useDarkMode();
 
   const handleCall = (number: string) => {
     Linking.openURL(`tel:${number}`);
@@ -59,9 +55,9 @@ export default function AboutScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, isDarkMode && styles.safeAreaDark]} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* 1. CLEAN MOBILE NAVIGATION HEADER */}
-      <View style={[styles.header, isDarkMode && styles.headerDark]}>
+      <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
             try {
@@ -82,22 +78,10 @@ export default function AboutScreen() {
           activeOpacity={0.7}
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={22} color={isDarkMode ? '#F8FAFC' : TEXT_PRIMARY} strokeWidth={2} />
+          <ArrowLeft size={22} color={TEXT_PRIMARY} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>About & Support</Text>
-        <TouchableOpacity
-          onPress={() => setIsDarkMode(!isDarkMode)}
-          style={[styles.themeHeaderBtn, isDarkMode && styles.themeHeaderBtnDark]}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          activeOpacity={0.7}
-          accessibilityLabel="Toggle Dark Mode"
-        >
-          {isDarkMode ? (
-            <Sun size={18} color="#FBBF24" strokeWidth={2.4} />
-          ) : (
-            <Moon size={18} color="#18258F" strokeWidth={2.2} />
-          )}
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>About & Support</Text>
+        <View style={styles.headerPlaceholder} />
       </View>
 
       <ScrollView
@@ -116,45 +100,6 @@ export default function AboutScreen() {
             <Text style={styles.appTagline}>
               “Your simple companion for Raipur's BRTS network.”
             </Text>
-          </View>
-        </View>
-
-        {/* 2.5 APPEARANCE / DARK MODE */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionHeading, isDarkMode && styles.sectionHeadingDark]}>APPEARANCE</Text>
-          <View style={[styles.groupedCard, isDarkMode && styles.groupedCardDark]}>
-            <View style={styles.menuRow}>
-              <View style={[styles.menuIconBox, { backgroundColor: isDarkMode ? '#1A243B' : LIGHT_BLUE }]}>
-                {isDarkMode ? (
-                  <Moon size={18} color="#93C5FD" strokeWidth={2.2} />
-                ) : (
-                  <Sun size={18} color="#EA580C" strokeWidth={2.2} />
-                )}
-              </View>
-              <View style={styles.menuTextCol}>
-                <Text style={[styles.menuTitle, isDarkMode && styles.menuTitleDark]}>Dark Mode</Text>
-                <Text style={[styles.menuSubtitle, isDarkMode && styles.menuSubtitleDark]}>
-                  {isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.switchTrack,
-                  isDarkMode ? styles.switchTrackOn : styles.switchTrackOff,
-                ]}
-                onPress={() => setIsDarkMode(!isDarkMode)}
-                activeOpacity={0.85}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: isDarkMode }}
-              >
-                <View
-                  style={[
-                    styles.switchThumb,
-                    isDarkMode ? styles.switchThumbOn : styles.switchThumbOff,
-                  ]}
-                />
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
 
@@ -476,9 +421,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BG_COLOR,
   },
-  safeAreaDark: {
-    backgroundColor: '#0B0F19',
-  },
   header: {
     height: 54,
     flexDirection: 'row',
@@ -488,10 +430,6 @@ const styles = StyleSheet.create({
     backgroundColor: CARD_BG,
     borderBottomWidth: 1,
     borderBottomColor: DIVIDER_COLOR,
-  },
-  headerDark: {
-    backgroundColor: '#0B0F19',
-    borderBottomColor: '#24324D',
   },
   backButton: {
     width: 36,
@@ -506,62 +444,9 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     letterSpacing: -0.2,
   },
-  headerTitleDark: {
-    color: '#F8FAFC',
-  },
-  themeHeaderBtn: {
+  headerPlaceholder: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EEF0F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeHeaderBtnDark: {
-    backgroundColor: '#1A243B',
-  },
-  sectionHeadingDark: {
-    color: '#94A3B8',
-  },
-  groupedCardDark: {
-    backgroundColor: '#151D2F',
-    borderColor: '#24324D',
-  },
-  menuTitleDark: {
-    color: '#F8FAFC',
-  },
-  menuSubtitleDark: {
-    color: '#94A3B8',
-  },
-  switchTrack: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  switchTrackOn: {
-    backgroundColor: PRIMARY,
-  },
-  switchTrackOff: {
-    backgroundColor: '#E2E8F0',
-  },
-  switchThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  switchThumbOn: {
-    alignSelf: 'flex-end',
-  },
-  switchThumbOff: {
-    alignSelf: 'flex-start',
   },
   scrollView: {
     flex: 1,
