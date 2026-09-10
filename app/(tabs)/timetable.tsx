@@ -152,10 +152,12 @@ export default function TimetableScreen() {
   const destStation = direction === 'up' ? 'Railway Station' : 'HNLU / Loop';
 
   // Render expanded stops timeline for a trip
-  const renderStopsTimeline = (item: Trip) => (
-    <View style={styles.expandedDetails}>
-      <View style={styles.expandedHeaderDivider} />
-      <Text style={styles.expandedTitle}>ROUTE TIMELINE ({item.stops.length} STOPS)</Text>
+  const renderStopsTimeline = (item: Trip, isHero: boolean = false) => (
+    <View style={[styles.expandedDetails, isHero && styles.expandedDetailsHero]}>
+      <View style={[styles.expandedHeaderDivider, isHero && styles.expandedHeaderDividerHero]} />
+      <Text style={[styles.expandedTitle, isHero && styles.expandedTitleHero]}>
+        ROUTE TIMELINE ({item.stops.length} STOPS)
+      </Text>
 
       <View style={styles.timelineContainer}>
         {item.stops.map((st, sIdx) => {
@@ -165,12 +167,15 @@ export default function TimetableScreen() {
           return (
             <View key={sIdx} style={styles.timelineItemRow}>
               <View style={styles.spineCol}>
-                {!isLast && <View style={styles.spineLine} />}
+                {!isLast && (
+                  <View style={[styles.spineLine, isHero && styles.spineLineHero]} />
+                )}
                 <View
                   style={[
                     styles.spineDot,
-                    isFirst && styles.spineDotOrigin,
-                    isLast && styles.spineDotDest,
+                    isHero && styles.spineDotHero,
+                    isFirst && (isHero ? styles.spineDotOriginHero : styles.spineDotOrigin),
+                    isLast && (isHero ? styles.spineDotDestHero : styles.spineDotDest),
                   ]}
                 />
               </View>
@@ -179,7 +184,8 @@ export default function TimetableScreen() {
                 <Text
                   style={[
                     styles.stopNameText,
-                    (isFirst || isLast) && styles.stopNameBold,
+                    isHero && styles.stopNameTextHero,
+                    (isFirst || isLast) && (isHero ? styles.stopNameBoldHero : styles.stopNameBold),
                   ]}
                   numberOfLines={1}
                 >
@@ -188,7 +194,8 @@ export default function TimetableScreen() {
                 <Text
                   style={[
                     styles.stopTimeText,
-                    (isFirst || isLast) && styles.stopTimeBold,
+                    isHero && styles.stopTimeTextHero,
+                    (isFirst || isLast) && (isHero ? styles.stopTimeBoldHero : styles.stopTimeBold),
                   ]}
                 >
                   {st.time}
@@ -321,7 +328,7 @@ export default function TimetableScreen() {
                 <TouchableOpacity
                   style={styles.nextDepCard}
                   onPress={() => toggleExpand(nextTrip.id)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.92}
                 >
                   {/* TOP ROW: NEXT DEPARTURE BADGE + COUNTDOWN */}
                   <View style={styles.nextDepTopRow}>
@@ -330,7 +337,7 @@ export default function TimetableScreen() {
                       <Text style={styles.nextDepBadgeText}>NEXT DEPARTURE</Text>
                     </View>
                     <View style={styles.nextDepCountdownWrap}>
-                      <Clock size={11} color={PRIMARY} strokeWidth={2} />
+                      <Clock size={12} color="#FEF08A" strokeWidth={2.4} />
                       <Text style={styles.nextDepCountdownText}>
                         {upcomingDiff === 0
                           ? 'Departs NOW'
@@ -351,7 +358,9 @@ export default function TimetableScreen() {
                     </View>
 
                     <View style={styles.nextDepArrowCol}>
-                      <ArrowRight size={16} color={PRIMARY} strokeWidth={2.4} />
+                      <View style={styles.nextDepArrowCircle}>
+                        <ArrowRight size={14} color="#FFFFFF" strokeWidth={2.6} />
+                      </View>
                       <Text style={styles.nextDepStopsLabel}>
                         {nextTrip.stops.length} stops
                       </Text>
@@ -359,7 +368,7 @@ export default function TimetableScreen() {
 
                     <View style={[styles.nextDepStopCol, { alignItems: 'flex-end' }]}>
                       <Text style={styles.nextDepTimeHero}>{nextTrip.arrivalTime}</Text>
-                      <Text style={styles.nextDepStopLabel} numberOfLines={1}>
+                      <Text style={[styles.nextDepStopLabel, { textAlign: 'right' }]} numberOfLines={1}>
                         {nextTrip.destination}
                       </Text>
                     </View>
@@ -368,7 +377,7 @@ export default function TimetableScreen() {
                   {/* BOTTOM META ROW */}
                   <View style={styles.nextDepBottomRow}>
                     <View style={styles.nextDepMetaLeft}>
-                      <Bus size={12} color={PRIMARY} strokeWidth={2.2} />
+                      <Bus size={13} color="#93C5FD" strokeWidth={2.2} />
                       <Text style={styles.nextDepRouteText}>{nextTrip.route}</Text>
                       <Text style={styles.nextDepDotSep}>·</Text>
                       <Text style={styles.nextDepMetaText}>
@@ -388,15 +397,15 @@ export default function TimetableScreen() {
                         {expandedTripId === nextTrip.id ? 'Hide stops' : 'View stops'}
                       </Text>
                       {expandedTripId === nextTrip.id ? (
-                        <ChevronUp size={13} color={PRIMARY} />
+                        <ChevronUp size={13} color="#FFFFFF" />
                       ) : (
-                        <ChevronDown size={13} color={PRIMARY} />
+                        <ChevronDown size={13} color="#FFFFFF" />
                       )}
                     </View>
                   </View>
 
                   {/* EXPANDED STOPS TIMELINE */}
-                  {expandedTripId === nextTrip.id && renderStopsTimeline(nextTrip)}
+                  {expandedTripId === nextTrip.id && renderStopsTimeline(nextTrip, true)}
                 </TouchableOpacity>
               </View>
             )}
@@ -669,24 +678,24 @@ const styles = StyleSheet.create({
     paddingBottom: 120, // Breathing space for floating bottom nav dock
   },
 
-  /* HERO NEXT DEPARTURE CARD */
+  /* HERO NEXT DEPARTURE CARD (HIGHLIGHTED LIVE HERO CARD) */
   nextDepContainer: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   nextDepCard: {
-    backgroundColor: CARD_BG,
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: PRIMARY,
+    borderRadius: 22,
+    padding: 18,
     borderWidth: 1.5,
-    borderColor: 'rgba(24, 37, 143, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.32,
+    shadowRadius: 18,
+    elevation: 8,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 8px 24px rgba(24, 37, 143, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03)',
+          boxShadow: '0 12px 30px rgba(24, 37, 143, 0.30), 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.30)',
         } as any)
       : {}),
   },
@@ -694,55 +703,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   nextDepBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: PRIMARY_LIGHT,
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.20)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.40)',
     gap: 6,
   },
   liveGreenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#12B76A',
+    width: 6.5,
+    height: 6.5,
+    borderRadius: 3.5,
+    backgroundColor: '#10B981',
   },
   nextDepBadgeText: {
     fontFamily: FONT.bold,
     fontSize: 10,
-    fontWeight: '700',
-    color: PRIMARY,
-    letterSpacing: 0.6,
+    fontWeight: '800',
+    color: '#34D399',
+    letterSpacing: 0.8,
   },
   nextDepCountdownWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F8F9FC',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 8,
+    gap: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 9,
     borderWidth: 1,
-    borderColor: BORDER_SUBTLE,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   nextDepCountdownText: {
-    fontFamily: FONT.semiBold,
+    fontFamily: FONT.bold,
     fontSize: 11,
-    fontWeight: '600',
-    color: PRIMARY,
+    fontWeight: '700',
+    color: '#FEF08A',
     fontVariant: ['tabular-nums'],
   },
   nextDepTimesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 10,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: BORDER_COLOR,
+    borderBottomColor: 'rgba(255, 255, 255, 0.14)',
   },
   nextDepStopCol: {
     flex: 1,
@@ -750,34 +761,44 @@ const styles = StyleSheet.create({
   },
   nextDepTimeHero: {
     fontFamily: FONT.extraBold,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: PRIMARY,
+    color: '#FFFFFF',
     letterSpacing: -0.4,
     fontVariant: ['tabular-nums'],
   },
   nextDepStopLabel: {
     fontFamily: FONT.medium,
-    fontSize: 12.5,
-    color: TEXT_SECONDARY,
+    fontSize: 13,
+    color: '#E0E7FF',
     fontWeight: '500',
     marginTop: 2,
   },
   nextDepArrowCol: {
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
+  },
+  nextDepArrowCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.20)',
   },
   nextDepStopsLabel: {
     fontFamily: FONT.medium,
     fontSize: 11,
-    color: TEXT_MUTED,
-    marginTop: 2,
+    color: '#BFDBFE',
+    marginTop: 4,
   },
   nextDepBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 10,
+    paddingTop: 12,
   },
   nextDepMetaLeft: {
     flexDirection: 'row',
@@ -785,31 +806,37 @@ const styles = StyleSheet.create({
   },
   nextDepRouteText: {
     fontFamily: FONT.bold,
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
-    color: PRIMARY,
-    marginLeft: 4,
+    color: '#FFFFFF',
+    marginLeft: 5,
   },
   nextDepDotSep: {
-    color: TEXT_MUTED,
+    color: 'rgba(255, 255, 255, 0.40)',
     marginHorizontal: 5,
     fontSize: 12,
   },
   nextDepMetaText: {
     fontFamily: FONT.medium,
     fontSize: 12,
-    color: TEXT_SECONDARY,
+    color: '#E0E7FF',
     fontWeight: '500',
   },
   viewStopsToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   viewStopsToggleText: {
     fontFamily: FONT.semiBold,
     fontSize: 11.5,
-    color: PRIMARY,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 
@@ -1012,6 +1039,50 @@ const styles = StyleSheet.create({
   stopTimeBold: {
     fontFamily: FONT.bold,
     color: PRIMARY,
+    fontWeight: '700',
+  },
+
+  /* EXPANDED TIMELINE HERO STYLES (INSIDE HIGHLIGHTED NEXT DEPARTURE CARD) */
+  expandedDetailsHero: {
+    marginTop: 14,
+    paddingTop: 10,
+  },
+  expandedHeaderDividerHero: {
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+  },
+  expandedTitleHero: {
+    color: '#BFDBFE',
+  },
+  spineLineHero: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  spineDotHero: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+  },
+  spineDotOriginHero: {
+    backgroundColor: '#34D399',
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+  },
+  spineDotDestHero: {
+    backgroundColor: '#FDE047',
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+  },
+  stopNameTextHero: {
+    color: 'rgba(255, 255, 255, 0.90)',
+  },
+  stopNameBoldHero: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  stopTimeTextHero: {
+    color: '#93C5FD',
+  },
+  stopTimeBoldHero: {
+    color: '#FDE047',
     fontWeight: '700',
   },
 
