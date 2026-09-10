@@ -987,6 +987,24 @@ export default function LiveBusScreen() {
     setSmartAlertModalVisible(true);
   };
 
+  const handleOpenAbout = () => {
+    try {
+      router.navigate('/about' as any);
+    } catch (e) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/about';
+      }
+    }
+    // Fallback for mobile WebView/PWA if client routing doesn't immediately engage
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        if (window.location.pathname !== '/about') {
+          window.location.href = '/about';
+        }
+      }, 80);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* --- REDBUS-STYLE 2-SECTION TOP HEADER (BLUE ACTIVE) --- */}
@@ -1111,10 +1129,12 @@ export default function LiveBusScreen() {
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
-              onPress={() => router.push('/about' as any)}
+              onPress={handleOpenAbout}
               style={styles.infoIconButton}
               activeOpacity={0.7}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               accessibilityLabel="About and support"
+              accessibilityRole="button"
             >
               <Info size={20} color="#18258F" />
             </TouchableOpacity>
@@ -3257,12 +3277,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   infoIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#EEF0F9',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
+    cursor: 'pointer' as any,
   },
   headerSwitchBusBtn: {
     backgroundColor: '#FFFFFF',

@@ -59,7 +59,20 @@ export default function AboutScreen() {
       {/* 1. CLEAN MOBILE NAVIGATION HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            try {
+              if (router.canGoBack()) {
+                router.back();
+                return;
+              }
+            } catch (e) {}
+            try {
+              router.navigate('/' as any);
+            } catch (e) {}
+            if (typeof window !== 'undefined') {
+              window.location.href = '/';
+            }
+          }}
           style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           activeOpacity={0.7}
