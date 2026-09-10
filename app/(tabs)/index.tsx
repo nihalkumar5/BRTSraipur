@@ -66,6 +66,7 @@ import {
 } from '../../src/services/notifications';
 import SmartAlertModal from '../../src/components/SmartAlertModal';
 import ActiveTripCard from '../../src/components/ActiveTripCard';
+import CancelAlarmModal from '../../src/components/CancelAlarmModal';
 import { Stop, ActiveJourney, PopularRoute, NearbyDirectAlternative, NearbyServiceStation } from '../../src/types';
 import { FONT, typography } from '../../src/theme/typography';
 import { CitySkylineSvg } from '../../src/components/CitySkylineSvg';
@@ -437,6 +438,7 @@ export default function LiveBusScreen() {
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
   const [activeTripAlert, setActiveTripAlert] = useState<SmartTripAlert | null>(() => getActiveTripAlert());
   const [smartAlertModalVisible, setSmartAlertModalVisible] = useState<boolean>(false);
+  const [cancelConfirmVisible, setCancelConfirmVisible] = useState<boolean>(false);
 
   useEffect(() => {
     const alert = getActiveTripAlert();
@@ -1135,7 +1137,7 @@ export default function LiveBusScreen() {
           <ActiveTripCard
             alert={activeTripAlert}
             onOpenSettings={() => setSmartAlertModalVisible(true)}
-            onDismiss={handleCancelSmartAlert}
+            onDismiss={() => setCancelConfirmVisible(true)}
           />
         )}
 
@@ -2517,6 +2519,16 @@ export default function LiveBusScreen() {
         currentAlert={activeTripAlert}
         onSave={handleSaveSmartAlert}
         onCancelAlert={handleCancelSmartAlert}
+      />
+
+      {/* CANCEL TRIP ALARM CONFIRMATION POPUP (MATCHES APP THEME) */}
+      <CancelAlarmModal
+        visible={cancelConfirmVisible}
+        onClose={() => setCancelConfirmVisible(false)}
+        onConfirmCancel={handleCancelSmartAlert}
+        routeBadge={activeTripAlert?.routeBadge}
+        fromStop={activeTripAlert?.fromStop}
+        toStop={activeTripAlert?.toStop}
       />
 
       <Modal
