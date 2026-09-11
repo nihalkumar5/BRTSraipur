@@ -299,7 +299,7 @@ export default function AboutScreen() {
             {/* CHHATTISGARH STATE PORTAL */}
             <TouchableOpacity
               style={styles.rowItem}
-              onPress={() => handleWebsite('https://cgstate.gov.in/')}
+              onPress={() => handleWebsite('https://cgstate.gov.in')}
               activeOpacity={0.65}
             >
               <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
@@ -308,6 +308,42 @@ export default function AboutScreen() {
               <View style={styles.rowTextCol}>
                 <Text style={styles.rowPrimary}>Chhattisgarh State Portal</Text>
                 <Text style={styles.rowSecondary}>cgstate.gov.in</Text>
+              </View>
+              <ExternalLink size={15} color={TEXT_LIGHT} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* NAVA RAIPUR ATAL NAGAR (NRANVP) */}
+            <TouchableOpacity
+              style={styles.rowItem}
+              onPress={() => handleWebsite('https://navaraipuratalnagar.com')}
+              activeOpacity={0.65}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <Globe size={17} color={SUCCESS} strokeWidth={2} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowPrimary}>Nava Raipur Atal Nagar (NRDA)</Text>
+                <Text style={styles.rowSecondary}>navaraipuratalnagar.com</Text>
+              </View>
+              <ExternalLink size={15} color={TEXT_LIGHT} strokeWidth={2} />
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* CG TRANSPORT DEPT */}
+            <TouchableOpacity
+              style={styles.rowItem}
+              onPress={() => handleWebsite('https://cgtransport.gov.in')}
+              activeOpacity={0.65}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <Globe size={17} color={SUCCESS} strokeWidth={2} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowPrimary}>CG Transport Department</Text>
+                <Text style={styles.rowSecondary}>cgtransport.gov.in</Text>
               </View>
               <ExternalLink size={15} color={TEXT_LIGHT} strokeWidth={2} />
             </TouchableOpacity>
