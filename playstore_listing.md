@@ -1,6 +1,6 @@
-# 📱 Google Play Store Submission Kit: Tatpar: Raipur BRTS Guide
+# 📱 Google Play Store Submission Kit: Raipur BRTS Guide
 
-This document contains all the copy, metadata, Data Safety responses, and store listing details required to publish **Tatpar: Raipur BRTS Guide** on the Google Play Console.
+This document contains all the copy, metadata, Data Safety responses, and store listing details required to publish **Raipur BRTS Guide** on the Google Play Console.
 
 ---
 
@@ -8,8 +8,7 @@ This document contains all the copy, metadata, Data Safety responses, and store 
 
 | Field | Value / Content | Constraints |
 |---|---|---|
-| **App Name** | `Tatpar: Raipur BRTS Guide` | Max 30 chars (Actual: 25 chars) |
-| **Alternative App Name** | `Raipur BRTS Guide: Tatpar` | Max 30 chars (Actual: 25 chars) |
+| **App Name** | `Raipur BRTS Guide` | Max 30 chars (Actual: 17 chars) |
 | **Short Description** | `Unofficial timetable, routes & fare guide for Raipur & Nava Raipur BRTS buses.` | Max 80 chars (Actual: 79 chars) |
 | **Application Type** | `App` | |
 | **Primary Category** | `Maps & Navigation` (or `Travel & Local`) | |
@@ -23,20 +22,19 @@ This document contains all the copy, metadata, Data Safety responses, and store 
 ⚠️ DISCLAIMER & SOURCE OF INFORMATION:
 
 1. Non-Government Entity Disclaimer:
-This application is an independent public transit guide and utility developed for commuters. It is NOT an official application of, endorsed by, or affiliated with the Government of Chhattisgarh, Raipur Urban Public Transport Society (RUPTS), Raipur Municipal Corporation (RMC), Nava Raipur Atal Nagar Development Authority (NRDA), or any government department or authority.
+This application is an independent public transit guide and utility developed for commuters. It is NOT an official application of, endorsed by, or affiliated with the Government of Chhattisgarh, Raipur Urban Public Transport Society (RUPTS), Raipur Municipal Corporation (RMC), Nava Raipur Atal Nagar Development Authority (NRDA/NRANVP), or any government department or authority.
 
 2. Source of Public / Government Information:
 All transit route corridors, bus stop directory, scheduled timetables, and distance-based fare slab details are compiled from publicly available transit information published on official transit and state websites:
 • Tatpar BRTS Official Transit Portal: https://www.tatparbus.in
 • Raipur District Administration: https://raipur.gov.in
-• Chhattisgarh State Official Portal: https://cgstate.gov.in/
+• Government of Chhattisgarh State Portal: https://cgstate.gov.in
+• Nava Raipur Atal Nagar Development Authority (NRANVP): https://navaraipuratalnagar.com
 • Transport Department, Chhattisgarh: https://cgtransport.gov.in
-• Raipur Municipal Corporation (Nagar Nigam): https://nagarnigamraipur.nic.in
-• Smart Cities Mission Portal: https://smartcities.gov.in
 
 ---
 
-Tatpar: Raipur BRTS Guide (तत्पर बीआरटीएस रायपुर गाइड) is an independent passenger transit guide for Nava Raipur Atal Nagar and Raipur City, Chhattisgarh.
+Raipur BRTS Guide (रायपुर बीआरटीएस गाइड) is an independent passenger transit guide for Nava Raipur Atal Nagar and Raipur City, Chhattisgarh.
 
 Designed for daily commuters, students, office employees, and visitors, this guide provides easy access to Bus Rapid Transit System (BRTS) schedules, route corridors, bus stop directory, and standard fare tables—all in a clean, high-performance interface that works seamlessly both online and offline.
 
@@ -47,8 +45,8 @@ Designed for daily commuters, students, office employees, and visitors, this gui
 • First bus, last bus, and frequency indicators.
 • Direct corridor coverage between Raipur Railway Station, Mantralaya (Mahanadi Bhawan), Police Headquarters (PHQ), Hidayatullah National Law University (HNLU), IIIT, and Swami Vivekananda Airport feeder link.
 
-2. 📍 All 23+ BRTS Bus Shelters & Stops:
-• Directory of BRTS stops in Raipur and Nava Raipur.
+2. 📍 All 39 BRTS Bus Shelters & Stops:
+• Directory of all 39 BRTS stops in Raipur and Nava Raipur.
 • Identify boarding shelters, major interchange nodes (Telibandha, Serikhedi, Naya Raipur Entry gate), and nearby landmarks.
 
 3. 💰 Fare Calculator:
@@ -78,9 +76,10 @@ Designed for daily commuters, students, office employees, and visitors, this gui
 Quick access to public emergency helplines:
 • Emergency Response Support System: 112
 • Raipur Municipal Corporation (RMC): 1800-233-1234
+• BRTS ICCC Helpdesk: 0771-2211501
 • Women Helpline: 1091
 
-Tatpar: Raipur BRTS Guide is an independent digital transit initiative committed to making public transport across Chhattisgarh transparent, accessible, and effortless.
+Raipur BRTS Guide is an independent digital transit initiative committed to making public transport across Chhattisgarh transparent, accessible, and effortless.
 ```
 
 ---
