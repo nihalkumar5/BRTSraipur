@@ -1092,6 +1092,28 @@ function calculateTransferJourney(
     transferDepartures = [...lastRunToday, ...forwardDepartures];
   }
 
+  const allRouteDepartures: UpcomingDeparture[] = dedupedOptions.map(o => {
+    const isDep = o.depMins1 < nowMins;
+    const inTransit = o.depMins1 <= nowMins && nowMins <= o.arrMins2;
+    const isArr = nowMins > o.arrMins2;
+    return {
+      tripId: `${o.leg1Trip.id}_${o.leg2Trip.id}`,
+      route: `${o.leg1Trip.routeNumber} ➔ ${o.leg2Trip.routeNumber}`,
+      departureTime: o.leg1Trip.stops[o.f1Idx].time,
+      arrivalTime: o.leg2Trip.stops[o.t2Idx].time,
+      departureMins: o.depMins1,
+      arrivalMins: o.arrMins2,
+      diffMins: o.depMins1 - nowMins,
+      isNextDay: false,
+      isDeparted: isDep,
+      isInTransit: inTransit,
+      isArrived: isArr,
+      isSelected: `${o.leg1Trip.id}_${o.leg2Trip.id}` === `${chosen.leg1Trip.id}_${chosen.leg2Trip.id}`,
+      serviceName: `Transfer at ${o.hub}`,
+    };
+  });
+  allRouteDepartures.sort((a, b) => a.departureMins - b.departureMins);
+
   return {
     trip: {
       ...chosen.leg1Trip,
@@ -1122,6 +1144,7 @@ function calculateTransferJourney(
     intermediateStopsCount: intermediateStops.length + secondLegStops.length - 1,
     intermediateStops,
     upcomingDepartures: transferDepartures,
+    allRouteDepartures,
     isTransfer: true,
     transferHub: chosen.hub,
     transferWaitMins: chosen.waitMins,
@@ -1313,17 +1336,37 @@ export function calculateJourney(
   } else if (mode === 'onboard') {
     // Look for a bus that is currently running on the route between origin/boarding and destination
     const runningTrips = matchingTrips.filter(m => m.depMins <= nowMins && nowMins <= m.arrMins);
-    if (runningTrips.length > 0) {
-      chosen = runningTrips[0];
+    // Active trips that have NOT yet reached the final destination
+    const activeRunningTrips = runningTrips.filter(m => nowMins < m.arrMins);
+
+    if (activeRunningTrips.length > 0) {
+      // Pick the most recently departed active running trip (closest to commuter boarding)
+      chosen = activeRunningTrips[activeRunningTrips.length - 1];
+      isInTransit = true;
+    } else if (runningTrips.length > 0) {
+      // All running trips have reached destination, pick latest one
+      chosen = runningTrips[runningTrips.length - 1];
       isInTransit = true;
     } else {
-      // If no trip exactly in range, find the most recent departed trip or nearest upcoming
-      const pastTrips = matchingTrips.filter(m => m.depMins <= nowMins);
-      if (pastTrips.length > 0) {
-        chosen = pastTrips[pastTrips.length - 1];
-        if (nowMins <= chosen.arrMins + 5) {
-          isInTransit = true;
-        }
+      // If no trip currently running in range:
+      const upcomingTrips = matchingTrips.filter(m => m.depMins >= nowMins);
+      const pastTrips = matchingTrips.filter(m => m.depMins < nowMins);
+      const nextTrip = upcomingTrips.length > 0 ? upcomingTrips[0] : null;
+      const lastPastTrip = pastTrips.length > 0 ? pastTrips[pastTrips.length - 1] : null;
+
+      // If next trip departs within 20 mins, commuter is boarding the upcoming bus
+      if (nextTrip && nextTrip.depMins - nowMins <= 20) {
+        chosen = nextTrip;
+        isInTransit = false;
+      } else if (lastPastTrip && nowMins <= lastPastTrip.arrMins + 5) {
+        // Recently arrived bus (within 5 mins of terminal arrival)
+        chosen = lastPastTrip;
+        isInTransit = true;
+      } else if (nextTrip) {
+        chosen = nextTrip;
+        isInTransit = false;
+      } else if (lastPastTrip) {
+        chosen = lastPastTrip;
       } else {
         chosen = matchingTrips[0];
       }
@@ -1558,6 +1601,29 @@ export function calculateJourney(
     upcomingDepartures = [...lastRunToday, ...forwardDepartures];
   }
 
+  // Build complete list of all departures for this route today
+  const allRouteDepartures: UpcomingDeparture[] = matchingTrips.map(m => {
+    const isDep = m.depMins < nowMins;
+    const inTransit = m.depMins <= nowMins && nowMins <= m.arrMins;
+    const isArr = nowMins > m.arrMins;
+    return {
+      tripId: m.trip.id,
+      route: m.trip.route,
+      departureTime: m.trip.stops[m.fromIndex].time,
+      arrivalTime: m.trip.stops[m.toIndex].time,
+      departureMins: m.depMins,
+      arrivalMins: m.arrMins,
+      diffMins: m.depMins - nowMins,
+      isNextDay: false,
+      isDeparted: isDep,
+      isInTransit: inTransit,
+      isArrived: isArr,
+      isSelected: m.trip.id === chosen.trip.id,
+      serviceName: m.trip.serviceName,
+    };
+  });
+  allRouteDepartures.sort((a, b) => a.departureMins - b.departureMins);
+
   return {
     trip,
     fromStop,
@@ -1582,6 +1648,7 @@ export function calculateJourney(
     intermediateStopsCount: intermediateStops.length,
     intermediateStops,
     upcomingDepartures,
+    allRouteDepartures,
     serviceEndedToday,
     lastDepartedTodayTime,
     nearbyDirectAlternatives: findNearbyDirectAlternatives(fromStop.name, toStop.name, serviceDay, nowMins),

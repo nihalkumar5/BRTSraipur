@@ -46,11 +46,15 @@ export interface UpcomingDeparture {
   departureTime: string;
   arrivalTime: string;
   departureMins: number;
+  arrivalMins?: number;
   diffMins: number;
   isNextDay: boolean;
   isDeparted?: boolean;
   isLastToday?: boolean;
   isInTransit?: boolean;
+  isArrived?: boolean;
+  isSelected?: boolean;
+  serviceName?: string;
   currentStopIndex?: number;
 }
 
@@ -90,6 +94,7 @@ export interface ActiveJourney {
   intermediateStopsCount: number;
   intermediateStops: JourneyStopInfo[];
   upcomingDepartures: UpcomingDeparture[];
+  allRouteDepartures?: UpcomingDeparture[];
   isTransfer?: boolean;
   transferHub?: string;
   transferWaitMins?: number;

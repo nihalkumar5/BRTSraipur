@@ -41,6 +41,7 @@ import {
   ShieldCheck,
   ChevronRight,
   Zap,
+  AlertCircle,
 } from 'lucide-react-native';
 import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import {
@@ -623,6 +624,33 @@ export default function LiveBusScreen() {
     return currentTimeMins >= journey.arrivalMins;
   }, [journey, currentTimeMins]);
 
+  // Complete list of departures for current journey (including past running and upcoming)
+  const allAvailableDepartures = useMemo(() => {
+    if (!journey) return [];
+    if (journey.allRouteDepartures && journey.allRouteDepartures.length > 0) {
+      return journey.allRouteDepartures;
+    }
+    return journey.upcomingDepartures || [];
+  }, [journey]);
+
+  // Quick horizontal departure chips around current selected / active bus
+  const quickDeparturesList = useMemo(() => {
+    if (!journey) return [];
+    const list = allAvailableDepartures;
+    if (list.length <= 6) return list;
+    const selIdx = list.findIndex(d => d.tripId === journey.trip.id);
+    if (selIdx >= 0) {
+      const start = Math.max(0, Math.min(selIdx - 1, list.length - 5));
+      return list.slice(start, start + 5);
+    }
+    const activeIdx = list.findIndex(d => !d.isArrived);
+    if (activeIdx >= 0) {
+      const start = Math.max(0, Math.min(activeIdx - 1, list.length - 5));
+      return list.slice(start, start + 5);
+    }
+    return list.slice(0, 5);
+  }, [journey, allAvailableDepartures]);
+
   const heroNextStopLabel = useMemo(() => {
     if (!journey) return 'NEXT STOP';
     if (isBeforeDeparture) return 'BOARDING AT';
@@ -1099,21 +1127,33 @@ export default function LiveBusScreen() {
                 ? 'Bus Track'
                 : "I'm Onboard · Live"}
             </Text>
-            <Text style={styles.pageSubHeading} numberOfLines={1}>
-              {planningMode === 'next'
-                ? 'Tatpar BRTS · Nava Raipur Express'
-                : journey
-                  ? `${journey.fromStop.shortName || journey.fromStop.name} → ${journey.toStop.shortName || journey.toStop.name}`
+            {planningMode === 'onboard' && journey ? (
+              <TouchableOpacity
+                onPress={() => setModalVisible(true)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                accessibilityLabel="Change route stations"
+              >
+                <Text style={styles.pageSubHeading} numberOfLines={1}>
+                  {`${journey.fromStop.shortName || journey.fromStop.name} → ${journey.toStop.shortName || journey.toStop.name}`}
+                  <Text style={{ color: '#4338CA', fontSize: 11 }}> ✎ Change</Text>
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.pageSubHeading} numberOfLines={1}>
+                {planningMode === 'next'
+                  ? 'Tatpar BRTS · Nava Raipur Express'
                   : 'Real-time in-bus stop tracking'}
-            </Text>
+              </Text>
+            )}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {planningMode === 'onboard' && journey ? (
               <TouchableOpacity
-                onPress={() => openPicker('to')}
+                onPress={() => setDeparturesExpanded(true)}
                 style={styles.headerSwitchBusBtn}
                 activeOpacity={0.7}
-                accessibilityLabel="Switch bus route"
+                accessibilityLabel="Switch bus departure"
               >
                 <Text style={styles.headerSwitchBusText}>Switch Bus ✎</Text>
               </TouchableOpacity>
@@ -2205,6 +2245,94 @@ export default function LiveBusScreen() {
                 </View>
               </Animated.View>
 
+              {/* ONBOARD BUS DEPARTURE SELECTOR BAR */}
+              <View style={styles.onboardDepartureBarCard}>
+                <View style={styles.onboardDepartureBarHeader}>
+                  <View style={styles.onboardDepartureBarLeft}>
+                    <View style={[styles.onboardDeparturePulseDot, { backgroundColor: isJourneyCompleted ? '#94A3B8' : '#10B981' }]} />
+                    <Text style={styles.onboardDepartureBarTitle} numberOfLines={1}>
+                      Boarded: <Text style={{ fontWeight: '700', color: '#101828' }}>{journey.fromTime}</Text> Bus
+                      <Text style={{ fontWeight: '400', color: '#64748B', fontSize: 12 }}>
+                        {isBeforeDeparture ? ' · Boarding' : isJourneyCompleted ? ' · Arrived' : ' · Live'}
+                      </Text>
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setDeparturesExpanded(true)}
+                    style={styles.onboardDepartureBarChangeBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.onboardDepartureBarChangeText}>Switch Bus ▾</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Soft notice if selected bus has already reached destination */}
+                {isJourneyCompleted && (
+                  <TouchableOpacity
+                    style={styles.onboardArrivedNotice}
+                    onPress={() => setDeparturesExpanded(true)}
+                    activeOpacity={0.8}
+                  >
+                    <AlertCircle size={13.5} color="#B45309" strokeWidth={2.2} />
+                    <Text style={styles.onboardArrivedNoticeText} numberOfLines={1}>
+                      This bus reached destination. On a different bus? <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }}>Change bus ➔</Text>
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Quick Departure Chips */}
+                {quickDeparturesList.length > 1 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.onboardQuickChipsScroll}
+                  >
+                    {quickDeparturesList.map((dep) => {
+                      const isSel = dep.tripId === journey.trip.id;
+                      return (
+                        <TouchableOpacity
+                          key={`chip_${dep.tripId}_${dep.departureTime}`}
+                          onPress={() => {
+                            setSelectedTripId(dep.tripId);
+                            triggerCardBounce();
+                          }}
+                          style={[
+                            styles.onboardQuickChip,
+                            isSel && styles.onboardQuickChipSelected,
+                          ]}
+                          activeOpacity={0.75}
+                        >
+                          {dep.isInTransit && !dep.isArrived && (
+                            <View style={styles.chipLivePulseDot} />
+                          )}
+                          <Text
+                            style={[
+                              styles.onboardQuickChipTime,
+                              isSel && styles.onboardQuickChipTimeSelected,
+                            ]}
+                          >
+                            {dep.departureTime}
+                          </Text>
+                          {isSel ? (
+                            <Check size={11} color="#FFFFFF" strokeWidth={3} style={{ marginLeft: 3 }} />
+                          ) : dep.isArrived ? (
+                            <Text style={styles.onboardChipArrivedIcon}>🏁</Text>
+                          ) : null}
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity
+                      onPress={() => setDeparturesExpanded(true)}
+                      style={styles.onboardQuickChipMore}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={styles.onboardQuickChipMoreText}>All Buses ▾</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                )}
+              </View>
+
               {/* 2. REMAINING TIME & FARE DUAL CARDS */}
               <View style={styles.metricsGridRow}>
                 {/* CARD 1: ESTIMATED REMAINING TIME (SIGNATURE BLUE THEMED) */}
@@ -3063,13 +3191,16 @@ export default function LiveBusScreen() {
               {/* MODAL HEADER */}
               <View style={styles.departuresModalHeaderRow}>
                 <View style={{ flex: 1, marginRight: 12 }}>
-                  <Text style={styles.departuresModalTitle}>Choose a departure</Text>
+                  <Text style={styles.departuresModalTitle}>
+                    {planningMode === 'onboard' ? 'Select Bus Departure' : 'Choose a departure'}
+                  </Text>
                   <Text style={styles.departuresModalRouteSubtitle} numberOfLines={1}>
                     {journey.fromStop.shortName || journey.fromStop.name} → {journey.toStop.shortName || journey.toStop.name}
                   </Text>
                   <Text style={styles.departuresModalCountSubtitle}>
-                    {(journey.upcomingDepartures || []).length}{' '}
-                    {(journey.upcomingDepartures || []).length === 1 ? 'bus' : 'buses'} available
+                    {planningMode === 'onboard'
+                      ? 'Tap the bus you boarded to get accurate live stops & ETA'
+                      : `${allAvailableDepartures.length} ${allAvailableDepartures.length === 1 ? 'bus' : 'buses'} available today`}
                   </Text>
                 </View>
 
@@ -3084,6 +3215,22 @@ export default function LiveBusScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* Reset to Auto-detect button if user has manually selected a trip */}
+              {selectedTripId ? (
+                <TouchableOpacity
+                  style={styles.departuresAutoDetectBtn}
+                  onPress={() => {
+                    setSelectedTripId(null);
+                    setDeparturesExpanded(false);
+                    triggerCardBounce();
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <RotateCcw size={13} color="#18258F" strokeWidth={2.4} />
+                  <Text style={styles.departuresAutoDetectText}>Reset to Auto-detect Live Bus</Text>
+                </TouchableOpacity>
+              ) : null}
+
               <View style={styles.departuresModalDivider} />
 
               {/* SINGLE COLUMN DEPARTURES LIST */}
@@ -3092,9 +3239,8 @@ export default function LiveBusScreen() {
                 style={styles.departuresModalScroll}
                 contentContainerStyle={styles.departuresModalListContent}
               >
-                {(journey.upcomingDepartures || []).map((dep, index) => {
+                {allAvailableDepartures.map((dep, index) => {
                   const isSelected = journey.trip.id === dep.tripId;
-                  const isFirstUpcoming = index === 0;
 
                   return (
                     <TouchableOpacity
@@ -3110,7 +3256,7 @@ export default function LiveBusScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      {/* Left: Route number + Service */}
+                      {/* Left: Route number + Service + Time range */}
                       <View style={styles.departureRowLeft}>
                         <View style={styles.departureRowRouteWrap}>
                           <Text
@@ -3121,6 +3267,16 @@ export default function LiveBusScreen() {
                           >
                             {dep.route || journey.trip.routeNumber || 'BRT'}
                           </Text>
+                          {dep.arrivalTime ? (
+                            <Text
+                              style={[
+                                styles.departureRowTimeSpan,
+                                isSelected && styles.departureRowTimeSpanSelected,
+                              ]}
+                            >
+                              {dep.departureTime} → {dep.arrivalTime}
+                            </Text>
+                          ) : null}
                         </View>
                         <Text
                           style={[
@@ -3129,28 +3285,32 @@ export default function LiveBusScreen() {
                           ]}
                           numberOfLines={1}
                         >
-                          {journey.trip.serviceName || 'AC Express'}
+                          {dep.serviceName || journey.trip.serviceName || 'AC Express'}
                         </Text>
                       </View>
 
-                      {/* Right: Departure time + Selection badge / hollow dot */}
+                      {/* Right: Status badge / Selected badge */}
                       <View style={styles.departureRowRight}>
-                        <Text
-                          style={[
-                            styles.departureRowTimeText,
-                            isSelected && styles.departureRowTimeTextSelected,
-                          ]}
-                        >
-                          {dep.departureTime}
-                        </Text>
-
                         {isSelected ? (
                           <View style={styles.departureSelectedBadge}>
-                            <View style={styles.departureSelectedDot} />
+                            <Check size={11} color="#18258F" strokeWidth={3} />
                             <Text style={styles.departureSelectedBadgeText}>
-                              {isFirstUpcoming ? 'NEXT' : 'Selected'}
+                              Selected
                             </Text>
                           </View>
+                        ) : dep.isInTransit && !dep.isArrived ? (
+                          <View style={styles.departureLiveBadge}>
+                            <View style={styles.chipLivePulseDot} />
+                            <Text style={styles.departureLiveBadgeText}>Live</Text>
+                          </View>
+                        ) : dep.isArrived ? (
+                          <View style={styles.departureArrivedBadge}>
+                            <Text style={styles.departureArrivedBadgeText}>Arrived</Text>
+                          </View>
+                        ) : !dep.isDeparted ? (
+                          <Text style={styles.departureUpcomingText}>
+                            in {dep.diffMins}m
+                          </Text>
                         ) : (
                           <View style={styles.departureHollowDot} />
                         )}
@@ -4163,6 +4323,198 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
     backgroundColor: '#FFFFFF',
+  },
+  departuresAutoDetectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: '#EEF2FF',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  departuresAutoDetectText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+  departureRowTimeSpan: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    color: '#475569',
+    marginLeft: 8,
+  },
+  departureRowTimeSpanSelected: {
+    color: '#18258F',
+    fontWeight: '600',
+  },
+  departureLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  departureLiveBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  departureArrivedBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  departureArrivedBadgeText: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    color: '#64748B',
+  },
+  departureUpcomingText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2563EB',
+  },
+
+  /* ONBOARD DEPARTURE BAR CARD */
+  onboardDepartureBarCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    marginTop: 10,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  onboardDepartureBarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  onboardDepartureBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  onboardDeparturePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  onboardDepartureBarTitle: {
+    fontFamily: FONT.medium,
+    fontSize: 13,
+    color: '#334155',
+    flex: 1,
+  },
+  onboardDepartureBarChangeBtn: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  onboardDepartureBarChangeText: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#18258F',
+  },
+  onboardArrivedNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  onboardArrivedNoticeText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#92400E',
+    flex: 1,
+  },
+  onboardQuickChipsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 10,
+    paddingRight: 4,
+  },
+  onboardQuickChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 4,
+  },
+  onboardQuickChipSelected: {
+    backgroundColor: '#18258F',
+    borderColor: '#18258F',
+  },
+  chipLivePulseDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#10B981',
+  },
+  onboardQuickChipTime: {
+    fontFamily: FONT.semiBold,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  onboardQuickChipTimeSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  onboardChipArrivedIcon: {
+    fontSize: 10,
+    marginLeft: 2,
+  },
+  onboardQuickChipMore: {
+    paddingHorizontal: 9,
+    paddingVertical: 5.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#94A3B8',
+    backgroundColor: '#FAFAFA',
+  },
+  onboardQuickChipMoreText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#64748B',
   },
 
   /* ROUTE STATUS COMPONENT (REPLACES TRAVEL TIME & FARE CARDS) */
