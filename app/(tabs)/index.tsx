@@ -1752,8 +1752,13 @@ export default function LiveBusScreen() {
                   );
                 })()}
 
-                {/* ROUTE STATUS COMPONENT (COMBINES STATUS, TIME, AND LINK) */}
-                <View style={styles.cleanRouteStatusCard}>
+                {/* ROUTE STATUS COMPONENT (PRO UI/UX REDESIGN: PROMINENT TRAVEL TIME & SCHEDULE HERO) */}
+                <TouchableOpacity
+                  style={styles.cleanRouteStatusCard}
+                  onPress={() => setRouteDetailsModalVisible(true)}
+                  activeOpacity={0.88}
+                  accessibilityLabel="View full route details and intermediate stops"
+                >
                   <View style={styles.cleanRouteStatusTopRow}>
                     <Text style={styles.cleanRouteStatusLabel}>Route status</Text>
                     <View style={styles.cleanRouteStatusLiveRow}>
@@ -1766,19 +1771,36 @@ export default function LiveBusScreen() {
                     {journey.fromStop.shortName} → {journey.toStop.shortName}
                   </Text>
 
-                  <View style={styles.cleanRouteStatusBottomRow}>
-                    <Text style={styles.cleanRouteStatusDetails}>
-                      {journey.durationMins} min · {journey.fromTime} → {journey.toTime}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setRouteDetailsModalVisible(true)}
-                      activeOpacity={0.7}
-                      style={styles.cleanRouteStatusViewBtn}
-                    >
-                      <Text style={styles.cleanRouteStatusViewText}>View route →</Text>
-                    </TouchableOpacity>
+                  {/* PROMINENT TRAVEL TIME & SCHEDULE HERO STRIP */}
+                  <View style={styles.cleanRouteStatusHighlightBox}>
+                    {/* Left: Prominent Travel Time Callout */}
+                    <View style={styles.cleanTravelTimeCol}>
+                      <View style={styles.cleanTravelTimeBadge}>
+                        <Clock size={16} color="#18258F" strokeWidth={2.5} />
+                        <Text style={styles.cleanTravelTimeValue}>{journey.durationMins} min</Text>
+                      </View>
+                      <Text style={styles.cleanTravelTimeSubtext}>
+                        {journey.durationMins >= 60
+                          ? `~${Math.floor(journey.durationMins / 60)}h ${journey.durationMins % 60 ? `${journey.durationMins % 60}m ` : ''}travel time`
+                          : 'Est. travel time'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.cleanRouteStatusDividerVertical} />
+
+                    {/* Right: Departure → Arrival Window & View Route */}
+                    <View style={styles.cleanRouteWindowCol}>
+                      <View style={styles.cleanRouteWindowTimes}>
+                        <Text style={styles.cleanRouteWindowTimeBold}>{journey.fromTime}</Text>
+                        <ArrowRight size={11} color="#64748B" strokeWidth={2.4} style={{ marginHorizontal: 4 }} />
+                        <Text style={styles.cleanRouteWindowTimeBold}>{journey.toTime}</Text>
+                      </View>
+                      <View style={styles.cleanRouteStatusViewBtn}>
+                        <Text style={styles.cleanRouteStatusViewText}>View route →</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
+                </TouchableOpacity>
 
                 {/* SMART TRIP GUARD & STOP ALARM */}
                 <TouchableOpacity
@@ -4366,14 +4388,20 @@ const styles = StyleSheet.create({
     color: '#2563EB',
   },
 
-  /* ROUTE STATUS COMPONENT (REPLACES TRAVEL TIME & FARE CARDS) */
+  /* ROUTE STATUS COMPONENT (PRO UI/UX REDESIGN: PROMINENT TRAVEL TIME & SCHEDULE HERO) */
   cleanRouteStatusCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     borderWidth: 1.2,
-    borderColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
   cleanRouteStatusTopRow: {
     flexDirection: 'row',
@@ -4383,11 +4411,11 @@ const styles = StyleSheet.create({
   },
   cleanRouteStatusLabel: {
     fontFamily: FONT.semiBold,
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   cleanRouteStatusLiveRow: {
     flexDirection: 'row',
@@ -4408,30 +4436,74 @@ const styles = StyleSheet.create({
   },
   cleanRouteStatusStations: {
     fontFamily: FONT.bold,
-    fontSize: 15.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 10,
+    letterSpacing: -0.2,
   },
-  cleanRouteStatusBottomRow: {
+  cleanRouteStatusHighlightBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#EDF2F7',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  cleanRouteStatusDetails: {
+  cleanTravelTimeCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  cleanTravelTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  cleanTravelTimeValue: {
+    fontFamily: FONT.bold,
+    fontSize: 17.5,
+    fontWeight: '800',
+    color: '#18258F',
+    letterSpacing: -0.4,
+  },
+  cleanTravelTimeSubtext: {
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '500',
-    color: '#475569',
+    color: '#64748B',
+    marginTop: 2,
+  },
+  cleanRouteStatusDividerVertical: {
+    width: 1,
+    height: 38,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 10,
+  },
+  cleanRouteWindowCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  cleanRouteWindowTimes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  cleanRouteWindowTimeBold: {
+    fontFamily: FONT.bold,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#1E293B',
   },
   cleanRouteStatusViewBtn: {
-    paddingVertical: 2,
-    paddingLeft: 6,
+    paddingVertical: 1,
   },
   cleanRouteStatusViewText: {
-    fontFamily: FONT.semiBold,
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
     color: '#18258F',
   },
 
