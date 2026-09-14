@@ -632,6 +632,24 @@ export default function LiveBusScreen() {
     return journey.upcomingDepartures || [];
   }, [journey]);
 
+  // Minimal quick 3-4 departure times around current bus
+  const quickDeparturesList = useMemo(() => {
+    if (!journey) return [];
+    const list = allAvailableDepartures;
+    if (list.length <= 4) return list;
+    const selIdx = list.findIndex(d => d.tripId === journey.trip.id);
+    if (selIdx >= 0) {
+      const start = Math.max(0, Math.min(selIdx - 1, list.length - 4));
+      return list.slice(start, start + 4);
+    }
+    const activeIdx = list.findIndex(d => !d.isArrived);
+    if (activeIdx >= 0) {
+      const start = Math.max(0, Math.min(activeIdx - 1, list.length - 4));
+      return list.slice(start, start + 4);
+    }
+    return list.slice(0, 4);
+  }, [journey, allAvailableDepartures]);
+
   const heroNextStopLabel = useMemo(() => {
     if (!journey) return 'NEXT STOP';
     if (isBeforeDeparture) return 'BOARDING AT';
@@ -2213,6 +2231,76 @@ export default function LiveBusScreen() {
                   </View>
                 </View>
               </Animated.View>
+
+              {/* MINIMAL QUICK DEPARTURE PILLS (3-4 times for fast selection) */}
+              {quickDeparturesList.length > 1 && (
+                <View style={styles.quickTimePillsContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.quickTimePillsScroll}
+                  >
+                    {quickDeparturesList.map((dep) => {
+                      const isSel = journey.trip.id === dep.tripId;
+                      return (
+                        <TouchableOpacity
+                          key={`quick_dep_${dep.tripId}_${dep.departureTime}`}
+                          onPress={() => {
+                            if (isSel && selectedTripId) {
+                              setSelectedTripId(null);
+                            } else {
+                              setSelectedTripId(dep.tripId);
+                            }
+                            triggerCardBounce();
+                          }}
+                          style={[
+                            styles.quickTimePill,
+                            isSel && styles.quickTimePillSelected,
+                          ]}
+                          activeOpacity={0.75}
+                        >
+                          {dep.isInTransit && !dep.isArrived && !isSel && (
+                            <View style={styles.quickTimeLiveDot} />
+                          )}
+                          <Text
+                            style={[
+                              styles.quickTimePillText,
+                              isSel && styles.quickTimePillTextSelected,
+                            ]}
+                          >
+                            {dep.departureTime}
+                          </Text>
+                          {isSel && (
+                            <Check size={11} color="#FFFFFF" strokeWidth={3} style={{ marginLeft: 3 }} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+
+                    {selectedTripId && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedTripId(null);
+                          triggerCardBounce();
+                        }}
+                        style={styles.quickTimeResetPill}
+                        activeOpacity={0.75}
+                      >
+                        <RotateCcw size={10} color="#059669" strokeWidth={2.4} style={{ marginRight: 3 }} />
+                        <Text style={styles.quickTimeResetText}>Auto</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                      onPress={() => setDeparturesExpanded(true)}
+                      style={styles.quickTimeMorePill}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={styles.quickTimeMoreText}>More ▾</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              )}
 
               {/* 2. REMAINING TIME & FARE DUAL CARDS */}
               <View style={styles.metricsGridRow}>
@@ -5643,6 +5731,88 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#18258F',
     borderRadius: 3,
+  },
+
+  /* MINIMAL QUICK TIME PILLS */
+  quickTimePillsContainer: {
+    marginBottom: 16,
+  },
+  quickTimePillsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+    gap: 8,
+  },
+  quickTimePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+  },
+  quickTimePillSelected: {
+    backgroundColor: '#18258F',
+    borderColor: '#18258F',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  quickTimeLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 5,
+  },
+  quickTimePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  quickTimePillTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  quickTimeResetPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+  },
+  quickTimeResetText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  quickTimeMorePill: {
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: 'rgba(24, 37, 143, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(24, 37, 143, 0.12)',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+  },
+  quickTimeMoreText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#18258F',
   },
 
   /* COMPACT ONBOARD JOURNEY MAP */
