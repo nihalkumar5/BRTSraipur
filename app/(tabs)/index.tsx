@@ -730,29 +730,14 @@ export default function LiveBusScreen() {
     return '● Arriving now';
   }, [journey, isBeforeDeparture, isAtDeparture, isJourneyCompleted, currentTimeMins]);
 
-  // Focused stops to display in compact journey map (up to 3 passed + current + next 4 upcoming)
+  // Complete stops list in journey sequence (user scrolls to view full route timeline)
   const displayedOnboardStops = useMemo(() => {
     if (!journey) return [];
-    const total = journey.intermediateStops.length;
-    if (total <= 8 || showAllOnboardStops) {
-      return journey.intermediateStops.map((stop, originalIndex) => ({ stop, originalIndex }));
-    }
-    const startIdx = Math.max(0, activeCurrentStopIdx - 3);
-    const endIdx = Math.min(total, activeCurrentStopIdx + 5);
-    return journey.intermediateStops
-      .map((stop, originalIndex) => ({ stop, originalIndex }))
-      .slice(startIdx, endIdx);
-  }, [journey, activeCurrentStopIdx, showAllOnboardStops]);
+    return journey.intermediateStops.map((stop, originalIndex) => ({ stop, originalIndex }));
+  }, [journey]);
 
-  // Hidden upcoming stops count beyond the compact view
-  const hiddenUpcomingCount = useMemo(() => {
-    if (!journey || showAllOnboardStops) return 0;
-    const total = journey.intermediateStops.length;
-    const displayedMaxIdx = displayedOnboardStops.length > 0 
-      ? displayedOnboardStops[displayedOnboardStops.length - 1].originalIndex 
-      : 0;
-    return Math.max(0, total - 1 - displayedMaxIdx);
-  }, [journey, displayedOnboardStops, showAllOnboardStops]);
+  // Hidden upcoming stops count (0 since full route is displayed)
+  const hiddenUpcomingCount = 0;
 
   // Filter stations for modal picker
   const filteredStops = useMemo(() => {
@@ -763,7 +748,8 @@ export default function LiveBusScreen() {
         s.name.toLowerCase().includes(q) ||
         s.shortName.toLowerCase().includes(q) ||
         s.code.toLowerCase().includes(q) ||
-        s.hindiName.includes(q)
+        s.hindiName.includes(q) ||
+        (s.landmark && s.landmark.toLowerCase().includes(q))
     );
   }, [searchQuery]);
 
@@ -1531,8 +1517,7 @@ export default function LiveBusScreen() {
 
                         {/* SUBTITLE */}
                         <Text style={styles.noServiceSubtitle}>
-                          {journey.lastDepartedTodayTime ? `The last bus departed at ${journey.lastDepartedTodayTime}.\n` : 'Service has ended for today.\n'}
-                          Tomorrow’s service will resume after 12:00 AM (next bus at {journey.fromTime}).
+                          First bus departs tomorrow at {journey.fromTime}.
                         </Text>
                       </View>
 
@@ -1744,20 +1729,47 @@ export default function LiveBusScreen() {
                   </TouchableOpacity>
                 )}
 
+                {/* SMART TRIP GUARD & STOP ALARM (SLEEK NOTIFICATION STRIP - POSITIONED DIRECTLY UNDER BUS CARD) */}
+                {activeTripAlert ? (
+                  <ActiveTripCard
+                    alert={activeTripAlert}
+                    containerStyle={{ marginHorizontal: 0, marginTop: 0, marginBottom: 14 }}
+                    onOpenSettings={() => setSmartAlertModalVisible(true)}
+                    onDismiss={() => setCancelConfirmVisible(true)}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.onboardSetAlarmBar, { marginBottom: 14 }]}
+                    onPress={() => setSmartAlertModalVisible(true)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.onboardSetAlarmLeft}>
+                      <Bell size={13.5} color="#93C5FD" strokeWidth={2.4} />
+                      <Text style={styles.onboardSetAlarmTitle}>Trip Alarm</Text>
+                      <Text style={styles.onboardSetAlarmSub}>· Alerts for stops & departures</Text>
+                    </View>
+                    <View style={styles.onboardSetAlarmBtn}>
+                      <Text style={styles.onboardSetAlarmBtnText}>Set</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
                 {/* NEXT DEPARTURES STRIP (CLEAN MINIMAL TEXT ROW) */}
                 {(() => {
                   const allUpcomingDeps = journey.upcomingDepartures || [];
                   if (allUpcomingDeps.length === 0) return null;
 
                   const otherDeps = allUpcomingDeps
-                    .filter(dep => dep.tripId !== journey.trip.id)
+                    .filter(dep => dep.tripId !== journey.trip.id && !dep.isDeparted && !dep.isLastToday)
                     .slice(0, 3);
                   if (otherDeps.length === 0) return null;
 
                   return (
                     <View style={styles.cleanNextDeparturesCard}>
                       <View style={styles.cleanNextDeparturesHeaderRow}>
-                        <Text style={styles.cleanNextDeparturesTitle}>Next departures</Text>
+                        <Text style={styles.cleanNextDeparturesTitle}>
+                          {journey.serviceEndedToday ? "Tomorrow's departures" : "Next departures"}
+                        </Text>
                         <TouchableOpacity
                           onPress={() => setDeparturesExpanded(true)}
                           activeOpacity={0.7}
@@ -1805,8 +1817,20 @@ export default function LiveBusScreen() {
                   <View style={styles.cleanRouteStatusTopRow}>
                     <Text style={styles.cleanRouteStatusLabel}>Route status</Text>
                     <View style={styles.cleanRouteStatusLiveRow}>
-                      <View style={styles.cleanStatusGreenDot} />
-                      <Text style={styles.cleanRouteStatusLiveText}>On schedule</Text>
+                      <View
+                        style={[
+                          styles.cleanStatusGreenDot,
+                          journey.serviceEndedToday && { backgroundColor: '#94A3B8' },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.cleanRouteStatusLiveText,
+                          journey.serviceEndedToday && { color: '#64748B' },
+                        ]}
+                      >
+                        {journey.serviceEndedToday ? 'Closed for tonight' : 'On schedule'}
+                      </Text>
                     </View>
                   </View>
 
@@ -1842,59 +1866,6 @@ export default function LiveBusScreen() {
                         <Text style={styles.cleanRouteStatusViewText}>View route →</Text>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-
-                {/* SMART TRIP GUARD & STOP ALARM */}
-                <TouchableOpacity
-                  style={[
-                    styles.smartGuardCard,
-                    activeTripAlert && styles.smartGuardCardActive,
-                  ]}
-                  onPress={() => setSmartAlertModalVisible(true)}
-                  activeOpacity={0.85}
-                >
-                  <View
-                    style={[
-                      styles.smartGuardIconBox,
-                      activeTripAlert && styles.smartGuardIconBoxActive,
-                    ]}
-                  >
-                    {activeTripAlert ? (
-                      <BellRing size={18} color="#15803D" strokeWidth={2.4} />
-                    ) : (
-                      <BellRing size={18} color="#18258F" strokeWidth={2.2} />
-                    )}
-                  </View>
-                  <View style={styles.smartGuardTextBox}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.smartGuardTitle}>Trip Alarm</Text>
-                      {activeTripAlert && (
-                        <View style={styles.armedBadge}>
-                          <Text style={styles.armedBadgeText}>ACTIVE</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
-                      {activeTripAlert
-                        ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
-                        : 'Departure reminder & destination stop alarm'}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.smartGuardBtn,
-                      activeTripAlert && styles.smartGuardBtnActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.smartGuardBtnText,
-                        activeTripAlert && styles.smartGuardBtnTextActive,
-                      ]}
-                    >
-                      {activeTripAlert ? 'Manage' : 'Set Alarm'}
-                    </Text>
                   </View>
                 </TouchableOpacity>
 
@@ -2069,24 +2040,6 @@ export default function LiveBusScreen() {
                   </View>
                 )}
 
-                {/* VIEW COMPLETE TIMETABLE FOOTER CTA */}
-                <TouchableOpacity
-                  style={styles.cleanTimetableFooterCta}
-                  onPress={() => {
-                    try {
-                      router.navigate('/timetable' as any);
-                    } catch (e) {
-                      router.navigate('/(tabs)/timetable' as any);
-                    }
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <View style={styles.cleanTimetableFooterLeft}>
-                    <Calendar size={15} color="#18258F" strokeWidth={2.2} />
-                    <Text style={styles.cleanTimetableFooterText}>View full timetable & all stops</Text>
-                  </View>
-                  <ChevronRight size={15} color="#18258F" strokeWidth={2.2} />
-                </TouchableOpacity>
 
                 {/* PROMOTIONAL BANNER IMAGE */}
                 <TouchableOpacity
@@ -2300,6 +2253,30 @@ export default function LiveBusScreen() {
               {/* MINIMAL QUICK DEPARTURE PILLS (3-4 times for fast selection) */}
               {quickDeparturesList.length > 1 && (
                 <View style={styles.quickTimePillsContainer}>
+                  {/* HEADING ROW */}
+                  <View style={styles.quickTimeHeaderRow}>
+                    <View style={styles.quickTimeHeaderLeft}>
+                      <Clock size={13} color="#18258F" strokeWidth={2.4} />
+                      <Text style={styles.quickTimeHeaderTitle}>Departure Time</Text>
+                    </View>
+                    {selectedTripId ? (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedTripId(null);
+                          triggerCardBounce();
+                        }}
+                        style={styles.quickTimeResetBtn}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <RotateCcw size={10} color="#059669" strokeWidth={2.4} style={{ marginRight: 3 }} />
+                        <Text style={styles.quickTimeResetLink}>Reset to live</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={styles.quickTimeHeaderSub}>Select departure</Text>
+                    )}
+                  </View>
+
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -2341,20 +2318,6 @@ export default function LiveBusScreen() {
                         </TouchableOpacity>
                       );
                     })}
-
-                    {selectedTripId && (
-                      <TouchableOpacity
-                        onPress={() => {
-                          setSelectedTripId(null);
-                          triggerCardBounce();
-                        }}
-                        style={styles.quickTimeResetPill}
-                        activeOpacity={0.75}
-                      >
-                        <RotateCcw size={10} color="#059669" strokeWidth={2.4} style={{ marginRight: 3 }} />
-                        <Text style={styles.quickTimeResetText}>Auto</Text>
-                      </TouchableOpacity>
-                    )}
 
                     <TouchableOpacity
                       onPress={() => setDeparturesExpanded(true)}
@@ -2411,58 +2374,30 @@ export default function LiveBusScreen() {
                 </View>
               </View>
 
-              {/* SMART TRIP GUARD & STOP ALARM */}
-              <TouchableOpacity
-                style={[
-                  styles.smartGuardCard,
-                  activeTripAlert && styles.smartGuardCardActive,
-                ]}
-                onPress={() => setSmartAlertModalVisible(true)}
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    styles.smartGuardIconBox,
-                    activeTripAlert && styles.smartGuardIconBoxActive,
-                  ]}
+              {/* SMART TRIP GUARD & STOP ALARM (SLEEK NOTIFICATION STRIP) */}
+              {activeTripAlert ? (
+                <ActiveTripCard
+                  alert={activeTripAlert}
+                  containerStyle={{ marginHorizontal: 0, marginTop: 0, marginBottom: 18 }}
+                  onOpenSettings={() => setSmartAlertModalVisible(true)}
+                  onDismiss={() => setCancelConfirmVisible(true)}
+                />
+              ) : (
+                <TouchableOpacity
+                  style={styles.onboardSetAlarmBar}
+                  onPress={() => setSmartAlertModalVisible(true)}
+                  activeOpacity={0.75}
                 >
-                  {activeTripAlert ? (
-                    <BellRing size={18} color="#15803D" strokeWidth={2.4} />
-                  ) : (
-                    <BellRing size={18} color="#18258F" strokeWidth={2.2} />
-                  )}
-                </View>
-                <View style={styles.smartGuardTextBox}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.smartGuardTitle}>Trip Alarm</Text>
-                    {activeTripAlert && (
-                      <View style={styles.armedBadge}>
-                        <Text style={styles.armedBadgeText}>ACTIVE</Text>
-                      </View>
-                    )}
+                  <View style={styles.onboardSetAlarmLeft}>
+                    <Bell size={13.5} color="#93C5FD" strokeWidth={2.4} />
+                    <Text style={styles.onboardSetAlarmTitle}>Trip Alarm</Text>
+                    <Text style={styles.onboardSetAlarmSub}>· Alerts for stops & departures</Text>
                   </View>
-                  <Text style={styles.smartGuardSubtitle} numberOfLines={1}>
-                    {activeTripAlert
-                      ? `${activeTripAlert.minutesBeforeDeparture ? `${activeTripAlert.minutesBeforeDeparture}m departure alert` : ''}${activeTripAlert.wakeUpAlarmEnabled ? ' · Wake-up alarm on' : ''}`
-                      : 'Departure reminder & destination stop alarm'}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.smartGuardBtn,
-                    activeTripAlert && styles.smartGuardBtnActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.smartGuardBtnText,
-                      activeTripAlert && styles.smartGuardBtnTextActive,
-                    ]}
-                  >
-                    {activeTripAlert ? 'Manage' : 'Set Alarm'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                  <View style={styles.onboardSetAlarmBtn}>
+                    <Text style={styles.onboardSetAlarmBtnText}>Set</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
 
               {/* 3. YOUR JOURNEY (COMPACT ROUTE PROGRESS MAP) */}
               <View style={styles.compactJourneyCard}>
@@ -2613,46 +2548,21 @@ export default function LiveBusScreen() {
                   })}
                 </View>
 
-                {/* MORE STOPS / VIEW FULL ROUTE FOOTER */}
-                {hiddenUpcomingCount > 0 && !showAllOnboardStops ? (
-                  <View style={styles.compactJourneyMoreSection}>
-                    <TouchableOpacity
-                      onPress={() => setShowAllOnboardStops(true)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.compactJourneyMoreCount}>
-                        + {hiddenUpcomingCount} more stops
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setRouteDetailsModalVisible(true)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.compactJourneyViewFullRouteLink}>
-                        View full route →
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : showAllOnboardStops && journey.intermediateStops.length > 8 ? (
-                  <View style={styles.compactJourneyMoreSection}>
-                    <TouchableOpacity
-                      onPress={() => setShowAllOnboardStops(false)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.compactJourneyViewFullRouteLink}>
-                        Show compact map ↑
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setRouteDetailsModalVisible(true)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.compactJourneyViewFullRouteLink}>
-                        View route details →
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
+                {/* JOURNEY FOOTER META & DETAILS */}
+                <View style={styles.compactJourneyFooter}>
+                  <Text style={styles.compactJourneyFooterMeta}>
+                    {journey.intermediateStops.length} stops total · Nava Raipur BRTS
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setRouteDetailsModalVisible(true)}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Text style={styles.compactJourneyViewFullRouteLink}>
+                      Details ↗
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ) : (
@@ -3231,11 +3141,6 @@ export default function LiveBusScreen() {
                   <Text style={styles.departuresModalRouteSubtitle} numberOfLines={1}>
                     {journey.fromStop.shortName || journey.fromStop.name} → {journey.toStop.shortName || journey.toStop.name}
                   </Text>
-                  <Text style={styles.departuresModalCountSubtitle}>
-                    {planningMode === 'onboard'
-                      ? 'Tap the bus you boarded to get accurate live stops & ETA'
-                      : `${allAvailableDepartures.length} ${allAvailableDepartures.length === 1 ? 'bus' : 'buses'} available today`}
-                  </Text>
                 </View>
 
                 <TouchableOpacity
@@ -3290,38 +3195,15 @@ export default function LiveBusScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      {/* Left: Route number + Service + Time range */}
-                      <View style={styles.departureRowLeft}>
-                        <View style={styles.departureRowRouteWrap}>
-                          <Text
-                            style={[
-                              styles.departureRowRouteText,
-                              isSelected && styles.departureRowRouteTextSelected,
-                            ]}
-                          >
-                            {dep.route || journey.trip.routeNumber || 'BRT'}
-                          </Text>
-                          {dep.arrivalTime ? (
-                            <Text
-                              style={[
-                                styles.departureRowTimeSpan,
-                                isSelected && styles.departureRowTimeSpanSelected,
-                              ]}
-                            >
-                              {dep.departureTime} → {dep.arrivalTime}
-                            </Text>
-                          ) : null}
-                        </View>
-                        <Text
-                          style={[
-                            styles.departureRowServiceText,
-                            isSelected && styles.departureRowServiceTextSelected,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {dep.serviceName || journey.trip.serviceName || 'AC Express'}
-                        </Text>
-                      </View>
+                      {/* Left: Departure time only */}
+                      <Text
+                        style={[
+                          styles.departureRowTimeText,
+                          isSelected && styles.departureRowTimeTextSelected,
+                        ]}
+                      >
+                        {dep.departureTime}
+                      </Text>
 
                       {/* Right: Status badge / Selected badge */}
                       <View style={styles.departureRowRight}>
@@ -4125,7 +4007,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderWidth: 1.5,
     borderColor: '#EDF2F7',
-    marginBottom: 20,
+    marginBottom: 14,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
@@ -4487,18 +4369,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 54,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    minHeight: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#EAECF0',
+    borderBottomColor: '#F1F5F9',
     borderRadius: 12,
   },
   departureRowItemSelected: {
     backgroundColor: '#EEF2FF',
     borderWidth: 1.5,
-    borderColor: '#2438B8',
-    borderBottomColor: '#2438B8',
+    borderColor: '#18258F',
+    borderBottomColor: '#18258F',
     marginVertical: 4,
   },
   departureRowLeft: {
@@ -4534,17 +4416,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   departureRowTimeText: {
-    fontFamily: FONT.semiBold,
-    fontSize: 14.5,
-    fontWeight: '600',
-    color: '#344054',
+    fontFamily: FONT.bold,
+    fontSize: 15.5,
+    fontWeight: '700',
+    color: '#0F172A',
     fontVariant: ['tabular-nums'],
   },
   departureRowTimeTextSelected: {
     fontFamily: FONT.bold,
-    fontWeight: '700',
-    color: '#2438B8',
-    fontSize: 15,
+    fontWeight: '800',
+    color: '#18258F',
+    fontSize: 16,
   },
   departureSelectedBadge: {
     flexDirection: 'row',
@@ -4653,7 +4535,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    marginBottom: 14,
+    marginBottom: 18,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
     shadowColor: '#18258F',
@@ -4998,7 +4880,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 14,
     elevation: 2,
-    marginBottom: 20,
+    marginBottom: 14,
     overflow: 'hidden',
   },
   noServiceTopRow: {
@@ -5284,12 +5166,12 @@ const styles = StyleSheet.create({
   metricsGridRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 18,
     width: '100%',
   },
   metricCard: {
     flex: 1,
-    height: 108,
+    height: 104,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 16,
@@ -5377,20 +5259,20 @@ const styles = StyleSheet.create({
   metricCardValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A', // Punchy deep black typography
+    color: '#0F172A',
     letterSpacing: -0.4,
     marginBottom: 2,
   },
   metricUnitText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#64748B',
   },
   metricCardSub: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '500',
-    color: '#64748B', // Neutral muted subtitle
-    marginTop: 1,
+    color: '#64748B',
+    marginTop: 2,
   },
 
   /* NOTIFICATION ACTION CARD (Coral reserved for Alerts/Reminders) */
@@ -5852,7 +5734,7 @@ const styles = StyleSheet.create({
   /* ========================================================================= */
   onboardContainer: {
     paddingHorizontal: 20,
-    marginTop: 16,
+    marginTop: 18,
   },
   onboardRouteStrip: {
     flexDirection: 'row',
@@ -5910,22 +5792,22 @@ const styles = StyleSheet.create({
   },
   onboardHeroCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 22,
     paddingVertical: 18,
     paddingHorizontal: 20,
     position: 'relative',
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 18,
     borderWidth: 1.5,
     borderColor: '#EDF2F7',
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
     elevation: 3,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 10px 28px rgba(24, 37, 143, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 8px 24px rgba(24, 37, 143, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03)',
         } as any)
       : {}),
   },
@@ -5991,17 +5873,17 @@ const styles = StyleSheet.create({
     color: '#64748B',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginTop: 14,
-    marginBottom: 4,
+    marginTop: 10,
+    marginBottom: 2,
     maxWidth: '60%',
   },
   onboardHeroNextStopTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '800',
     color: '#0B132B',
     letterSpacing: -0.4,
-    marginBottom: 8,
+    marginBottom: 6,
     maxWidth: '60%',
   },
   onboardHeroEtaRow: {
@@ -6036,7 +5918,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#0B132B',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   onboardHeroServiceBadge: {
     fontSize: 12,
@@ -6067,19 +5949,60 @@ const styles = StyleSheet.create({
 
   /* MINIMAL QUICK TIME PILLS */
   quickTimePillsContainer: {
-    marginBottom: 16,
+    marginBottom: 18,
+  },
+  quickTimeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  quickTimeHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  quickTimeHeaderTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.1,
+  },
+  quickTimeHeaderSub: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  quickTimeResetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+  },
+  quickTimeResetLink: {
+    fontFamily: FONT.semiBold,
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '600',
   },
   quickTimePillsScroll: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 2,
-    gap: 8,
+    gap: 10,
   },
   quickTimePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 13,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -6147,13 +6070,60 @@ const styles = StyleSheet.create({
     color: '#18258F',
   },
 
+  /* ONBOARD MINIMAL SET ALARM STRIP (SIGNATURE BLUE STRIP) */
+  onboardSetAlarmBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#18258F',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#18258F',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  onboardSetAlarmLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  onboardSetAlarmTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  onboardSetAlarmSub: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#BFDBFE',
+  },
+  onboardSetAlarmBtn: {
+    paddingHorizontal: 11,
+    paddingVertical: 4.5,
+    borderRadius: 7,
+    backgroundColor: '#FFFFFF',
+  },
+  onboardSetAlarmBtnText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+
   /* COMPACT ONBOARD JOURNEY MAP */
   compactJourneyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: 18,
+    paddingBottom: 18,
     marginBottom: 96,
     borderWidth: 1,
     borderColor: '#E4E7EC',
@@ -6167,8 +6137,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingBottom: 8,
+    marginBottom: 14,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -6234,28 +6204,29 @@ const styles = StyleSheet.create({
   compactJourneyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 34,
-    paddingVertical: 4.5,
+    minHeight: 44,
+    paddingVertical: 7,
     paddingHorizontal: 8,
     borderRadius: 8,
   },
   compactJourneyRowPassed: {
-    minHeight: 28,
-    paddingVertical: 2.5,
+    minHeight: 44,
+    paddingVertical: 7,
     paddingHorizontal: 8,
   },
   compactJourneyRowCurrent: {
     backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginVertical: 4,
+    borderRadius: 10,
   },
   compactJourneyDotCol: {
     width: 24,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginRight: 10,
+    marginRight: 12,
     alignSelf: 'stretch',
   },
   compactJourneyLineTop: {
@@ -6343,9 +6314,9 @@ const styles = StyleSheet.create({
   },
   compactJourneyStationPassed: {
     fontFamily: FONT.medium,
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: '#64748B',
   },
   compactJourneyStationCurrent: {
     fontFamily: FONT.bold,
@@ -6432,25 +6403,23 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 13,
   },
-  compactJourneyMoreSection: {
+  compactJourneyFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
-    paddingBottom: 2,
     marginTop: 6,
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
   },
-  compactJourneyMoreCount: {
+  compactJourneyFooterMeta: {
     fontFamily: FONT.medium,
-    fontSize: 12.5,
-    fontWeight: '500',
-    color: '#64748B',
+    fontSize: 12,
+    color: '#94A3B8',
   },
   compactJourneyViewFullRouteLink: {
     fontFamily: FONT.semiBold,
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#18258F',
   },

@@ -50,7 +50,7 @@ const DEST_DOT = '#F97066';
 export default function FaresScreen() {
   const insets = useSafeAreaInsets();
   const [fromStop, setFromStop] = useState<string>('Raipur Railway Station');
-  const [toStop, setToStop] = useState<string>('HNLU (National Law University)');
+  const [toStop, setToStop] = useState<string>('HNLU');
   const [showFullPolicy, setShowFullPolicy] = useState(false);
 
   // Modal station picker
@@ -194,7 +194,8 @@ export default function FaresScreen() {
         s.name.toLowerCase().includes(q) ||
         s.shortName.toLowerCase().includes(q) ||
         s.code.toLowerCase().includes(q) ||
-        s.hindiName.includes(q)
+        s.hindiName.includes(q) ||
+        (s.landmark && s.landmark.toLowerCase().includes(q))
     );
   }, [searchQuery]);
 

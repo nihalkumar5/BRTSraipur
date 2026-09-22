@@ -1,220 +1,173 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StyleProp, ViewStyle } from 'react-native';
 import {
   Bell,
-  MapPin,
   X,
-  SlidersHorizontal,
 } from 'lucide-react-native';
 import { SmartTripAlert } from '../services/notifications';
 import { FONT } from '../theme/typography';
+import stopsData from '../data/stops.json';
 
 interface ActiveTripCardProps {
   alert: SmartTripAlert;
   onOpenSettings: () => void;
   onDismiss: () => void;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export default function ActiveTripCard({
   alert,
   onOpenSettings,
   onDismiss,
+  containerStyle,
 }: ActiveTripCardProps) {
+  const fromDisp = stopsData.find(s => s.name === alert.fromStop)?.shortName || alert.fromStop.split('(')[0].trim();
+  const toDisp = stopsData.find(s => s.name === alert.toStop)?.shortName || alert.toStop.split('(')[0].trim();
+
   return (
-    <View style={styles.cardContainer}>
-      {/* Top Bar: Active Status & Close */}
-      <View style={styles.topBar}>
-        <View style={styles.statusLeft}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusTitle}>TRIP ALARM ACTIVE</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.dismissBtn}
-          onPress={onDismiss}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          activeOpacity={0.7}
-          accessibilityLabel="Dismiss trip alarm"
-        >
-          <X size={13} color="#FFFFFF" opacity={0.85} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Info Row */}
-      <View style={styles.mainRow}>
-        <View style={styles.badgeBox}>
-          <Text style={styles.badgeText}>{alert.routeBadge}</Text>
+    <View style={[styles.stripContainer, containerStyle]}>
+      <TouchableOpacity
+        style={styles.stripMainTouch}
+        onPress={onOpenSettings}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={`Trip alarm active: ${fromDisp} to ${toDisp} at ${alert.departureTime}. Tap to edit.`}
+      >
+        {/* Left Notification Icon */}
+        <View style={styles.stripIconWrap}>
+          <Bell size={12.5} color="#059669" strokeWidth={2.4} />
+          <View style={styles.stripPulseDot} />
         </View>
 
-        <View style={styles.routeDetails}>
-          <Text style={styles.routeStops} numberOfLines={1}>
-            {alert.fromStop} → {alert.toStop}
-          </Text>
-          <Text style={styles.timeText}>
-            Leaves at <Text style={styles.timeHighlight}>{alert.departureTime}</Text>
+        {/* Center 1-Line Info */}
+        <View style={styles.stripTextCol}>
+          <Text style={styles.stripText} numberOfLines={1}>
+            <Text style={styles.stripRoute}>{fromDisp} → {toDisp}</Text>
+            <Text style={styles.stripDot}> · </Text>
+            <Text style={styles.stripTime}>{alert.departureTime}</Text>
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={onOpenSettings}
-          activeOpacity={0.75}
-        >
-          <SlidersHorizontal size={11} color="#FFFFFF" style={{ marginRight: 4 }} />
-          <Text style={styles.editText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Edit Action Pill */}
+        <View style={styles.stripEditBadge}>
+          <Text style={styles.stripEditText}>Edit</Text>
+        </View>
+      </TouchableOpacity>
 
-      {/* Active Reminder Tags */}
-      <View style={styles.tagsRow}>
-        {alert.minutesBeforeDeparture !== null && (
-          <View style={styles.tag}>
-            <Bell size={10} color="#93C5FD" style={{ marginRight: 4 }} />
-            <Text style={styles.tagText}>
-              {alert.minutesBeforeDeparture}m departure alert
-            </Text>
-          </View>
-        )}
-
-        {alert.wakeUpAlarmEnabled && (
-          <View style={styles.tag}>
-            <MapPin size={10} color="#6EE7B7" style={{ marginRight: 4 }} />
-            <Text style={styles.tagText}>
-              Stop alarm at {alert.toStop}
-            </Text>
-          </View>
-        )}
-      </View>
+      {/* Dismiss (X) Button */}
+      <TouchableOpacity
+        style={styles.stripDismissBtn}
+        onPress={onDismiss}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 8 }}
+        activeOpacity={0.7}
+        accessibilityLabel="Dismiss trip alarm"
+      >
+        <X size={13} color="#94A3B8" strokeWidth={2.4} />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#18258F',
+  stripContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 6,
-    marginBottom: 10,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 8,
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 14,
+    paddingVertical: 9,
+    paddingLeft: 12,
+    paddingRight: 10,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        } as any)
+      : {}),
   },
-  statusLeft: {
+  stripMainTouch: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    minWidth: 0,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34D399',
+  stripIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    position: 'relative',
+  },
+  stripPulseDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#10B981',
+    position: 'absolute',
+    top: 2,
+    right: 2,
+  },
+  stripTextCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
     marginRight: 6,
   },
-  statusTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#A7F3D0',
-    letterSpacing: 0.5,
+  stripText: {
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    color: '#334155',
   },
-  dismissBtn: {
+  stripRoute: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  stripDot: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  stripTime: {
+    fontFamily: FONT.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  stripEditBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginRight: 6,
+  },
+  stripEditText: {
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#18258F',
+  },
+  stripDismissBtn: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  mainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  badgeBox: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 3.5,
-    paddingHorizontal: 7.5,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  badgeText: {
-    fontFamily: FONT.bold,
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#18258F',
-  },
-  routeDetails: {
-    flex: 1,
-  },
-  routeStops: {
-    fontFamily: FONT.bold,
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 1,
-    letterSpacing: -0.2,
-  },
-  timeText: {
-    fontFamily: FONT.regular,
-    fontSize: 11.5,
-    color: '#BFDBFE',
-  },
-  timeHighlight: {
-    fontFamily: FONT.bold,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    paddingVertical: 4.5,
-    paddingHorizontal: 8.5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    marginLeft: 6,
-  },
-  editText: {
-    fontFamily: FONT.bold,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    paddingVertical: 3,
-    paddingHorizontal: 7.5,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  tagText: {
-    fontFamily: FONT.medium,
-    fontSize: 11,
-    color: '#F1F5F9',
+    marginLeft: 2,
   },
 });
