@@ -1173,70 +1173,118 @@ export default function LiveBusScreen() {
         {/* ========================================================================= */}
         {planningMode === 'next' ? (
           <>
-            {/* DOMINANT FROM / TO SELECTION CARD */}
+            {/* DOMINANT FROM / TO SELECTION CARD (PRO TRANSIT UI/UX REDESIGN) */}
             <View style={styles.headerCard}>
-              {/* FROM ROW */}
-              <View style={styles.stationRow}>
-                <View style={[styles.dotIndicator, { backgroundColor: '#10B981' }]} />
-                <TouchableOpacity
-                  style={styles.stationInputTouch}
-                  onPress={() => openPicker('from')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.inputLabel}>FROM</Text>
-                  <Text
+              <View style={styles.journeyTrackWrapper}>
+                {/* LEFT: VISUAL VERTICAL JOURNEY TRACK */}
+                <View style={styles.journeyTrackCol}>
+                  <View style={styles.journeyDotOrigin}>
+                    <View style={styles.journeyDotInnerOrigin} />
+                  </View>
+                  <View style={styles.journeyTrackLine} />
+                  <View style={styles.journeyDotDest}>
+                    <View style={styles.journeyDotInnerDest} />
+                  </View>
+                </View>
+
+                {/* MIDDLE/MAIN: TWO ELEVATED INTERACTIVE INPUT FIELDS */}
+                <View style={styles.journeyInputsCol}>
+                  {/* FROM INPUT BOX */}
+                  <TouchableOpacity
                     style={[
-                      styles.stationText,
-                      !fromStation && styles.placeholderText,
+                      styles.stationInputField,
+                      fromStation ? styles.stationInputFieldFilled : null,
                     ]}
-                    numberOfLines={1}
+                    onPress={() => openPicker('from')}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={fromStation ? `Boarding from ${fromStation}` : "Select boarding stop"}
                   >
-                    {fromStation ? stops.find(s => s.name === fromStation)?.shortName || fromStation : 'Boarding station'}
-                  </Text>
-                </TouchableOpacity>
+                    <View style={styles.stationInputContent}>
+                      <Text style={styles.inputLabel}>FROM · BOARDING</Text>
+                      <Text
+                        style={[
+                          styles.stationText,
+                          !fromStation && styles.placeholderText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {fromStation
+                          ? stops.find(s => s.name === fromStation)?.shortName || fromStation
+                          : 'Select boarding stop...'}
+                      </Text>
+                    </View>
 
-                {fromStation ? (
-                  <TouchableOpacity onPress={clearFrom} style={styles.clearBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <X size={15} color="#556080" />
+                    {fromStation ? (
+                      <TouchableOpacity
+                        onPress={clearFrom}
+                        style={styles.fieldClearBtn}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        accessibilityLabel="Clear boarding stop"
+                      >
+                        <X size={15} color="#64748B" strokeWidth={2.4} />
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.fieldActionIcon}>
+                        <Search size={14} color="#94A3B8" strokeWidth={2.2} />
+                      </View>
+                    )}
                   </TouchableOpacity>
-                ) : null}
-              </View>
 
-              {/* DIVIDER & SWAP BUTTON */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <TouchableOpacity onPress={swapStations} style={styles.swapBtn} activeOpacity={0.7}>
+                  {/* TO INPUT BOX */}
+                  <TouchableOpacity
+                    style={[
+                      styles.stationInputField,
+                      toStation ? styles.stationInputFieldFilled : null,
+                    ]}
+                    onPress={() => openPicker('to')}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={toStation ? `Destination is ${toStation}` : "Select destination stop"}
+                  >
+                    <View style={styles.stationInputContent}>
+                      <Text style={styles.inputLabel}>TO · DESTINATION</Text>
+                      <Text
+                        style={[
+                          styles.stationText,
+                          !toStation && styles.placeholderText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {toStation
+                          ? stops.find(s => s.name === toStation)?.shortName || toStation
+                          : 'Where are you going?'}
+                      </Text>
+                    </View>
+
+                    {toStation ? (
+                      <TouchableOpacity
+                        onPress={clearTo}
+                        style={styles.fieldClearBtn}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        accessibilityLabel="Clear destination stop"
+                      >
+                        <X size={15} color="#64748B" strokeWidth={2.4} />
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.fieldActionIcon}>
+                        <Search size={14} color="#94A3B8" strokeWidth={2.2} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* FLOATING SWAP BUTTON (RIGHT SIDE, CENTERED BETWEEN FROM & TO) */}
+                <TouchableOpacity
+                  onPress={swapStations}
+                  style={styles.floatingSwapBtn}
+                  activeOpacity={0.8}
+                  accessibilityLabel="Swap origin and destination"
+                >
                   <Animated.View style={{ transform: [{ rotate: spinInterpolate }] }}>
-                    <ArrowUpDown size={13} color="#18258F" />
+                    <ArrowUpDown size={14} color="#18258F" strokeWidth={2.4} />
                   </Animated.View>
                 </TouchableOpacity>
-              </View>
-
-              {/* TO ROW */}
-              <View style={styles.stationRow}>
-                <View style={[styles.dotIndicator, { backgroundColor: '#F26B52' }]} />
-                <TouchableOpacity
-                  style={styles.stationInputTouch}
-                  onPress={() => openPicker('to')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.inputLabel}>TO</Text>
-                  <Text
-                    style={[
-                      styles.stationText,
-                      !toStation && styles.placeholderText,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {toStation ? stops.find(s => s.name === toStation)?.shortName || toStation : 'Destination station'}
-                  </Text>
-                </TouchableOpacity>
-
-                {toStation ? (
-                  <TouchableOpacity onPress={clearTo} style={styles.clearBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <X size={15} color="#556080" />
-                  </TouchableOpacity>
-                ) : null}
               </View>
             </View>
 
@@ -3459,78 +3507,159 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 10,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 14,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
   },
-  stationRow: {
+  journeyTrackWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    position: 'relative',
   },
-  dotIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 14,
+  journeyTrackCol: {
+    width: 18,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    alignSelf: 'stretch',
   },
-  stationInputTouch: {
+  journeyDotOrigin: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#D1FAE5',
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  journeyDotInnerOrigin: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#059669',
+  },
+  journeyTrackLine: {
+    flex: 1,
+    width: 2,
+    backgroundColor: '#CBD5E1',
+    marginVertical: 4,
+    borderRadius: 1,
+  },
+  journeyDotDest: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  journeyDotInnerDest: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#DC2626',
+  },
+  journeyInputsCol: {
+    flex: 1,
+    marginLeft: 10,
+    paddingRight: 22,
+    gap: 8,
+  },
+  stationInputField: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 13,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 52,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+  },
+  stationInputFieldFilled: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  stationInputContent: {
     flex: 1,
     justifyContent: 'center',
+    marginRight: 6,
   },
   inputLabel: {
     fontFamily: FONT.bold,
-    fontSize: 10,
-    color: '#6B7280',
+    fontSize: 9.5,
+    color: '#64748B',
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
   stationText: {
     fontFamily: FONT.bold,
-    fontSize: 15.5, // Station name: 15–16 px / 700
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   placeholderText: {
     fontFamily: FONT.medium,
-    fontSize: 14.5,
-    color: '#9CA3AF',
+    fontSize: 13.5,
+    color: '#94A3B8',
     fontWeight: '500',
   },
-  clearBtn: {
-    padding: 6,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
+  fieldActionIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
-    marginVertical: 4,
-    paddingLeft: 22,
+    justifyContent: 'center',
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(24, 37, 143, 0.08)',
+  fieldClearBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  swapBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#F1F3FA',
-    borderWidth: 1,
+  floatingSwapBtn: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    marginTop: -18,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
     borderColor: '#DDE2F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+    zIndex: 10,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
   chipsScroll: {
     marginTop: 14,
