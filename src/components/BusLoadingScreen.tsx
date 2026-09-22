@@ -9,6 +9,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { CitySkylineSvg } from './CitySkylineSvg';
 
 interface BusLoadingScreenProps {
   onFinish?: () => void;
@@ -273,6 +274,15 @@ export default function BusLoadingScreen({
         <View style={styles.footer}>
           <Text style={styles.footerText}>नवा रायपुर अटल नगर · रायपुर बीआरटीएस गाइड</Text>
         </View>
+
+        {/* City Skyline Background Line Drawing */}
+        <CitySkylineSvg
+          width={Dimensions.get('window').width}
+          height={160}
+          color="#FFFFFF"
+          opacity={0.12}
+          style={styles.skylineBg}
+        />
       </Animated.View>
     </View>
   );
@@ -430,5 +440,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.65)',
     letterSpacing: 0.5,
+  },
+  skylineBg: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
   },
 });
