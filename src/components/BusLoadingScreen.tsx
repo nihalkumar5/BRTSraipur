@@ -2,21 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   Animated,
   Easing,
   Platform,
   Dimensions,
 } from 'react-native';
-import Svg, {
-  Rect,
-  Circle,
-  Path,
-  Line,
-  LinearGradient,
-  Stop,
-  Defs,
-} from 'react-native-svg';
 
 interface BusLoadingScreenProps {
   onFinish?: () => void;
@@ -225,158 +217,12 @@ export default function BusLoadingScreen({
               },
             ]}
           >
-            {/* Soft contact shadow on asphalt */}
-            <View style={styles.busContactShadow} />
-
-            {/* Front Headlight Light Beam illuminating ahead */}
-            <View style={styles.headlightCone} />
-
-            {/* Modern RED Electric BRTS Bus Side Profile SVG */}
-            <Svg width={230} height={84} viewBox="0 0 230 84" fill="none">
-              <Defs>
-                {/* Vibrant Red Body Gradient */}
-                <LinearGradient id="redBusBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <Stop offset="0%" stopColor="#F43F5E" />
-                  <Stop offset="25%" stopColor="#E11D48" />
-                  <Stop offset="75%" stopColor="#BE123C" />
-                  <Stop offset="100%" stopColor="#881337" />
-                </LinearGradient>
-                {/* Tinted Panoramic Windows */}
-                <LinearGradient id="busWindowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <Stop offset="0%" stopColor="#0F172A" />
-                  <Stop offset="100%" stopColor="#1E293B" />
-                </LinearGradient>
-                {/* White Racing Stripe */}
-                <LinearGradient id="stripeWhiteGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <Stop offset="0%" stopColor="#FFFFFF" />
-                  <Stop offset="80%" stopColor="#F8FAFC" />
-                  <Stop offset="100%" stopColor="#E2E8F0" />
-                </LinearGradient>
-                {/* LED Banner Display */}
-                <LinearGradient id="ledBannerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <Stop offset="0%" stopColor="#1E1B4B" />
-                  <Stop offset="100%" stopColor="#0F172A" />
-                </LinearGradient>
-              </Defs>
-
-              {/* Roof AC Pod & Aero fairing */}
-              <Rect x={70} y={6} width={76} height={7} rx={3.5} fill="#881337" />
-              <Rect x={75} y={8} width={20} height={3} rx={1.5} fill="#4C0519" />
-              <Rect x={100} y={8} width={20} height={3} rx={1.5} fill="#4C0519" />
-              <Rect x={125} y={8} width={16} height={3} rx={1.5} fill="#4C0519" />
-
-              {/* Main Bus Aerodynamic Red Body */}
-              <Path
-                d="M 16 22
-                   C 16 16, 22 12, 28 12
-                   L 204 12
-                   C 216 12, 224 22, 226 34
-                   L 227 60
-                   C 227 64, 224 66, 218 66
-                   L 18 66
-                   C 14 66, 12 63, 12 58
-                   L 12 28
-                   C 12 24, 14 22, 16 22 Z"
-                fill="url(#redBusBodyGrad)"
-              />
-
-              {/* Front Aerodynamic Windshield */}
-              <Path
-                d="M 198 16
-                   L 208 16
-                   C 218 16, 223 24, 225 36
-                   L 198 36 Z"
-                fill="url(#busWindowGrad)"
-              />
-
-              {/* Panoramic Tinted Side Windows (4 large commuter bays) */}
-              <Rect x={26} y={16} width={38} height={20} rx={3} fill="url(#busWindowGrad)" />
-              <Rect x={68} y={16} width={38} height={20} rx={3} fill="url(#busWindowGrad)" />
-              <Rect x={110} y={16} width={38} height={20} rx={3} fill="url(#busWindowGrad)" />
-              <Rect x={152} y={16} width={42} height={20} rx={3} fill="url(#busWindowGrad)" />
-
-              {/* Window Glass Reflection Accents */}
-              <Line x1={32} y1={18} x2={58} y2={34} stroke="#475569" strokeWidth={1.2} strokeOpacity={0.6} />
-              <Line x1={74} y1={18} x2={100} y2={34} stroke="#475569" strokeWidth={1.2} strokeOpacity={0.6} />
-              <Line x1={116} y1={18} x2={142} y2={34} stroke="#475569" strokeWidth={1.2} strokeOpacity={0.6} />
-              <Line x1={158} y1={18} x2={186} y2={34} stroke="#475569" strokeWidth={1.2} strokeOpacity={0.6} />
-
-              {/* Amber LED Destination Display Banner */}
-              <Rect x={110} y={18} width={76} height={6} rx={2} fill="url(#ledBannerGrad)" />
-              <Rect x={114} y={20} width={68} height={2} rx={1} fill="#F59E0B" />
-
-              {/* Signature Pure White Livery Striping */}
-              <Path
-                d="M 12 44
-                   L 225 44
-                   L 226 50
-                   L 12 50 Z"
-                fill="url(#stripeWhiteGrad)"
-              />
-              {/* Golden Speed Accent Belt */}
-              <Path
-                d="M 12 51
-                   L 226 51
-                   L 226 53
-                   L 12 53 Z"
-                fill="#F59E0B"
-              />
-
-              {/* Raipur BRTS Star Badge */}
-              <Circle cx={105} cy={47} r={2.5} fill="#E11D48" />
-              <Circle cx={105} cy={47} r={1.2} fill="#FFFFFF" />
-
-              {/* Front Crystal LED Headlight */}
-              <Path
-                d="M 224 48
-                   C 227 48, 228 52, 227 56
-                   L 221 56
-                   L 221 48 Z"
-                fill="#FEF08A"
-              />
-              {/* Rear Ruby LED Taillight */}
-              <Rect x={12} y={46} width={3} height={10} rx={1} fill="#FDA4AF" />
-
-              {/* Wheel Well Arches */}
-              <Path d="M 40 66 A 15 15 0 0 1 70 66 Z" fill="#0F172A" />
-              <Path d="M 166 66 A 15 15 0 0 1 196 66 Z" fill="#0F172A" />
-            </Svg>
-
-            {/* Rear Spinning Wheel */}
-            <Animated.View
-              style={[
-                styles.wheelContainer,
-                { left: 41, transform: [{ rotate: wheelRotation }] },
-              ]}
-            >
-              <Svg width={28} height={28} viewBox="0 0 28 28">
-                <Circle cx={14} cy={14} r={13} fill="#0F172A" stroke="#334155" strokeWidth={1.5} />
-                <Circle cx={14} cy={14} r={8} fill="#475569" />
-                <Circle cx={14} cy={14} r={3} fill="#CBD5E1" />
-                {/* 5-Spoke Alloy Pattern */}
-                <Line x1={14} y1={6} x2={14} y2={22} stroke="#CBD5E1" strokeWidth={1.5} />
-                <Line x1={6} y1={11} x2={22} y2={17} stroke="#CBD5E1" strokeWidth={1.5} />
-                <Line x1={6} y1={17} x2={22} y2={11} stroke="#CBD5E1" strokeWidth={1.5} />
-              </Svg>
-            </Animated.View>
-
-            {/* Front Spinning Wheel */}
-            <Animated.View
-              style={[
-                styles.wheelContainer,
-                { left: 167, transform: [{ rotate: wheelRotation }] },
-              ]}
-            >
-              <Svg width={28} height={28} viewBox="0 0 28 28">
-                <Circle cx={14} cy={14} r={13} fill="#0F172A" stroke="#334155" strokeWidth={1.5} />
-                <Circle cx={14} cy={14} r={8} fill="#475569" />
-                <Circle cx={14} cy={14} r={3} fill="#CBD5E1" />
-                {/* 5-Spoke Alloy Pattern */}
-                <Line x1={14} y1={6} x2={14} y2={22} stroke="#CBD5E1" strokeWidth={1.5} />
-                <Line x1={6} y1={11} x2={22} y2={17} stroke="#CBD5E1" strokeWidth={1.5} />
-                <Line x1={6} y1={17} x2={22} y2={11} stroke="#CBD5E1" strokeWidth={1.5} />
-              </Svg>
-            </Animated.View>
+            {/* Actual 3D Red Bus PNG - same one used on hero card, guaranteed to render */}
+            <Image
+              source={require('../../assets/images/redbus_3d.png')}
+              style={styles.busImage}
+              resizeMode="contain"
+            />
           </Animated.View>
 
           {/* --- MOVING ROAD STRIP (CONVEYOR) --- */}
@@ -478,39 +324,16 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   busWrapper: {
-    width: 230,
-    height: 84,
+    width: 220,
+    height: 120,
     position: 'relative',
     zIndex: 2,
-  },
-  busContactShadow: {
-    position: 'absolute',
-    bottom: 11,
-    left: 14,
-    width: 202,
-    height: 8,
-    borderRadius: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    transform: [{ scaleY: 0.5 }],
-  },
-  headlightCone: {
-    position: 'absolute',
-    right: -28,
-    bottom: 24,
-    width: 32,
-    height: 14,
-    backgroundColor: 'rgba(253, 224, 71, 0.15)',
-    borderRadius: 10,
-    transform: [{ skewX: '-35deg' }],
-  },
-  wheelContainer: {
-    position: 'absolute',
-    bottom: 5,
-    width: 28,
-    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 3,
+  },
+  busImage: {
+    width: 220,
+    height: 120,
   },
 
   /* --- MOVING ROAD STRIP --- */
