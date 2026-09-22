@@ -401,6 +401,18 @@ export default function LiveBusScreen() {
     }
   };
 
+  const removeRecentSearch = (from: string, to: string) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(item => !(item.from === from && item.to === to));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem('tatpar_recent_searches', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+  };
+
   const applyRecentSearch = (from: string, to: string) => {
     setFromStation(from);
     setToStation(to);
@@ -1282,7 +1294,7 @@ export default function LiveBusScreen() {
                   accessibilityLabel="Swap origin and destination"
                 >
                   <Animated.View style={{ transform: [{ rotate: spinInterpolate }] }}>
-                    <ArrowUpDown size={14} color="#18258F" strokeWidth={2.4} />
+                    <ArrowUpDown size={15} color="#18258F" strokeWidth={2.4} />
                   </Animated.View>
                 </TouchableOpacity>
               </View>
@@ -1291,123 +1303,106 @@ export default function LiveBusScreen() {
             {!fromStation || !toStation ? (
               /* STATE 1: UNSELECTED PROMPT */
               <View style={styles.unselectedSection}>
-                {/* RECENT SEARCHES CHIPS (IF ANY) */}
+                {/* RECENT SEARCHES (PREMIUM TRANSIT CARDS) */}
                 {recentSearches.length > 0 && (
                   <View style={styles.recentSearchesSection}>
                     <View style={styles.recentSectionHeaderRow}>
                       <View style={styles.recentHeaderLeft}>
                         <View style={styles.recentIconSmallBox}>
-                          <Clock size={12} color="#18258F" strokeWidth={2.4} />
+                          <Clock size={13} color="#18258F" strokeWidth={2.2} />
                         </View>
                         <Text style={styles.recentSectionTitle}>Recent Searches</Text>
+                        <View style={styles.recentCountBadge}>
+                          <Text style={styles.recentCountText}>{recentSearches.length}</Text>
+                        </View>
                       </View>
                       <TouchableOpacity
                         onPress={clearRecentSearches}
                         style={styles.recentClearBtn}
                         activeOpacity={0.7}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Clear all recent searches"
                       >
-                        <Text style={styles.recentClearText}>Clear</Text>
+                        <Text style={styles.recentClearText}>Clear all</Text>
                       </TouchableOpacity>
                     </View>
 
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.recentChipsScrollContent}
-                    >
-                      {recentSearches.map((item, idx) => {
+                    <View style={styles.recentCardsList}>
+                      {recentSearches.slice(0, 3).map((item, idx) => {
                         const fromDisp = stops.find(s => s.name === item.from)?.shortName || item.from;
                         const toDisp = stops.find(s => s.name === item.to)?.shortName || item.to;
+                        const fare = getFare(item.from, item.to);
+                        const liveJ = calculateJourney(item.from, item.to, currentTimeMins, 'next');
+                        const durationText = liveJ?.durationMins ? `${liveJ.durationMins}m travel` : 'Direct Route';
+
                         return (
                           <TouchableOpacity
                             key={`recent_${item.from}_${item.to}_${idx}`}
-                            style={styles.recentChip}
+                            style={styles.recentTripCard}
                             onPress={() => applyRecentSearch(item.from, item.to)}
                             activeOpacity={0.75}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Recent search from ${fromDisp} to ${toDisp}`}
                           >
-                            <Text style={styles.recentChipFromText} numberOfLines={1}>
-                              {fromDisp}
-                            </Text>
-                            <ArrowRight size={11} color="#94A3B8" strokeWidth={2.4} style={{ marginHorizontal: 6 }} />
-                            <Text style={styles.recentChipToText} numberOfLines={1}>
-                              {toDisp}
-                            </Text>
+                            <View style={styles.recentIconWrap}>
+                              <Bus size={17} color="#18258F" strokeWidth={2.2} />
+                            </View>
+
+                            <View style={styles.recentInfoCol}>
+                              <View style={styles.recentStationsRow}>
+                                <Text style={styles.recentStationFrom} numberOfLines={1}>
+                                  {fromDisp}
+                                </Text>
+                                <ArrowRight size={11} color="#94A3B8" strokeWidth={2.4} style={{ marginHorizontal: 6 }} />
+                                <Text style={styles.recentStationTo} numberOfLines={1}>
+                                  {toDisp}
+                                </Text>
+                              </View>
+
+                              <View style={styles.recentMetaRow}>
+                                <Text style={styles.recentMetaText}>{durationText}</Text>
+                                <Text style={styles.recentMetaDot}>·</Text>
+                                <Text style={styles.recentMetaText}>BRTS Direct</Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.recentRightCol}>
+                              {fare ? (
+                                <View style={styles.recentFareBadge}>
+                                  <Text style={styles.recentFareBadgeText}>₹{fare}</Text>
+                                </View>
+                              ) : null}
+                              <View style={styles.recentArrowCircle}>
+                                <ArrowUpRight size={14} color="#18258F" strokeWidth={2.4} />
+                              </View>
+                            </View>
                           </TouchableOpacity>
                         );
                       })}
-                    </ScrollView>
+                    </View>
                   </View>
                 )}
 
-                <View style={styles.popularSectionHeaderRow}>
-                  <Text style={styles.popularSectionTitle}>Popular Routes</Text>
-                  <TouchableOpacity
-                    onPress={() => setAllPopularModalVisible(true)}
-                    style={styles.popularViewAllBtn}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel="View all popular routes"
-                  >
-                    <Text style={styles.popularViewAllText}>View all</Text>
-                    <ChevronRight size={14} color="#18258F" strokeWidth={2.4} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* INDIVIDUAL POPULAR ROUTE CARDS (MATCHING USER UPLOADED DESIGN) */}
-                <View style={styles.popularCardsList}>
-                  {popularRoutes.slice(0, 4).map((item) => {
-                    const routeFare = getFare(item.from, item.to) || item.fare;
-                    return (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={styles.popularCard}
-                        onPress={() => selectPopularRoute(item)}
-                        activeOpacity={0.75}
-                      >
-                        {/* BUS SQUIRCLE ICON */}
-                        <View style={styles.popularIconWrap}>
-                          <Bus size={20} color="#18258F" strokeWidth={2.2} />
-                        </View>
-
-                        {/* ROUTE INFO */}
-                        <View style={styles.popularInfoCol}>
-                          <View style={styles.popularTitleRow}>
-                            <Text style={styles.popularStationText}>{item.fromDisplay}</Text>
-                            <ArrowRight size={12} color="#94A3B8" strokeWidth={2.2} style={{ marginHorizontal: 6 }} />
-                            <Text style={styles.popularStationText}>{item.toDisplay}</Text>
-                          </View>
-                          <Text style={styles.popularMetaText}>
-                            {item.typicalDuration}  ·  {item.tag}
-                          </Text>
-                        </View>
-
-                        {/* FARE BADGE & CHEVRON */}
-                        <View style={styles.popularRightCol}>
-                          <View style={styles.popularFareBadge}>
-                            <Text style={styles.popularFareBadgeText}>₹{routeFare}</Text>
-                          </View>
-                          <ChevronRight size={16} color="#9CA3AF" style={{ marginLeft: 8 }} />
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* SUBTLE EMPTY STATE */}
-                <View style={styles.emptyStateSection}>
+                {/* CALM & CLEAN EMPTY STATE (ULTRA MINIMAL & ZERO BLOAT) */}
+                <View
+                  style={[
+                    styles.emptyStateSection,
+                    recentSearches.length > 0 && styles.emptyStateWithRecents,
+                  ]}
+                >
                   <View style={styles.emptyIllustrationWrapper}>
                     <EditorialBusIllustration
-                      width={146}
-                      height={62}
-                      color="#17205F"
+                      width={160}
+                      height={68}
+                      color="#18258F"
                       wheelBg="#F7F6F2"
-                      accentColor="#687080"
+                      accentColor="#64748B"
                     />
                   </View>
-                  <Text style={styles.emptyStateTitle}>Find your next ride</Text>
+                  <Text style={styles.emptyStateTitle}>Find your next bus</Text>
                   <Text style={styles.emptyStateSubtitle}>
-                    Choose a route above to see live departures
+                    Select your boarding and destination stations above to view live departures, timetable & fares
                   </Text>
                 </View>
               </View>
@@ -3506,13 +3501,14 @@ const styles = StyleSheet.create({
   headerCard: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
-    marginTop: 10,
-    borderRadius: 20,
-    padding: 14,
+    marginTop: 14,
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
     elevation: 3,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
@@ -3523,68 +3519,68 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   journeyTrackCol: {
-    width: 18,
+    width: 20,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 18,
+    paddingVertical: 20,
     alignSelf: 'stretch',
   },
   journeyDotOrigin: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#D1FAE5',
-    borderWidth: 1.5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 2,
     borderColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
   },
   journeyDotInnerOrigin: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#059669',
   },
   journeyTrackLine: {
     flex: 1,
     width: 2,
     backgroundColor: '#CBD5E1',
-    marginVertical: 4,
+    marginVertical: 6,
     borderRadius: 1,
   },
   journeyDotDest: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#FEE2E2',
-    borderWidth: 1.5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 2,
     borderColor: '#EF4444',
     alignItems: 'center',
     justifyContent: 'center',
   },
   journeyDotInnerDest: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#DC2626',
   },
   journeyInputsCol: {
     flex: 1,
-    marginLeft: 10,
-    paddingRight: 22,
-    gap: 8,
+    marginLeft: 12,
+    paddingRight: 28,
+    gap: 12,
   },
   stationInputField: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 13,
+    borderRadius: 14,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 52,
+    minHeight: 60,
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
   stationInputFieldFilled: {
@@ -3599,16 +3595,16 @@ const styles = StyleSheet.create({
   stationInputContent: {
     flex: 1,
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: 8,
   },
   inputLabel: {
     fontFamily: FONT.bold,
-    fontSize: 9.5,
+    fontSize: 10,
     color: '#64748B',
     fontWeight: '700',
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   stationText: {
     fontFamily: FONT.bold,
@@ -3620,22 +3616,22 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontFamily: FONT.medium,
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#94A3B8',
     fontWeight: '500',
   },
   fieldActionIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   fieldClearBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -3644,20 +3640,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: '50%',
-    marginTop: -18,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    marginTop: -19,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
+    borderWidth: 1.5,
     borderColor: '#DDE2F0',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     zIndex: 10,
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
@@ -3742,89 +3738,169 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
   },
-  /* RECENT SEARCHES */
+  /* RECENT SEARCHES - PREMIUM TRANSIT CARDS */
   recentSearchesSection: {
-    marginBottom: 22,
-    marginTop: 2,
+    marginTop: 14,
+    marginBottom: 8,
   },
   recentSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
     paddingHorizontal: 2,
   },
   recentHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 8,
   },
   recentIconSmallBox: {
-    width: 22,
-    height: 22,
+    width: 24,
+    height: 24,
     borderRadius: 7,
-    backgroundColor: 'rgba(24, 37, 143, 0.08)',
+    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   recentSectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
-    letterSpacing: -0.1,
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  recentCountBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  recentCountText: {
+    fontFamily: FONT.bold,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#64748B',
   },
   recentClearBtn: {
-    paddingVertical: 3,
-    paddingHorizontal: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(100, 116, 139, 0.06)',
   },
   recentClearText: {
     fontFamily: FONT.semiBold,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: '#64748B',
   },
-  recentChipsScrollContent: {
-    gap: 10,
-    paddingRight: 10,
-    paddingVertical: 2,
+  recentCardsList: {
+    gap: 8,
   },
-  recentChip: {
+  recentTripCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    borderRadius: 16,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    shadowColor: '#18258F',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 1.5,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 2px 8px rgba(24, 37, 143, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+          boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+          cursor: 'pointer',
         } as any)
       : {}),
   },
-  recentChipFromText: {
+  recentIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
+  recentInfoCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+  recentStationsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recentStationFrom: {
     fontFamily: FONT.bold,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#0F172A',
-    maxWidth: 120,
+    letterSpacing: -0.1,
+    maxWidth: '44%',
   },
-  recentChipToText: {
+  recentStationTo: {
     fontFamily: FONT.bold,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#18258F',
-    maxWidth: 120,
+    letterSpacing: -0.1,
+    maxWidth: '44%',
+  },
+  recentMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2.5,
+  },
+  recentMetaText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  recentMetaDot: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    marginHorizontal: 5,
+  },
+  recentRightCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginLeft: 8,
+  },
+  recentFareBadge: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 7.5,
+    paddingVertical: 3.5,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  recentFareBadgeText: {
+    fontFamily: FONT.bold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontVariant: ['tabular-nums'],
+  },
+  recentArrowCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  /* POPULAR ROUTES (MATCHING USER UPLOADED DESIGN) */
+  /* POPULAR ROUTES (SMART TIME-AWARE & LIVE TIMINGS) */
   popularSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -3834,11 +3910,18 @@ const styles = StyleSheet.create({
   },
   popularSectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 17.5,
+    lineHeight: 23,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
+  },
+  popularSectionSubtitle: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 2,
   },
   popularViewAllBtn: {
     flexDirection: 'row',
@@ -3848,7 +3931,7 @@ const styles = StyleSheet.create({
   },
   popularViewAllText: {
     fontFamily: FONT.bold,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '700',
     color: '#18258F',
     marginRight: 2,
@@ -3861,25 +3944,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 13,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#EFF2F7',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
     shadowColor: '#18258F',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 1.5,
+    shadowRadius: 6,
+    elevation: 2,
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
   popularIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 13,
+    marginRight: 12,
   },
   popularInfoCol: {
     flex: 1,
@@ -3891,11 +3975,50 @@ const styles = StyleSheet.create({
   },
   popularStationText: {
     fontFamily: FONT.bold,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 14.5,
+    lineHeight: 19,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0F172A',
     letterSpacing: -0.1,
+  },
+  popularLiveMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 3,
+    flexWrap: 'wrap',
+  },
+  popularLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 5,
+  },
+  popularNextBusText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#059669',
+    fontWeight: '500',
+  },
+  popularNextBusBold: {
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: '#047857',
+  },
+  popularDotSeparator: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginHorizontal: 4,
+  },
+  popularDurationText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#64748B',
+  },
+  popularEndedText: {
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    color: '#94A3B8',
   },
   popularMetaText: {
     fontFamily: FONT.regular,
@@ -3910,15 +4033,17 @@ const styles = StyleSheet.create({
   },
   popularFareBadge: {
     backgroundColor: '#EFF3FF',
-    paddingHorizontal: 12,
-    paddingVertical: 5.5,
-    borderRadius: 14,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(24, 37, 143, 0.1)',
   },
   popularFareBadgeText: {
     fontFamily: FONT.bold,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#18258F',
     fontVariant: ['tabular-nums'],
   },
   categoryChipsWrapper: {
@@ -3953,32 +4078,38 @@ const styles = StyleSheet.create({
   emptyStateSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 26,
+    marginTop: 38,
     marginBottom: 60,
   },
+  emptyStateWithRecents: {
+    marginTop: 20,
+    marginBottom: 36,
+  },
   emptyIllustrationWrapper: {
-    width: 148,
-    height: 64,
+    width: 160,
+    height: 68,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
     opacity: 0.95,
   },
   emptyStateTitle: {
+    fontFamily: FONT.bold,
     fontSize: 18,
     fontWeight: '700',
-    color: '#17205F',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 5,
     letterSpacing: -0.2,
   },
   emptyStateSubtitle: {
+    fontFamily: FONT.regular,
     fontSize: 13.5,
     fontWeight: '400',
-    color: '#687080',
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 19,
-    maxWidth: 260,
+    lineHeight: 20,
+    maxWidth: 290,
   },
 
   /* STATE 2: SIGNATURE DEEP NAVY HERO CARD */
