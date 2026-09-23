@@ -493,8 +493,8 @@ export default function RootLayout() {
           </View>
         )}
 
-        {/* Seamless full screen loading overlay matching splash screen - ONLY ON NATIVE */}
-        {Platform.OS !== 'web' && isLoading && (
+        {/* Seamless full screen loading overlay matching splash screen */}
+        {isLoading && (
           <BusLoadingScreen
             duration={2100}
             onFinish={() => setIsLoading(false)}

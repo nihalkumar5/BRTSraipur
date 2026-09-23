@@ -20,11 +20,7 @@ export default function BusLoadingScreen({
   onFinish,
   duration = 2400,
 }: BusLoadingScreenProps) {
-  if (Platform.OS === 'web') {
-    return null;
-  }
-
-  const isNative = true;
+  const isNative = Platform.OS !== 'web';
 
   // Animation values
   const busSuspensionAnim = useRef(new Animated.Value(0)).current;
@@ -277,10 +273,10 @@ export default function BusLoadingScreen({
 
         {/* City Skyline Background Line Drawing */}
         <CitySkylineSvg
-          width={Dimensions.get('window').width}
+          width="100%"
           height={160}
           color="#FFFFFF"
-          opacity={0.12}
+          opacity={0.14}
           style={styles.skylineBg}
         />
       </Animated.View>
@@ -291,7 +287,7 @@ export default function BusLoadingScreen({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    position: 'absolute',
+    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
     top: 0,
     left: 0,
     right: 0,
@@ -445,5 +441,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
+    right: 0,
   },
 });

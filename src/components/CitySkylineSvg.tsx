@@ -2,14 +2,14 @@ import React from 'react';
 import Svg, { Path, Rect, Circle, SvgProps } from 'react-native-svg';
 
 export interface CitySkylineSvgProps extends SvgProps {
-  width?: number;
+  width?: number | string;
   height?: number;
   color?: string;
   opacity?: number;
 }
 
 export const CitySkylineSvg: React.FC<CitySkylineSvgProps> = ({
-  width = 210,
+  width = '100%',
   height = 95,
   color = '#18258F',
   opacity = 0.15,
@@ -18,9 +18,10 @@ export const CitySkylineSvg: React.FC<CitySkylineSvgProps> = ({
 }) => {
   return (
     <Svg
-      width={width}
+      width={width as any}
       height={height}
       viewBox="0 0 280 110"
+      preserveAspectRatio="none"
       fill="none"
       style={[{ opacity }, style]}
       {...props}
