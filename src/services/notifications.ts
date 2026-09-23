@@ -208,8 +208,8 @@ export function isJourneyCompleted(alert: SmartTripAlert | null): boolean {
   const createdDate = new Date(alert.createdAt);
   const createdMins = createdDate.getHours() * 60 + createdDate.getMinutes();
 
-  // If departure was scheduled before creation time (e.g. user planned late at night for next morning)
-  const isTomorrow = departureMins < createdMins;
+  // It is only tomorrow if created late at night (> 8 PM) for an early morning bus (< 12 PM)
+  const isTomorrow = createdMins >= 20 * 60 && departureMins < 12 * 60;
 
   const arrivalDate = new Date(alert.createdAt);
   arrivalDate.setSeconds(0, 0);
