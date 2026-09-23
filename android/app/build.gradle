@@ -112,17 +112,8 @@ android {
         applicationId 'com.raipur.brts.tatpar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.0.4"
-        externalNativeBuild {
-            cmake {
-                arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-                cppFlags "-Wl,-z,max-page-size=16384"
-            }
-            ndkBuild {
-                arguments "APP_LDFLAGS+=-Wl,-z,max-page-size=16384"
-            }
-        }
+        versionCode 6
+        versionName "1.0.5"
     }
     signingConfigs {
         debug {
@@ -144,6 +135,9 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
     }
     packagingOptions {
