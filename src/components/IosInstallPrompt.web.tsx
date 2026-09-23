@@ -3,356 +3,303 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
-import { Share, SquarePlus, X, Download, Smartphone } from 'lucide-react-native';
-
-const STORAGE_KEY = 'tatpar_pwa_install_dismissed_at';
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+import { Share, SquarePlus, Smartphone, Lock, ArrowDown } from 'lucide-react-native';
 
 export default function IosInstallPrompt() {
-  const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [devBypassed, setDevBypassed] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
-    // 1. Check if already installed / running in standalone mode or native webview
-    const isStandalone =
+    // Check if query param ?preview=1 or ?bypass=1 is present
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('bypass') === '1' || urlParams.get('preview') === '1') {
+        setDevBypassed(true);
+      }
+    } catch (e) {}
+
+    // Check if running in standalone mode (installed PWA) or native Android WebView
+    const standaloneMode =
       (window.navigator as any).standalone === true ||
       window.matchMedia('(display-mode: standalone)').matches ||
       Boolean((window as any).ReactNativeWebView);
 
-    if (isStandalone) return;
+    setIsStandalone(Boolean(standaloneMode));
 
-    // 2. Check if previously dismissed recently
-    try {
-      const dismissedAt = localStorage.getItem(STORAGE_KEY);
-      if (dismissedAt && Date.now() - parseInt(dismissedAt, 10) < SEVEN_DAYS_MS) {
-        return;
-      }
-    } catch (e) {}
-
-    // 3. Detect iOS Safari
-    const ua = window.navigator.userAgent;
+    // Detect iOS (iPhone / iPad / iPod)
+    const ua = window.navigator.userAgent || '';
     const isAppleDevice =
       /iPad|iPhone|iPod/.test(ua) ||
       (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
 
     setIsIOS(isAppleDevice);
-
-    // 4. Capture Chrome / Android PWA install event
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsVisible(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // If iOS, delay slightly (2 seconds) after initial page load so user isn't immediately interrupted
-    let timer: any;
-    if (isAppleDevice) {
-      timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 2200);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      if (timer) clearTimeout(timer);
-    };
   }, []);
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, Date.now().toString());
-    } catch (e) {}
-  };
-
-  const handleNativeInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      if (choiceResult.outcome === 'accepted') {
-        setIsVisible(false);
-      }
-      setDeferredPrompt(null);
+  // Developer bypass: tap logo 5 times in DevTools to unlock without opening from Home Screen
+  const handleLogoTap = () => {
+    const next = tapCount + 1;
+    setTapCount(next);
+    if (next >= 5) {
+      setDevBypassed(true);
     }
   };
 
-  if (!isVisible) return null;
+  // If already installed to Home Screen (standalone) or not iOS or dev-bypassed: don't block
+  if (isStandalone || !isIOS || devBypassed) {
+    return null;
+  }
 
   return (
-    <View style={styles.overlayContainer}>
+    <View style={styles.lockOverlay}>
       <View style={styles.card}>
-        {/* CLOSE BUTTON */}
-        <TouchableOpacity
-          onPress={handleDismiss}
-          style={styles.closeBtn}
-          activeOpacity={0.7}
-          accessibilityLabel="Dismiss install banner"
-        >
-          <X size={18} color="#6B7280" />
-        </TouchableOpacity>
-
-        {/* HEADER: APP ICON & TITLE */}
-        <View style={styles.headerRow}>
-          <Image
-            source={{ uri: '/apple-touch-icon.png' }}
-            style={styles.appIcon}
-            accessibilityLabel="Tatpar BRTS App Icon"
-          />
-          <View style={styles.headerTextCol}>
-            <View style={styles.badgeRow}>
-              <Text style={styles.title}>Tatpar BRTS Raipur</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{isIOS ? 'iPhone App' : 'Free App'}</Text>
-              </View>
-            </View>
-            <Text style={styles.subtitle}>
-              {isIOS
-                ? 'Install on your iPhone for 1-tap offline bus tracking & full-screen view'
-                : 'Install for quick access & offline bus schedules'}
-            </Text>
-          </View>
-        </View>
-
-        {/* INSTRUCTIONS */}
-        {isIOS ? (
-          <View style={styles.iosStepsContainer}>
-            <View style={styles.stepItem}>
-              <View style={[styles.stepIconWrap, { backgroundColor: '#EBF3FF' }]}>
-                <Share size={18} color="#007AFF" />
-              </View>
-              <View style={styles.stepTextCol}>
-                <Text style={styles.stepText}>
-                  1. Tap <Text style={styles.stepBold}>Share</Text> in Safari toolbar
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.stepDivider} />
-
-            <View style={styles.stepItem}>
-              <View style={[styles.stepIconWrap, { backgroundColor: '#E8F5E9' }]}>
-                <SquarePlus size={18} color="#2E7D32" />
-              </View>
-              <View style={styles.stepTextCol}>
-                <Text style={styles.stepText}>
-                  2. Select <Text style={styles.stepBold}>Add to Home Screen</Text>
-                </Text>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.androidBtnContainer}>
-            {deferredPrompt ? (
-              <TouchableOpacity
-                onPress={handleNativeInstall}
-                style={styles.primaryInstallBtn}
-                activeOpacity={0.8}
-              >
-                <Download size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                <Text style={styles.primaryInstallBtnText}>Install Tatpar App</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.genericTipRow}>
-                <Smartphone size={16} color="#18258F" style={{ marginRight: 6 }} />
-                <Text style={styles.genericTipText}>
-                  Tap browser menu (⋮) & select "Add to Home screen"
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* FOOTER ACTIONS */}
-        <View style={styles.footerRow}>
-          <Text style={styles.footerNote}>
-            {isIOS ? '⚡ Zero App Store download required' : '⚡ Uses less than 2 MB space'}
-          </Text>
-          <TouchableOpacity onPress={handleDismiss} activeOpacity={0.6}>
-            <Text style={styles.dismissLink}>Not now</Text>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleLogoTap} activeOpacity={0.8}>
+            <Image
+              source={{ uri: '/apple-touch-icon.png' }}
+              style={styles.appIcon}
+              accessibilityLabel="Tatpar BRTS Icon"
+            />
           </TouchableOpacity>
+          <View style={styles.badge}>
+            <Lock size={12} color="#D97706" style={{ marginRight: 4 }} />
+            <Text style={styles.badgeText}>iPhone Installation Required</Text>
+          </View>
+          <Text style={styles.title}>Install Tatpar BRTS App</Text>
+          <Text style={styles.subtitle}>
+            Raipur BRTS is an App-Only experience on iPhone. Please add it to your Home Screen to unlock live bus routes, stops & schedules.
+          </Text>
         </View>
+
+        {/* 3 MANDATORY STEPS */}
+        <View style={styles.stepsContainer}>
+          {/* STEP 1 */}
+          <View style={styles.stepRow}>
+            <View style={[styles.stepIconBox, { backgroundColor: '#EBF3FF' }]}>
+              <Share size={20} color="#007AFF" />
+            </View>
+            <View style={styles.stepTextBox}>
+              <Text style={styles.stepNum}>STEP 1</Text>
+              <Text style={styles.stepDesc}>
+                Tap the <Text style={styles.stepBold}>Share button (⎋)</Text> in Safari toolbar below
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* STEP 2 */}
+          <View style={styles.stepRow}>
+            <View style={[styles.stepIconBox, { backgroundColor: '#E8F5E9' }]}>
+              <SquarePlus size={20} color="#16A34A" />
+            </View>
+            <View style={styles.stepTextBox}>
+              <Text style={styles.stepNum}>STEP 2</Text>
+              <Text style={styles.stepDesc}>
+                Scroll down & select <Text style={styles.stepBold}>"Add to Home Screen"</Text>
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* STEP 3 */}
+          <View style={styles.stepRow}>
+            <View style={[styles.stepIconBox, { backgroundColor: '#EEF2FF' }]}>
+              <Smartphone size={20} color="#18258F" />
+            </View>
+            <View style={styles.stepTextBox}>
+              <Text style={styles.stepNum}>STEP 3</Text>
+              <Text style={styles.stepDesc}>
+                Open the new <Text style={styles.stepBold}>"Tatpar BRTS"</Text> icon from Home Screen!
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* BOTTOM HINT */}
+        <View style={styles.bottomHintBox}>
+          <Text style={styles.bottomHintText}>
+            ⚡ Once opened from your Home Screen, full access unlocks automatically.
+          </Text>
+        </View>
+      </View>
+
+      {/* ANIMATED BOUNCING ARROW POINTING TO SAFARI SHARE BUTTON */}
+      <View style={styles.arrowContainer}>
+        <View style={styles.arrowBubble}>
+          <Text style={styles.arrowBubbleText}>Tap Share below</Text>
+        </View>
+        <ArrowDown size={28} color="#FFFFFF" />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlayContainer: {
-    position: 'absolute',
-    bottom: 24,
-    left: 16,
-    right: 16,
-    zIndex: 99999,
+  lockOverlay: {
+    position: 'fixed' as any,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    backdropFilter: 'blur(20px)',
+    zIndex: 9999999,
     alignItems: 'center',
-    pointerEvents: 'box-none',
-  },
+    justifyContent: 'center',
+    padding: 18,
+  } as any,
   card: {
     width: '100%',
-    maxWidth: 440,
+    maxWidth: 380,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
+    borderRadius: 24,
+    padding: 22,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.28,
+    shadowRadius: 32,
+    elevation: 20,
     borderWidth: 1,
-    borderColor: 'rgba(24, 37, 143, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  closeBtn: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    padding: 6,
-    borderRadius: 14,
-    backgroundColor: '#F3F4F6',
-    zIndex: 2,
-  },
-  headerRow: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    paddingRight: 32,
-    marginBottom: 14,
+    marginBottom: 18,
   },
   appIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     backgroundColor: '#18258F',
-    marginRight: 12,
-  },
-  headerTextCol: {
-    flex: 1,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#111827',
-    fontFamily: 'Plus Jakarta Sans',
+    marginBottom: 12,
+    shadowColor: '#18258F',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
   },
   badge: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#B45309',
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: 6,
     fontFamily: 'Plus Jakarta Sans',
   },
   subtitle: {
-    fontSize: 12,
-    color: '#4B5563',
-    lineHeight: 16,
+    fontSize: 13,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 8,
     fontFamily: 'Plus Jakarta Sans',
   },
-  iosStepsContainer: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 12,
+  stepsContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#E2E8F0',
+    marginBottom: 14,
   },
-  stepItem: {
+  stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  stepIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+  stepIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepTextCol: {
+  stepTextBox: {
     flex: 1,
   },
-  stepText: {
+  stepNum: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.8,
+    marginBottom: 1,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  stepDesc: {
     fontSize: 13,
-    color: '#1F2937',
+    color: '#1E293B',
+    lineHeight: 17,
     fontFamily: 'Plus Jakarta Sans',
   },
   stepBold: {
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  stepDivider: {
+  divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 8,
-    marginLeft: 42,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 10,
+    marginLeft: 52,
   },
-  androidBtnContainer: {
-    marginBottom: 12,
-  },
-  primaryInstallBtn: {
-    backgroundColor: '#18258F',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
+  bottomHintBox: {
+    backgroundColor: '#F0FDF4',
+    padding: 10,
     borderRadius: 12,
-    shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
   },
-  primaryInstallBtnText: {
+  bottomHintText: {
+    fontSize: 11,
+    color: '#15803D',
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 15,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  arrowContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center',
+  },
+  arrowBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  arrowBubbleText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     fontFamily: 'Plus Jakarta Sans',
-  },
-  genericTipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F4FF',
-    padding: 10,
-    borderRadius: 10,
-  },
-  genericTipText: {
-    fontSize: 12,
-    color: '#18258F',
-    fontWeight: '600',
-    fontFamily: 'Plus Jakarta Sans',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-  },
-  footerNote: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    fontFamily: 'Plus Jakarta Sans',
-  },
-  dismissLink: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-    fontFamily: 'Plus Jakarta Sans',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
   },
 });
