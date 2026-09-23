@@ -112,8 +112,8 @@ android {
         applicationId 'com.raipur.brts.tatpar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.7"
+        versionCode 9
+        versionName "1.0.8"
     }
     signingConfigs {
         debug {
@@ -206,13 +206,24 @@ tasks.whenTaskAdded { task ->
             def bundleDir = new File(buildDir, "outputs/bundle/release")
             def aabFile = new File(bundleDir, "app-release.aab")
             def patchScript = new File(rootDir, "../scripts/patch_aab_16kb.py")
-            def keystore = new File(projectDir, "debug.keystore")
+            def keystore = new File(System.getProperty("user.home"), "Desktop/tatpar-release.jks")
+            if (!keystore.exists()) {
+                keystore = new File(System.getProperty("user.home"), "tatpar-release.jks")
+            }
+            if (!keystore.exists()) {
+                keystore = new File(projectDir, "debug.keystore")
+            }
 
             if (aabFile.exists() && patchScript.exists()) {
                 println "--> 16KB Alignment: Patching all native libraries in AAB..."
                 exec {
-                    commandLine 'python3', patchScript.absolutePath, aabFile.absolutePath, aabFile.absolutePath, keystore.absolutePath
+                    commandLine 'python3', patchScript.absolutePath, aabFile.absolutePath, aabFile.absolutePath, keystore.absolutePath, 'NihalKumar@829', 'key0'
                 }
+                def releaseDir = new File(projectDir, "release")
+                releaseDir.mkdirs()
+                def copied = new File(releaseDir, "app-release.aab")
+                copied.bytes = aabFile.bytes
+                println "--> Copied signed AAB to: " + copied.absolutePath
             }
         }
     }

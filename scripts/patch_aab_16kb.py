@@ -49,7 +49,7 @@ def patch_elf_bytes(data: bytearray, filename: str) -> tuple:
 
     return data, patched
 
-def patch_aab(input_aab: str, output_aab: str, keystore_path: str):
+def patch_aab(input_aab: str, output_aab: str, keystore_path: str, storepass: str = None, alias: str = None, keypass: str = None):
     print(f"--> Processing AAB: {input_aab}")
     patched_count = 0
     total_so_count = 0
@@ -92,17 +92,26 @@ def patch_aab(input_aab: str, output_aab: str, keystore_path: str):
         os.remove(output_aab)
     os.rename(temp_out, output_aab)
 
+    # Defaults for tatpar release keystore
+    is_tatpar_ks = "tatpar-release" in keystore_path
+    if storepass is None:
+        storepass = "NihalKumar@829" if is_tatpar_ks else "android"
+    if alias is None:
+        alias = "key0" if is_tatpar_ks else "androiddebugkey"
+    if keypass is None:
+        keypass = storepass
+
     # Re-sign with jarsigner
-    print(f"--> Re-signing with jarsigner using {keystore_path}...")
+    print(f"--> Re-signing with jarsigner using {keystore_path} (alias: {alias})...")
     res = subprocess.run([
         "jarsigner",
         "-keystore", keystore_path,
-        "-storepass", "android",
-        "-keypass", "android",
+        "-storepass", storepass,
+        "-keypass", keypass,
         "-sigalg", "SHA256withRSA",
         "-digestalg", "SHA-256",
         output_aab,
-        "androiddebugkey"
+        alias
     ], capture_output=True, text=True)
 
     if res.returncode != 0:
@@ -149,5 +158,17 @@ def patch_aab(input_aab: str, output_aab: str, keystore_path: str):
 if __name__ == "__main__":
     aab_path = sys.argv[1] if len(sys.argv) > 1 else "android/app/build/outputs/bundle/release/app-release.aab"
     out_path = sys.argv[2] if len(sys.argv) > 2 else aab_path
-    ks_path = sys.argv[3] if len(sys.argv) > 3 else "android/app/debug.keystore"
-    patch_aab(aab_path, out_path, ks_path)
+    
+    # Check default keystore paths
+    default_ks = "/Users/nihalkumar/Desktop/tatpar-release.jks"
+    if not os.path.exists(default_ks):
+        default_ks = "/Users/nihalkumar/tatpar-release.jks"
+    if not os.path.exists(default_ks):
+        default_ks = "android/app/debug.keystore"
+
+    ks_path = sys.argv[3] if len(sys.argv) > 3 else default_ks
+    storepass = sys.argv[4] if len(sys.argv) > 4 else None
+    alias = sys.argv[5] if len(sys.argv) > 5 else None
+    keypass = sys.argv[6] if len(sys.argv) > 6 else None
+
+    patch_aab(aab_path, out_path, ks_path, storepass, alias, keypass)
