@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, FileText, AlertCircle, ShieldAlert, Scale, CheckCircle2, Mail, Globe, ExternalLink } from 'lucide-react-native';
+import { ArrowLeft, FileText, AlertCircle, ShieldAlert, Scale, CheckCircle2, Mail, Globe, ExternalLink, HelpCircle } from 'lucide-react-native';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();

@@ -26,6 +26,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import BusLoadingScreen from '../src/components/BusLoadingScreen';
+import VercelAnalytics from '../src/components/VercelAnalytics';
 
 export default function RootLayout() {
   const [canGoBack, setCanGoBack] = useState(false);
@@ -167,6 +168,7 @@ export default function RootLayout() {
         />
         {Platform.OS === 'web' ? (
           <>
+            <VercelAnalytics />
             <style
               dangerouslySetInnerHTML={{
                 __html: `

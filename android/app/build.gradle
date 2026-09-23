@@ -122,15 +122,26 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            def ks = file(System.getProperty("user.home") + "/Desktop/tatpar-release.jks")
+            if (!ks.exists()) {
+                ks = file(System.getProperty("user.home") + "/tatpar-release.jks")
+            }
+            if (!ks.exists()) {
+                ks = file("debug.keystore")
+            }
+            storeFile ks
+            storePassword 'NihalKumar@829'
+            keyAlias 'key0'
+            keyPassword 'NihalKumar@829'
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
