@@ -30,6 +30,7 @@ import BusLoadingScreen from '../src/components/BusLoadingScreen';
 export default function RootLayout() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPageReady, setIsPageReady] = useState(false);
   const webViewRef = useRef<WebView>(null);
   const lastBackPressRef = useRef<number>(0);
 
@@ -254,7 +255,11 @@ export default function RootLayout() {
               nestedScrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={`
                 (function() {
-                  try {
+                    // 0. Ensure HTML, BODY, and #root have matching warm theme background instantly
+                    const bgStyle = document.createElement('style');
+                    bgStyle.innerHTML = 'html, body, #root { background-color: #F8F6F0 !important; }';
+                    (document.head || document.documentElement).appendChild(bgStyle);
+
                     // 1. Rigid viewport and touch zoom lockdown
                     let meta = document.querySelector('meta[name="viewport"]');
                     if (!meta) {
@@ -293,6 +298,7 @@ export default function RootLayout() {
                     style.id = 'tatpar-custom-styles';
                     style.innerHTML = \`
                       html, body, #root {
+                        background-color: #F8F6F0 !important;
                         touch-action: pan-x pan-y !important;
                         -webkit-text-size-adjust: 100% !important;
                         text-size-adjust: 100% !important;
@@ -332,7 +338,6 @@ export default function RootLayout() {
                     // 3. Expose Android Hardware Back Handler to Native
                     window.__handleAndroidBack = function() {
                       try {
-                        // A. Try closing visible modal or back-button in overlays
                         const closeBtns = document.querySelectorAll('[aria-label="Close"], [aria-label="close"], [aria-label="Back"], [aria-label="back"], button[data-testid="back-button"], button[data-testid="close-modal"]');
                         for (let i = closeBtns.length - 1; i >= 0; i--) {
                           const btn = closeBtns[i];
@@ -342,20 +347,17 @@ export default function RootLayout() {
                           }
                         }
 
-                        // B. If on a sub-screen or non-Home tab, return to Home tab
                         const homeTabBtn = document.querySelector('[aria-label="Home"], [aria-label="home"]');
                         if (homeTabBtn) {
                           homeTabBtn.click();
                           return true;
                         }
 
-                        // C. Fallback history back
                         if (window.history.length > 1) {
                           window.history.back();
                           return true;
                         }
 
-                        // D. Force root
                         window.location.href = '/';
                         return true;
                       } catch (e) {
@@ -406,15 +408,62 @@ export default function RootLayout() {
                     } catch (e) {}
                   }
 
+                  // 3. Notify native shell only when real page elements are rendered (zero white screen)
+                  function notifyReady() {
+                    try {
+                      var root = document.getElementById('root');
+                      var bodyText = (document.body && document.body.innerText) || '';
+                      var isDomReady = root && root.children && root.children.length > 0 && (
+                        bodyText.indexOf('Bus track') !== -1 ||
+                        bodyText.indexOf('Tatpar') !== -1 ||
+                        bodyText.indexOf('BRTS') !== -1 ||
+                        root.querySelector('button, svg, [role="tab"]') !== null
+                      );
+
+                      if (isDomReady) {
+                        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'PAGE_READY' }));
+                        }
+                        return;
+                      }
+                    } catch (e) {}
+                    setTimeout(notifyReady, 50);
+                  }
+
                   applyCustomFixes();
+                  notifyReady();
+
                   if (window.MutationObserver) {
-                    const obs = new MutationObserver(applyCustomFixes);
+                    const obs = new MutationObserver(function() {
+                      applyCustomFixes();
+                      notifyReady();
+                    });
                     obs.observe(document.documentElement, { childList: true, subtree: true });
                   }
                   setInterval(applyCustomFixes, 250);
                 })();
                 true;
               `}
+              androidLayerType="hardware"
+              containerStyle={{ backgroundColor: '#F8F6F0' }}
+              onLoadEnd={() => {
+                // Ensure check is triggered upon load end
+                if (webViewRef.current) {
+                  webViewRef.current.injectJavaScript(`
+                    (function() {
+                      try {
+                        var root = document.getElementById('root');
+                        if (root && root.children && root.children.length > 0) {
+                          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'PAGE_READY' }));
+                          }
+                        }
+                      } catch(e) {}
+                    })();
+                    true;
+                  `);
+                }
+              }}
               onNavigationStateChange={(navState) => {
                 setCanGoBack(navState.canGoBack);
               }}
@@ -422,7 +471,10 @@ export default function RootLayout() {
                 try {
                   const data = JSON.parse(event.nativeEvent.data);
                   if (!data) return;
-                  if (data.type === 'ON_HOME_ROOT') {
+                  if (data.type === 'PAGE_READY') {
+                    // Small delay to ensure browser paint pass is 100% complete before crossfade
+                    setTimeout(() => setIsPageReady(true), 150);
+                  } else if (data.type === 'ON_HOME_ROOT') {
                     const now = Date.now();
                     if (now - lastExitPressRef.current < 2000) {
                       BackHandler.exitApp();
@@ -495,10 +547,11 @@ export default function RootLayout() {
           </View>
         )}
 
-        {/* Seamless full screen loading overlay matching splash screen */}
-        {isLoading && (
+        {/* Seamless full screen loading overlay matching splash screen - ONLY ON NATIVE */}
+        {Platform.OS !== 'web' && isLoading && (
           <BusLoadingScreen
-            duration={2100}
+            isPageReady={isPageReady}
+            minDuration={1600}
             onFinish={() => setIsLoading(false)}
           />
         )}

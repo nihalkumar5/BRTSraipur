@@ -13,14 +13,22 @@ import { CitySkylineSvg } from './CitySkylineSvg';
 
 interface BusLoadingScreenProps {
   onFinish?: () => void;
-  duration?: number;
+  isPageReady?: boolean;
+  minDuration?: number;
+  maxTimeout?: number;
 }
 
 export default function BusLoadingScreen({
   onFinish,
-  duration = 2400,
+  isPageReady = false,
+  minDuration = 1600,
+  maxTimeout = 8000,
 }: BusLoadingScreenProps) {
-  const isNative = Platform.OS !== 'web';
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  const isNative = true;
 
   // Animation values
   const busSuspensionAnim = useRef(new Animated.Value(0)).current;
@@ -28,10 +36,13 @@ export default function BusLoadingScreen({
   const wheelSpinAnim = useRef(new Animated.Value(0)).current;
   const roadScrollAnim = useRef(new Animated.Value(0)).current;
   const windScrollAnim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const contentFadeAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = useRef(new Animated.Value(0.12)).current;
+  const containerFadeAnim = useRef(new Animated.Value(1)).current;
 
   const [statusText, setStatusText] = useState('Connecting routes & live stations...');
+  const startTimeRef = useRef<number>(Date.now());
+  const isExitingRef = useRef<boolean>(false);
+  const activeLoopsRef = useRef<{ stop: () => void }[]>([]);
 
   useEffect(() => {
     // 1. Bus subtle suspension bounce (micro-vibrations)
@@ -111,51 +122,82 @@ export default function BusLoadingScreen({
     );
     windLoop.start();
 
-    // 6. Linear progress fill
+    activeLoopsRef.current = [bounceLoop, tiltLoop, wheelLoop, roadLoop, windLoop];
+
+    // Smooth progressive progress bar fill while waiting for page load
     Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: duration - 350,
-      easing: Easing.out(Easing.cubic),
+      toValue: 0.88,
+      duration: Math.max(1200, minDuration),
+      easing: Easing.out(Easing.quad),
       useNativeDriver: false,
     }).start();
 
-    // 7. Dynamic status text sequence
     const t1 = setTimeout(() => {
       setStatusText('Syncing Raipur BRTS GPS telemetry...');
-    }, 850);
+    }, 750);
 
     const t2 = setTimeout(() => {
-      setStatusText('Ready for your journey ✨');
-    }, 1650);
-
-    // 8. Smooth exit fade
-    const exitTimer = setTimeout(() => {
-      Animated.timing(contentFadeAnim, {
-        toValue: 0,
-        duration: 220,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: isNative,
-      }).start(() => {
-        bounceLoop.stop();
-        tiltLoop.stop();
-        wheelLoop.stop();
-        roadLoop.stop();
-        windLoop.stop();
-        if (onFinish) onFinish();
-      });
-    }, duration);
+      setStatusText('Connecting live station departures...');
+    }, 1700);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
-      clearTimeout(exitTimer);
       bounceLoop.stop();
       tiltLoop.stop();
       wheelLoop.stop();
       roadLoop.stop();
       windLoop.stop();
     };
-  }, [duration, onFinish, isNative]);
+  }, [isNative, minDuration]);
+
+  // Seamless exit transition only after the page is verified ready
+  const triggerExit = useRef(() => {
+    if (isExitingRef.current) return;
+    isExitingRef.current = true;
+
+    setStatusText('Ready for your journey ✨');
+
+    // Complete the progress bar to 100%
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      // Smoothly fade out the blue loading screen to reveal the already-rendered page
+      Animated.timing(containerFadeAnim, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: isNative,
+      }).start(() => {
+        activeLoopsRef.current.forEach(l => l.stop());
+        if (onFinish) onFinish();
+      });
+    });
+  }).current;
+
+  // React when page is ready or when minDuration has elapsed
+  useEffect(() => {
+    if (!isPageReady) return;
+    const elapsed = Date.now() - startTimeRef.current;
+    const waitRemaining = Math.max(0, minDuration - elapsed);
+    const timer = setTimeout(() => {
+      triggerExit();
+    }, waitRemaining);
+
+    return () => clearTimeout(timer);
+  }, [isPageReady, minDuration, triggerExit]);
+
+  // Fallback safety timeout in case of slow connection
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      triggerExit();
+    }, maxTimeout);
+
+    return () => clearTimeout(safetyTimer);
+  }, [maxTimeout, triggerExit]);
 
   // Interpolations
   const wheelRotation = wheelSpinAnim.interpolate({
@@ -184,8 +226,8 @@ export default function BusLoadingScreen({
   });
 
   return (
-    <View style={styles.container} pointerEvents="none">
-      <Animated.View style={[styles.contentWrapper, { opacity: contentFadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: containerFadeAnim }]} pointerEvents="none">
+      <View style={styles.contentWrapper}>
         {/* --- MOVING BUS STAGE --- */}
         <View style={styles.stageContainer}>
           {/* Animated Speed Wind Streaks */}
@@ -279,8 +321,8 @@ export default function BusLoadingScreen({
           opacity={0.14}
           style={styles.skylineBg}
         />
-      </Animated.View>
-    </View>
+      </View>
+    </Animated.View>
   );
 }
 
