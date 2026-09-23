@@ -213,7 +213,7 @@ export default function TimetableScreen() {
       {/* 1. CLEAN HEADER & ESSENTIAL TOP CONTROLS */}
       <View style={styles.header}>
         <Text style={styles.title}>Timetable</Text>
-        <Text style={styles.subtitle}>Tatpar BRTS · Nava Raipur</Text>
+        <Text style={styles.subtitle}>Raipur BRTS · Nava Raipur</Text>
 
         {/* QUIET SEGMENTED CONTROL: WEEKDAYS / WEEKENDS */}
         <View style={styles.tabToggleRow}>

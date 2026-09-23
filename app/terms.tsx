@@ -43,7 +43,7 @@ export default function TermsOfServiceScreen() {
 
         <Text style={styles.mainTitle}>Terms of Service & Commuter Guidelines</Text>
         <Text style={styles.paragraph}>
-          Welcome to Tatpar BRTS Raipur. By downloading, accessing, or using the Tatpar BRTS Raipur application ("the App"),
+          Welcome to Raipur BRTS Guide. By downloading, accessing, or using the Raipur BRTS Guide application ("the App"),
           you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please discontinue using the application.
         </Text>
 
@@ -54,7 +54,7 @@ export default function TermsOfServiceScreen() {
             <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
           </View>
           <Text style={styles.paragraph}>
-            These Terms apply to all users, commuters, and visitors who access or use Tatpar BRTS Raipur on Android, Web, or any other platform. Your continued use of the App signifies your acceptance of these Terms and any future updates.
+            These Terms apply to all users, commuters, and visitors who access or use Raipur BRTS Guide on Android, Web, or any other platform. Your continued use of the App signifies your acceptance of these Terms and any future updates.
           </Text>
         </View>
 
@@ -79,7 +79,7 @@ export default function TermsOfServiceScreen() {
             <Text style={styles.sectionTitle}>3. Independent Commuter Utility Disclaimer</Text>
           </View>
           <Text style={styles.paragraph}>
-            Tatpar BRTS Raipur is a dedicated civic-tech passenger utility app developed to simplify public transit navigation for citizens and visitors in Nava Raipur Atal Nagar and Raipur. It is an independent transit utility and is not an official government entity, nor does it represent itself as the sole operational authority of the bus network.
+            Raipur BRTS Guide is a dedicated civic-tech passenger utility app developed to simplify public transit navigation for citizens and visitors in Nava Raipur Atal Nagar and Raipur. It is an independent transit utility and is not an official government entity, nor does it represent itself as the sole operational authority of the bus network.
           </Text>
         </View>
 
@@ -90,21 +90,21 @@ export default function TermsOfServiceScreen() {
             <Text style={styles.sectionTitle}>4. User Code of Conduct & Fair Use</Text>
           </View>
           <Text style={styles.paragraph}>
-            When utilizing Tatpar BRTS Raipur, you agree to:
+            When utilizing Raipur BRTS Guide, you agree to:
           </Text>
           <Text style={styles.bulletPoint}>• Use the service solely for lawful personal transit navigation and schedule reference.</Text>
-          <Text style={styles.bulletPoint}>• Not attempt to decompile, reverse engineer, intercept network traffic, or extract API endpoints maliciously.</Text>
-          <Text style={styles.bulletPoint}>• Not use automated crawlers, bots, or scrapers to overwhelm application servers or disrupt service availability for fellow citizens.</Text>
+          <Text style={styles.bulletPoint}>• Not attempt to decompile, reverse-engineer, exploit, or disrupt any feature of the application or its data services.</Text>
+          <Text style={styles.bulletPoint}>• Comply with all local traffic, transit safety, and public decorum guidelines issued by local law enforcement and transit authorities while boarding or traveling on BRTS buses.</Text>
         </View>
 
         {/* SECTION 5 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <AlertCircle size={18} color="#18258F" />
+            <HelpCircle size={18} color="#18258F" />
             <Text style={styles.sectionTitle}>5. Limitation of Liability</Text>
           </View>
           <Text style={styles.paragraph}>
-            To the maximum extent permitted by applicable law, the developers and contributors of Tatpar BRTS Raipur shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from:
+            To the maximum extent permitted by applicable law, the developers and contributors of Raipur BRTS Guide shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from:
           </Text>
           <Text style={styles.bulletPoint}>• Any missed buses, transit delays, or itinerary schedule changes.</Text>
           <Text style={styles.bulletPoint}>• Inability to access the application due to network outages or device failure.</Text>

@@ -41,9 +41,9 @@ export default function PrivacyPolicyScreen() {
           <Text style={styles.badgeText}>Google Play Compliant · Last updated: September 2026</Text>
         </View>
 
-        <Text style={styles.mainTitle}>Privacy Policy for Tatpar BRTS Raipur</Text>
+        <Text style={styles.mainTitle}>Privacy Policy for Raipur BRTS Guide</Text>
         <Text style={styles.paragraph}>
-          Tatpar BRTS Raipur ("we", "our", or "the app") provides public transit timetable, fare information,
+          Raipur BRTS Guide ("we", "our", or "the app") provides public transit timetable, fare information,
           and route planning for passengers in Nava Raipur Atal Nagar and Raipur City, Chhattisgarh. We are
           committed to protecting your privacy and ensuring transparency in all our operations.
         </Text>
@@ -144,7 +144,7 @@ export default function PrivacyPolicyScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Tatpar BRTS Raipur · Public Transit Guide for Nava Raipur Atal Nagar
+            Raipur BRTS Guide · Public Transit Guide for Nava Raipur Atal Nagar
           </Text>
         </View>
       </ScrollView>

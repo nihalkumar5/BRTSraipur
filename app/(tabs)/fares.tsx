@@ -225,7 +225,7 @@ export default function FaresScreen() {
         {/* 1. HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>Fares & Passes</Text>
-          <Text style={styles.subtitle}>Official Tatpar BRTS rates, passes & concessions</Text>
+          <Text style={styles.subtitle}>Official Raipur BRTS rates, passes & concessions</Text>
         </View>
 
         {/* 2. FARE CALCULATOR (HERO COMPONENT) */}

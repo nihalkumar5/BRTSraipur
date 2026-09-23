@@ -204,7 +204,7 @@ export default function AllStopsScreen() {
           </View>
         </View>
         <Text style={styles.subtitle}>
-          Live departure boards & directions for Tatpar BRTS shelters
+          Live departure boards & directions for Raipur BRTS shelters
         </Text>
 
         {/* 2. SEARCH BOX */}

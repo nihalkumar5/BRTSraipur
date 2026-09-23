@@ -1144,7 +1144,7 @@ export default function LiveBusScreen() {
             </Text>
             <Text style={styles.pageSubHeading} numberOfLines={1}>
               {planningMode === 'next'
-                ? 'Tatpar BRTS · Nava Raipur Express'
+                ? 'Raipur BRTS Guide · Nava Raipur Express'
                 : journey
                   ? `${journey.fromStop.shortName || journey.fromStop.name} → ${journey.toStop.shortName || journey.toStop.name}`
                   : 'Real-time in-bus stop tracking'}

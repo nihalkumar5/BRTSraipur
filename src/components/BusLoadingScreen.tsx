@@ -286,7 +286,7 @@ export default function BusLoadingScreen({
 
         {/* --- PREMIUM BRANDING & LIVE STATUS --- */}
         <View style={styles.textSection}>
-          <Text style={styles.brandTitle}>Tatpar BRTS</Text>
+          <Text style={styles.brandTitle}>Raipur BRTS Guide</Text>
           <Text style={styles.brandSubtitle}>RAIPUR · NAVA RAIPUR EXPRESS</Text>
           <Text style={styles.initiativeText}>High-Frequency Transit Corridor</Text>
 
