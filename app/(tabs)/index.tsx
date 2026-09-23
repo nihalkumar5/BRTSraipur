@@ -63,7 +63,7 @@ import {
   scheduleSmartTripAlert,
   cancelSmartTripAlert,
   triggerTactileVibration,
-  isJourneyCompleted,
+  isTripAlertCompleted,
 } from '../../src/services/notifications';
 import SmartAlertModal from '../../src/components/SmartAlertModal';
 import ActiveTripCard from '../../src/components/ActiveTripCard';
@@ -449,16 +449,29 @@ export default function LiveBusScreen() {
 
   // Notification & Smart Alert state
   const [activeReminders, setActiveReminders] = useState<ScheduledReminder[]>([]);
-  const [activeTripAlert, setActiveTripAlert] = useState<SmartTripAlert | null>(() => getActiveTripAlert());
+  const [activeTripAlert, setActiveTripAlert] = useState<SmartTripAlert | null>(() => {
+    try {
+      return getActiveTripAlert();
+    } catch (e) {
+      return null;
+    }
+  });
   const [smartAlertModalVisible, setSmartAlertModalVisible] = useState<boolean>(false);
   const [cancelConfirmVisible, setCancelConfirmVisible] = useState<boolean>(false);
 
+  const activeTripAlertRef = useRef<SmartTripAlert | null>(activeTripAlert);
   useEffect(() => {
-    const alert = getActiveTripAlert();
-    setActiveTripAlert(alert);
-    if (alert) {
-      setActiveReminders(getActiveReminders());
-    }
+    activeTripAlertRef.current = activeTripAlert;
+  }, [activeTripAlert]);
+
+  useEffect(() => {
+    try {
+      const alert = getActiveTripAlert();
+      setActiveTripAlert(alert);
+      if (alert) {
+        setActiveReminders(getActiveReminders());
+      }
+    } catch (e) {}
   }, []);
 
   // Time simulation
@@ -558,16 +571,20 @@ export default function LiveBusScreen() {
       setCurrentTimeMins(nowMins);
 
       // Check if active trip journey has completed and auto-turn off notification
-      const alert = getActiveTripAlert();
-      if (!alert) {
-        if (activeTripAlert) {
+      try {
+        const alert = getActiveTripAlert();
+        if (!alert) {
+          if (activeTripAlertRef.current) {
+            setActiveTripAlert(null);
+            setActiveReminders([]);
+          }
+        } else if (isTripAlertCompleted(alert)) {
+          cancelSmartTripAlert();
           setActiveTripAlert(null);
           setActiveReminders([]);
         }
-      } else if (isJourneyCompleted(alert)) {
-        cancelSmartTripAlert();
-        setActiveTripAlert(null);
-        setActiveReminders([]);
+      } catch (err) {
+        console.warn('Error checking trip alert status:', err);
       }
     };
 
@@ -590,7 +607,7 @@ export default function LiveBusScreen() {
         }
       }
     };
-  }, [isLiveClock, activeTripAlert]);
+  }, [isLiveClock]);
 
   // Compute active journey based on mode
   const journey: ActiveJourney | null = useMemo(() => {

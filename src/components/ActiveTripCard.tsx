@@ -21,8 +21,13 @@ export default function ActiveTripCard({
   onDismiss,
   containerStyle,
 }: ActiveTripCardProps) {
-  const fromDisp = stopsData.find(s => s.name === alert.fromStop)?.shortName || alert.fromStop.split('(')[0].trim();
-  const toDisp = stopsData.find(s => s.name === alert.toStop)?.shortName || alert.toStop.split('(')[0].trim();
+  if (!alert) return null;
+
+  const rawFrom = alert.fromStop || '';
+  const rawTo = alert.toStop || '';
+  const fromDisp = stopsData.find(s => s.name === rawFrom)?.shortName || (rawFrom ? rawFrom.split('(')[0].trim() : 'Pickup');
+  const toDisp = stopsData.find(s => s.name === rawTo)?.shortName || (rawTo ? rawTo.split('(')[0].trim() : 'Destination');
+  const depTime = alert.departureTime || '';
 
   return (
     <View style={[styles.stripContainer, containerStyle]}>
@@ -31,7 +36,7 @@ export default function ActiveTripCard({
         onPress={onOpenSettings}
         activeOpacity={0.75}
         accessibilityRole="button"
-        accessibilityLabel={`Trip alarm active: ${fromDisp} to ${toDisp} at ${alert.departureTime}. Tap to edit.`}
+        accessibilityLabel={`Trip alarm active: ${fromDisp} to ${toDisp} at ${depTime}. Tap to edit.`}
       >
         {/* Left Notification Icon */}
         <View style={styles.stripIconWrap}>
@@ -44,7 +49,7 @@ export default function ActiveTripCard({
           <Text style={styles.stripText} numberOfLines={1}>
             <Text style={styles.stripRoute}>{fromDisp} → {toDisp}</Text>
             <Text style={styles.stripDot}> · </Text>
-            <Text style={styles.stripTime}>{alert.departureTime}</Text>
+            <Text style={styles.stripTime}>{depTime}</Text>
           </Text>
         </View>
 

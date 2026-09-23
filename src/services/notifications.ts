@@ -187,41 +187,63 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  * Checks if the trip journey has completed (i.e. arrival time has arrived or passed).
  */
 export function isJourneyCompleted(alert: SmartTripAlert | null): boolean {
-  if (!alert) return true;
+  if (!alert || typeof alert.createdAt !== 'number') return true;
 
-  // Absolute safety timeout: > 3.5 hours since creation
-  if (Date.now() - alert.createdAt > 3.5 * 60 * 60 * 1000) {
+  const now = Date.now();
+  const elapsed = now - alert.createdAt;
+
+  // 1. Minimum 60-second grace period after creation (never auto-dismiss immediately upon arming)
+  if (elapsed < 60_000) {
+    return false;
+  }
+
+  // 2. Absolute safety timeout: > 18 hours since creation (covers overnight alerts)
+  if (elapsed > 18 * 60 * 60 * 1000) {
     return true;
   }
 
+  const departureMins = typeof alert.departureMins === 'number' ? alert.departureMins : 0;
+  const arrivalMins = typeof alert.arrivalMins === 'number' ? alert.arrivalMins : departureMins + 45;
+
   const createdDate = new Date(alert.createdAt);
   const createdMins = createdDate.getHours() * 60 + createdDate.getMinutes();
-  const isTomorrow = alert.departureMins < createdMins;
+
+  // If departure was scheduled before creation time (e.g. user planned late at night for next morning)
+  const isTomorrow = departureMins < createdMins;
 
   const arrivalDate = new Date(alert.createdAt);
+  arrivalDate.setSeconds(0, 0);
+
   if (isTomorrow) {
     arrivalDate.setDate(arrivalDate.getDate() + 1);
   }
-  if (alert.arrivalMins < alert.departureMins) {
+  if (arrivalMins < departureMins) {
     arrivalDate.setDate(arrivalDate.getDate() + 1);
   }
 
-  const arrH = Math.floor(((alert.arrivalMins % 1440) + 1440) % 1440 / 60);
-  const arrM = ((alert.arrivalMins % 1440) + 1440) % 1440 % 60;
+  const arrH = Math.floor(((arrivalMins % 1440) + 1440) % 1440 / 60);
+  const arrM = ((arrivalMins % 1440) + 1440) % 1440 % 60;
   arrivalDate.setHours(arrH, arrM, 0, 0);
 
-  // If current timestamp has reached or passed arrival time, journey is completed!
-  return Date.now() >= arrivalDate.getTime();
+  return now >= arrivalDate.getTime();
 }
+
+// Alias to avoid name collisions with local variables in components
+export const isTripAlertCompleted = isJourneyCompleted;
 
 /**
  * Reads the active trip alert from persistent storage (localStorage) or memory.
- * Clears expired or completed alerts immediately.
+ * Clears expired or completed alerts immediately without recursive calls.
  */
 export function getActiveTripAlert(): SmartTripAlert | null {
   if (currentActiveAlert) {
     if (isJourneyCompleted(currentActiveAlert)) {
-      cancelSmartTripAlert();
+      currentActiveAlert = null;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
+      }
       return null;
     }
     return currentActiveAlert;
@@ -232,16 +254,24 @@ export function getActiveTripAlert(): SmartTripAlert | null {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed: SmartTripAlert = JSON.parse(stored);
-        if (parsed && parsed.createdAt) {
+        if (parsed && typeof parsed.createdAt === 'number') {
           if (isJourneyCompleted(parsed)) {
             window.localStorage.removeItem(STORAGE_KEY);
+            currentActiveAlert = null;
             return null;
           }
           currentActiveAlert = parsed;
           return parsed;
+        } else {
+          // Corrupted / malformed object
+          window.localStorage.removeItem(STORAGE_KEY);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch (err) {}
+    }
   }
 
   return null;
@@ -509,9 +539,27 @@ export async function scheduleSmartTripAlert(params: {
 
 /**
  * Cancels all active trip alerts and removes them from storage.
+ * Note: Never calls getActiveTripAlert() to prevent circular recursion.
  */
 export async function cancelSmartTripAlert(): Promise<void> {
-  const alert = getActiveTripAlert();
+  const alert = currentActiveAlert || (() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored) return JSON.parse(stored) as SmartTripAlert;
+      } catch (e) {}
+    }
+    return null;
+  })();
+
+  currentActiveAlert = null;
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+  }
+  activeReminders = [];
+
   if (alert) {
     if (Platform.OS !== 'web') {
       try {
@@ -539,9 +587,9 @@ export async function cancelSmartTripAlert(): Promise<void> {
     }
   }
 
-  saveActiveTripAlert(null);
-  activeReminders = [];
-  triggerTactileVibration([0, 100]); // Short cancel tap
+  try {
+    triggerTactileVibration([0, 100]); // Short cancel tap
+  } catch (e) {}
 }
 
 // -------------------------------------------------------------
@@ -590,12 +638,12 @@ export function getActiveReminders(): ScheduledReminder[] {
   return [
     {
       id: current.id,
-      routeBadge: current.routeBadge,
-      fromStop: current.fromStop,
-      toStop: current.toStop,
-      departureTime: current.departureTime,
-      arrivalTime: current.arrivalTime,
-      triggerTime: current.departureTriggerTime || current.departureTime,
+      routeBadge: current.routeBadge || '',
+      fromStop: current.fromStop || '',
+      toStop: current.toStop || '',
+      departureTime: current.departureTime || '',
+      arrivalTime: current.arrivalTime || '',
+      triggerTime: current.departureTriggerTime || current.departureTime || '',
       minutesBefore: current.minutesBeforeDeparture || 15,
       notificationId: current.departureNotifId,
     },
