@@ -27,6 +27,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import BusLoadingScreen from '../src/components/BusLoadingScreen';
 import VercelAnalytics from '../src/components/VercelAnalytics';
+import IosInstallPrompt from '../src/components/IosInstallPrompt';
 
 export default function RootLayout() {
   const [canGoBack, setCanGoBack] = useState(false);
@@ -169,6 +170,7 @@ export default function RootLayout() {
         {Platform.OS === 'web' ? (
           <>
             <VercelAnalytics />
+            <IosInstallPrompt />
             <style
               dangerouslySetInnerHTML={{
                 __html: `
