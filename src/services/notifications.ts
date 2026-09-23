@@ -184,13 +184,43 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 /**
+ * Checks if the trip journey has completed (i.e. arrival time has arrived or passed).
+ */
+export function isJourneyCompleted(alert: SmartTripAlert | null): boolean {
+  if (!alert) return true;
+
+  // Absolute safety timeout: > 3.5 hours since creation
+  if (Date.now() - alert.createdAt > 3.5 * 60 * 60 * 1000) {
+    return true;
+  }
+
+  const createdDate = new Date(alert.createdAt);
+  const createdMins = createdDate.getHours() * 60 + createdDate.getMinutes();
+  const isTomorrow = alert.departureMins < createdMins;
+
+  const arrivalDate = new Date(alert.createdAt);
+  if (isTomorrow) {
+    arrivalDate.setDate(arrivalDate.getDate() + 1);
+  }
+  if (alert.arrivalMins < alert.departureMins) {
+    arrivalDate.setDate(arrivalDate.getDate() + 1);
+  }
+
+  const arrH = Math.floor(((alert.arrivalMins % 1440) + 1440) % 1440 / 60);
+  const arrM = ((alert.arrivalMins % 1440) + 1440) % 1440 % 60;
+  arrivalDate.setHours(arrH, arrM, 0, 0);
+
+  // If current timestamp has reached or passed arrival time, journey is completed!
+  return Date.now() >= arrivalDate.getTime();
+}
+
+/**
  * Reads the active trip alert from persistent storage (localStorage) or memory.
- * Clears expired alerts (> 3 hours after creation).
+ * Clears expired or completed alerts immediately.
  */
 export function getActiveTripAlert(): SmartTripAlert | null {
   if (currentActiveAlert) {
-    // Check if expired (> 3.5 hours old)
-    if (Date.now() - currentActiveAlert.createdAt > 3.5 * 60 * 60 * 1000) {
+    if (isJourneyCompleted(currentActiveAlert)) {
       cancelSmartTripAlert();
       return null;
     }
@@ -203,7 +233,7 @@ export function getActiveTripAlert(): SmartTripAlert | null {
       if (stored) {
         const parsed: SmartTripAlert = JSON.parse(stored);
         if (parsed && parsed.createdAt) {
-          if (Date.now() - parsed.createdAt > 3.5 * 60 * 60 * 1000) {
+          if (isJourneyCompleted(parsed)) {
             window.localStorage.removeItem(STORAGE_KEY);
             return null;
           }

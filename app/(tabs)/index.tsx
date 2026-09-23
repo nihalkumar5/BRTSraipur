@@ -63,6 +63,7 @@ import {
   scheduleSmartTripAlert,
   cancelSmartTripAlert,
   triggerTactileVibration,
+  isJourneyCompleted,
 } from '../../src/services/notifications';
 import SmartAlertModal from '../../src/components/SmartAlertModal';
 import ActiveTripCard from '../../src/components/ActiveTripCard';
@@ -549,12 +550,29 @@ export default function LiveBusScreen() {
     };
   }, []);
 
-  // Auto-refresh clock in real-time
+  // Auto-refresh clock in real-time & auto-dismiss completed journeys
   useEffect(() => {
     if (!isLiveClock) return;
-    const updateTime = () => setCurrentTimeMins(getCurrentMinutesOfDay());
+    const updateTime = () => {
+      const nowMins = getCurrentMinutesOfDay();
+      setCurrentTimeMins(nowMins);
+
+      // Check if active trip journey has completed and auto-turn off notification
+      const alert = getActiveTripAlert();
+      if (!alert) {
+        if (activeTripAlert) {
+          setActiveTripAlert(null);
+          setActiveReminders([]);
+        }
+      } else if (isJourneyCompleted(alert)) {
+        cancelSmartTripAlert();
+        setActiveTripAlert(null);
+        setActiveReminders([]);
+      }
+    };
+
     updateTime();
-    const interval = setInterval(updateTime, 5000);
+    const interval = setInterval(updateTime, 3000);
 
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('focus', updateTime);
@@ -572,7 +590,7 @@ export default function LiveBusScreen() {
         }
       }
     };
-  }, [isLiveClock]);
+  }, [isLiveClock, activeTripAlert]);
 
   // Compute active journey based on mode
   const journey: ActiveJourney | null = useMemo(() => {
