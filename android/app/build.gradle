@@ -112,8 +112,8 @@ android {
         applicationId 'com.raipur.brts.tatpar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 8
+        versionName "1.0.7"
     }
     signingConfigs {
         debug {
@@ -198,3 +198,23 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Automatically patch and sign AAB for 100% 16KB memory page size compliance
+tasks.whenTaskAdded { task ->
+    if (task.name == 'bundleRelease') {
+        task.doLast {
+            def bundleDir = new File(buildDir, "outputs/bundle/release")
+            def aabFile = new File(bundleDir, "app-release.aab")
+            def patchScript = new File(rootDir, "../scripts/patch_aab_16kb.py")
+            def keystore = new File(projectDir, "debug.keystore")
+
+            if (aabFile.exists() && patchScript.exists()) {
+                println "--> 16KB Alignment: Patching all native libraries in AAB..."
+                exec {
+                    commandLine 'python3', patchScript.absolutePath, aabFile.absolutePath, aabFile.absolutePath, keystore.absolutePath
+                }
+            }
+        }
+    }
+}
+
