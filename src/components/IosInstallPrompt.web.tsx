@@ -7,10 +7,14 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { Share, SquarePlus, Smartphone, Lock, ArrowDown } from 'lucide-react-native';
+import { Share, SquarePlus, Smartphone, Lock, ArrowDown, Download, Star, ExternalLink } from 'lucide-react-native';
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.raipur.brts.tatpar';
 
 export default function IosInstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [devBypassed, setDevBypassed] = useState(false);
   const [tapCount, setTapCount] = useState(0);
@@ -18,7 +22,7 @@ export default function IosInstallPrompt() {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
-    // Check if query param ?preview=1 or ?bypass=1 is present
+    // Check if query param ?preview=1 or ?bypass=1 is present for testing
     try {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('bypass') === '1' || urlParams.get('preview') === '1') {
@@ -26,24 +30,34 @@ export default function IosInstallPrompt() {
       }
     } catch (e) {}
 
-    // Check if running in standalone mode (installed PWA) or native Android WebView
+    // Check if running inside native Android App (WebView / APK)
+    const nativeAppCheck =
+      Boolean((window as any).ReactNativeWebView) ||
+      Boolean((window as any).__IS_TATPAR_NATIVE_APP__) ||
+      Boolean(window.document.referrer && window.document.referrer.includes('android-app://com.raipur.brts.tatpar'));
+
+    setIsNativeApp(nativeAppCheck);
+
+    // Check if running in standalone mode (installed PWA)
     const standaloneMode =
       (window.navigator as any).standalone === true ||
-      window.matchMedia('(display-mode: standalone)').matches ||
-      Boolean((window as any).ReactNativeWebView);
+      window.matchMedia('(display-mode: standalone)').matches;
 
     setIsStandalone(Boolean(standaloneMode));
 
-    // Detect iOS (iPhone / iPad / iPod)
+    // Device detection
     const ua = window.navigator.userAgent || '';
-    const isAppleDevice =
+    const isApple =
       /iPad|iPhone|iPod/.test(ua) ||
       (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
 
-    setIsIOS(isAppleDevice);
+    const isAndroidDevice = /Android/i.test(ua) && !ua.includes('; wv');
+
+    setIsIOS(isApple);
+    setIsAndroid(isAndroidDevice);
   }, []);
 
-  // Developer bypass: tap logo 5 times in DevTools to unlock without opening from Home Screen
+  // Developer bypass: tap logo 5 times in DevTools to unlock without opening from Home Screen/Play Store
   const handleLogoTap = () => {
     const next = tapCount + 1;
     setTapCount(next);
@@ -52,100 +66,179 @@ export default function IosInstallPrompt() {
     }
   };
 
-  // If already installed to Home Screen (standalone) or not iOS or dev-bypassed: don't block
-  if (isStandalone || !isIOS || devBypassed) {
+  const handleOpenPlayStore = () => {
+    try {
+      window.location.href = PLAY_STORE_URL;
+    } catch (e) {
+      window.open(PLAY_STORE_URL, '_blank');
+    }
+  };
+
+  // If already installed to Home Screen (standalone) or inside Native Android App or dev-bypassed: don't block
+  if (isNativeApp || isStandalone || devBypassed) {
     return null;
   }
 
-  return (
-    <View style={styles.lockOverlay}>
-      <View style={styles.card}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleLogoTap} activeOpacity={0.8}>
-            <Image
-              source={{ uri: '/apple-touch-icon.png' }}
-              style={styles.appIcon}
-              accessibilityLabel="Raipur BRTS Guide Icon"
-            />
+  // 1. ANDROID MOBILE BROWSER GATEKEEPER -> Directs to Google Play Store
+  if (isAndroid) {
+    return (
+      <View style={styles.lockOverlay}>
+        <View style={styles.card}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleLogoTap} activeOpacity={0.8}>
+              <Image
+                source={{ uri: '/apple-touch-icon.png' }}
+                style={styles.appIcon}
+                accessibilityLabel="Raipur BRTS Guide Icon"
+              />
+            </TouchableOpacity>
+            <View style={styles.playBadge}>
+              <Star size={12} color="#01875F" fill="#01875F" style={{ marginRight: 4 }} />
+              <Text style={styles.playBadgeText}>Google Play Store Official</Text>
+            </View>
+            <Text style={styles.title}>Raipur BRTS Guide</Text>
+            <Text style={styles.subtitle}>
+              Official mobile app for Nava Raipur Atal Nagar & Raipur City BRTS corridors.
+            </Text>
+          </View>
+
+          {/* FEATURES LIST */}
+          <View style={styles.featuresContainer}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureDot}>📍</Text>
+              <Text style={styles.featureText}>Real-time GPS bus tracking & shelter locator</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureDot}>🔔</Text>
+              <Text style={styles.featureText}>Smart arrival notifications before your stop</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureDot}>⚡</Text>
+              <Text style={styles.featureText}>100% offline timetables, routes & fare calculator</Text>
+            </View>
+          </View>
+
+          {/* PRIMARY GOOGLE PLAY DOWNLOAD BUTTON */}
+          <TouchableOpacity
+            onPress={handleOpenPlayStore}
+            style={styles.playStoreBtn}
+            activeOpacity={0.85}
+          >
+            <Download size={20} color="#FFFFFF" style={{ marginRight: 10 }} />
+            <View style={styles.playBtnTextCol}>
+              <Text style={styles.playBtnSub}>GET IT ON</Text>
+              <Text style={styles.playBtnMain}>Google Play</Text>
+            </View>
+            <ExternalLink size={16} color="rgba(255, 255, 255, 0.7)" style={{ marginLeft: 8 }} />
           </TouchableOpacity>
-          <View style={styles.badge}>
-            <Lock size={12} color="#D97706" style={{ marginRight: 4 }} />
-            <Text style={styles.badgeText}>iPhone Installation Required</Text>
+
+          {/* FOOTER NOTE */}
+          <View style={styles.bottomHintBox}>
+            <Text style={styles.bottomHintText}>
+              🔒 Please download the official Android app to continue using Raipur BRTS.
+            </Text>
           </View>
-          <Text style={styles.title}>Install Raipur BRTS Guide</Text>
-          <Text style={styles.subtitle}>
-            Raipur BRTS Guide is an App-Only experience on iPhone. Please add it to your Home Screen to unlock all bus routes, stops & timetables.
-          </Text>
-        </View>
-
-        {/* 3 MANDATORY STEPS */}
-        <View style={styles.stepsContainer}>
-          {/* STEP 1 */}
-          <View style={styles.stepRow}>
-            <View style={[styles.stepIconBox, { backgroundColor: '#EBF3FF' }]}>
-              <Share size={18} color="#007AFF" />
-            </View>
-            <View style={styles.stepTextBox}>
-              <Text style={styles.stepNum}>STEP 1</Text>
-              <Text style={styles.stepDesc}>
-                Tap the <Text style={styles.stepBold}>Share button (⎋)</Text> in Safari toolbar below
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* STEP 2 */}
-          <View style={styles.stepRow}>
-            <View style={[styles.stepIconBox, { backgroundColor: '#E8F5E9' }]}>
-              <SquarePlus size={18} color="#16A34A" />
-            </View>
-            <View style={styles.stepTextBox}>
-              <Text style={styles.stepNum}>STEP 2</Text>
-              <Text style={styles.stepDesc}>
-                Scroll down & select <Text style={styles.stepBold}>"Add to Home Screen"</Text>
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* STEP 3 */}
-          <View style={styles.stepRow}>
-            <View style={[styles.stepIconBox, { backgroundColor: '#EEF2FF' }]}>
-              <Smartphone size={18} color="#18258F" />
-            </View>
-            <View style={styles.stepTextBox}>
-              <Text style={styles.stepNum}>STEP 3</Text>
-              <Text style={styles.stepDesc}>
-                Open the new <Text style={styles.stepBold}>"Raipur BRTS Guide"</Text> icon from Home Screen!
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* BOTTOM CALLOUT: TAP SHARE BELOW */}
-        <View style={styles.shareActionBanner}>
-          <View style={styles.shareActionIconWrap}>
-            <Share size={18} color="#007AFF" />
-          </View>
-          <View style={styles.shareActionTextWrap}>
-            <Text style={styles.shareActionTitle}>Tap Safari Share button below</Text>
-            <Text style={styles.shareActionSub}>Look for the [ ⎋ ] icon in your bottom bar</Text>
-          </View>
-          <ArrowDown size={20} color="#007AFF" />
-        </View>
-
-        {/* UNLOCK HINT */}
-        <View style={styles.bottomHintBox}>
-          <Text style={styles.bottomHintText}>
-            ⚡ Once opened from your Home Screen, full access unlocks automatically.
-          </Text>
         </View>
       </View>
-    </View>
-  );
+    );
+  }
+
+  // 2. IPHONE / IPAD GATEKEEPER -> Directs to Add to Home Screen
+  if (isIOS) {
+    return (
+      <View style={styles.lockOverlay}>
+        <View style={styles.card}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleLogoTap} activeOpacity={0.8}>
+              <Image
+                source={{ uri: '/apple-touch-icon.png' }}
+                style={styles.appIcon}
+                accessibilityLabel="Raipur BRTS Guide Icon"
+              />
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Lock size={12} color="#D97706" style={{ marginRight: 4 }} />
+              <Text style={styles.badgeText}>iPhone Installation Required</Text>
+            </View>
+            <Text style={styles.title}>Install Raipur BRTS Guide</Text>
+            <Text style={styles.subtitle}>
+              Raipur BRTS Guide is an App-Only experience on iPhone. Please add it to your Home Screen to unlock all bus routes, stops & schedules.
+            </Text>
+          </View>
+
+          {/* 3 MANDATORY STEPS */}
+          <View style={styles.stepsContainer}>
+            {/* STEP 1 */}
+            <View style={styles.stepRow}>
+              <View style={[styles.stepIconBox, { backgroundColor: '#EBF3FF' }]}>
+                <Share size={18} color="#007AFF" />
+              </View>
+              <View style={styles.stepTextBox}>
+                <Text style={styles.stepNum}>STEP 1</Text>
+                <Text style={styles.stepDesc}>
+                  Tap the <Text style={styles.stepBold}>Share button (⎋)</Text> in Safari toolbar below
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* STEP 2 */}
+            <View style={styles.stepRow}>
+              <View style={[styles.stepIconBox, { backgroundColor: '#E8F5E9' }]}>
+                <SquarePlus size={18} color="#16A34A" />
+              </View>
+              <View style={styles.stepTextBox}>
+                <Text style={styles.stepNum}>STEP 2</Text>
+                <Text style={styles.stepDesc}>
+                  Scroll down & select <Text style={styles.stepBold}>"Add to Home Screen"</Text>
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* STEP 3 */}
+            <View style={styles.stepRow}>
+              <View style={[styles.stepIconBox, { backgroundColor: '#EEF2FF' }]}>
+                <Smartphone size={18} color="#18258F" />
+              </View>
+              <View style={styles.stepTextBox}>
+                <Text style={styles.stepNum}>STEP 3</Text>
+                <Text style={styles.stepDesc}>
+                  Open the new <Text style={styles.stepBold}>"Raipur BRTS Guide"</Text> icon from Home Screen!
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* BOTTOM CALLOUT: TAP SHARE BELOW */}
+          <View style={styles.shareActionBanner}>
+            <View style={styles.shareActionIconWrap}>
+              <Share size={18} color="#007AFF" />
+            </View>
+            <View style={styles.shareActionTextWrap}>
+              <Text style={styles.shareActionTitle}>Tap Safari Share button below</Text>
+              <Text style={styles.shareActionSub}>Look for the [ ⎋ ] icon in your bottom bar</Text>
+            </View>
+            <ArrowDown size={20} color="#007AFF" />
+          </View>
+
+          {/* UNLOCK HINT */}
+          <View style={styles.bottomHintBox}>
+            <Text style={styles.bottomHintText}>
+              ⚡ Once opened from your Home Screen, full access unlocks automatically.
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Desktop or other devices: don't block
+  return null;
 }
 
 const styles = StyleSheet.create({
@@ -209,6 +302,23 @@ const styles = StyleSheet.create({
     color: '#B45309',
     fontFamily: 'Plus Jakarta Sans',
   },
+  playBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E6F4EA',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#CEEAD6',
+  },
+  playBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#01875F',
+    fontFamily: 'Plus Jakarta Sans',
+  },
   title: {
     fontSize: 18,
     fontWeight: '800',
@@ -223,6 +333,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: 4,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  featuresContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+    gap: 8,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  featureDot: {
+    fontSize: 14,
+  },
+  featureText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1E293B',
+    fontFamily: 'Plus Jakarta Sans',
+    flex: 1,
+  },
+  playStoreBtn: {
+    backgroundColor: '#01875F',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#01875F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  playBtnTextCol: {
+    alignItems: 'flex-start',
+  },
+  playBtnSub: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.8,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  playBtnMain: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
     fontFamily: 'Plus Jakarta Sans',
   },
   stepsContainer: {

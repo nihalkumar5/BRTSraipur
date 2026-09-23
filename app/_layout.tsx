@@ -259,6 +259,7 @@ export default function RootLayout() {
               nestedScrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={`
                 (function() {
+                    window.__IS_TATPAR_NATIVE_APP__ = true;
                     // 0. Ensure HTML, BODY, and #root have matching warm theme background instantly
                     const bgStyle = document.createElement('style');
                     bgStyle.innerHTML = 'html, body, #root { background-color: #F8F6F0 !important; }';
