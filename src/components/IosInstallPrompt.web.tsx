@@ -66,16 +66,16 @@ export default function IosInstallPrompt() {
             <Image
               source={{ uri: '/apple-touch-icon.png' }}
               style={styles.appIcon}
-              accessibilityLabel="Tatpar BRTS Icon"
+              accessibilityLabel="Raipur BRTS Guide Icon"
             />
           </TouchableOpacity>
           <View style={styles.badge}>
             <Lock size={12} color="#D97706" style={{ marginRight: 4 }} />
             <Text style={styles.badgeText}>iPhone Installation Required</Text>
           </View>
-          <Text style={styles.title}>Install Tatpar BRTS App</Text>
+          <Text style={styles.title}>Install Raipur BRTS Guide</Text>
           <Text style={styles.subtitle}>
-            Raipur BRTS is an App-Only experience on iPhone. Please add it to your Home Screen to unlock live bus routes, stops & schedules.
+            Raipur BRTS Guide is an App-Only experience on iPhone. Please add it to your Home Screen to unlock all bus routes, stops & timetables.
           </Text>
         </View>
 
@@ -84,7 +84,7 @@ export default function IosInstallPrompt() {
           {/* STEP 1 */}
           <View style={styles.stepRow}>
             <View style={[styles.stepIconBox, { backgroundColor: '#EBF3FF' }]}>
-              <Share size={20} color="#007AFF" />
+              <Share size={18} color="#007AFF" />
             </View>
             <View style={styles.stepTextBox}>
               <Text style={styles.stepNum}>STEP 1</Text>
@@ -99,7 +99,7 @@ export default function IosInstallPrompt() {
           {/* STEP 2 */}
           <View style={styles.stepRow}>
             <View style={[styles.stepIconBox, { backgroundColor: '#E8F5E9' }]}>
-              <SquarePlus size={20} color="#16A34A" />
+              <SquarePlus size={18} color="#16A34A" />
             </View>
             <View style={styles.stepTextBox}>
               <Text style={styles.stepNum}>STEP 2</Text>
@@ -114,31 +114,35 @@ export default function IosInstallPrompt() {
           {/* STEP 3 */}
           <View style={styles.stepRow}>
             <View style={[styles.stepIconBox, { backgroundColor: '#EEF2FF' }]}>
-              <Smartphone size={20} color="#18258F" />
+              <Smartphone size={18} color="#18258F" />
             </View>
             <View style={styles.stepTextBox}>
               <Text style={styles.stepNum}>STEP 3</Text>
               <Text style={styles.stepDesc}>
-                Open the new <Text style={styles.stepBold}>"Tatpar BRTS"</Text> icon from Home Screen!
+                Open the new <Text style={styles.stepBold}>"Raipur BRTS Guide"</Text> icon from Home Screen!
               </Text>
             </View>
           </View>
         </View>
 
-        {/* BOTTOM HINT */}
+        {/* BOTTOM CALLOUT: TAP SHARE BELOW */}
+        <View style={styles.shareActionBanner}>
+          <View style={styles.shareActionIconWrap}>
+            <Share size={18} color="#007AFF" />
+          </View>
+          <View style={styles.shareActionTextWrap}>
+            <Text style={styles.shareActionTitle}>Tap Safari Share button below</Text>
+            <Text style={styles.shareActionSub}>Look for the [ ⎋ ] icon in your bottom bar</Text>
+          </View>
+          <ArrowDown size={20} color="#007AFF" />
+        </View>
+
+        {/* UNLOCK HINT */}
         <View style={styles.bottomHintBox}>
           <Text style={styles.bottomHintText}>
             ⚡ Once opened from your Home Screen, full access unlocks automatically.
           </Text>
         </View>
-      </View>
-
-      {/* ANIMATED BOUNCING ARROW POINTING TO SAFARI SHARE BUTTON */}
-      <View style={styles.arrowContainer}>
-        <View style={styles.arrowBubble}>
-          <Text style={styles.arrowBubbleText}>Tap Share below</Text>
-        </View>
-        <ArrowDown size={28} color="#FFFFFF" />
       </View>
     </View>
   );
@@ -156,14 +160,15 @@ const styles = StyleSheet.create({
     zIndex: 9999999,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 18,
+    padding: 16,
+    overflowY: 'auto' as any,
   } as any,
   card: {
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 370,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 22,
+    borderRadius: 22,
+    padding: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.28,
@@ -174,69 +179,69 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 14,
   },
   appIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: '#18258F',
-    marginBottom: 12,
+    marginBottom: 10,
     shadowColor: '#18258F',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#B45309',
     fontFamily: 'Plus Jakarta Sans',
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
     fontFamily: 'Plus Jakarta Sans',
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 8,
+    lineHeight: 16,
+    paddingHorizontal: 4,
     fontFamily: 'Plus Jakarta Sans',
   },
   stepsContainer: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   stepIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -244,7 +249,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepNum: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#94A3B8',
     letterSpacing: 0.8,
@@ -252,9 +257,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Plus Jakarta Sans',
   },
   stepDesc: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#1E293B',
-    lineHeight: 17,
+    lineHeight: 16,
     fontFamily: 'Plus Jakarta Sans',
   },
   stepBold: {
@@ -264,42 +269,57 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E2E8F0',
-    marginVertical: 10,
-    marginLeft: 52,
+    marginVertical: 8,
+    marginLeft: 46,
+  },
+  shareActionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    gap: 10,
+  },
+  shareActionIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareActionTextWrap: {
+    flex: 1,
+  },
+  shareActionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1D4ED8',
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  shareActionSub: {
+    fontSize: 10,
+    color: '#3B82F6',
+    fontFamily: 'Plus Jakarta Sans',
+    marginTop: 1,
   },
   bottomHintBox: {
     backgroundColor: '#F0FDF4',
-    padding: 10,
-    borderRadius: 12,
+    padding: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#DCFCE7',
   },
   bottomHintText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#15803D',
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 15,
-    fontFamily: 'Plus Jakarta Sans',
-  },
-  arrowContainer: {
-    position: 'absolute',
-    bottom: 20,
-    alignItems: 'center',
-  },
-  arrowBubble: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  arrowBubbleText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+    lineHeight: 14,
     fontFamily: 'Plus Jakarta Sans',
   },
 });

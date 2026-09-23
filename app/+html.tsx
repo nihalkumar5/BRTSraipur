@@ -11,7 +11,7 @@ export default function Root({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <title>Tatpar BRTS Raipur</title>
+        <title>Raipur BRTS Guide</title>
 
         <meta
           name="viewport"
@@ -22,8 +22,8 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Tatpar BRTS" />
-        <meta name="application-name" content="Tatpar BRTS" />
+        <meta name="apple-mobile-web-app-title" content="Raipur BRTS Guide" />
+        <meta name="application-name" content="Raipur BRTS Guide" />
         <meta name="theme-color" content="#18258F" />
         <meta name="msapplication-TileColor" content="#18258F" />
 
