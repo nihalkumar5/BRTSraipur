@@ -6,6 +6,7 @@ web-build/
 
 # Android
 android/.gradle/
+android/.kotlin/
 android/app/build/
 android/app/release/
 android/build/
