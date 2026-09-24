@@ -260,18 +260,18 @@ export default function AboutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>OFFICIAL SOURCES & LEGAL</Text>
           <View style={styles.card}>
-            {/* TATPAR OFFICIAL */}
+            {/* RAIPUR MUNICIPAL CORPORATION */}
             <TouchableOpacity
               style={styles.rowItem}
-              onPress={() => handleWebsite('https://www.tatparbus.in')}
+              onPress={() => handleWebsite('https://nagarnigamraipur.nic.in')}
               activeOpacity={0.65}
             >
               <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
                 <Globe size={17} color={SUCCESS} strokeWidth={2} />
               </View>
               <View style={styles.rowTextCol}>
-                <Text style={styles.rowPrimary}>Tatpar BRTS Official Portal</Text>
-                <Text style={styles.rowSecondary}>tatparbus.in</Text>
+                <Text style={styles.rowPrimary}>Raipur Municipal Corporation (RMC)</Text>
+                <Text style={styles.rowSecondary}>nagarnigamraipur.nic.in</Text>
               </View>
               <ExternalLink size={15} color={TEXT_LIGHT} strokeWidth={2} />
             </TouchableOpacity>
